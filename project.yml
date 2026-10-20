@@ -1,7 +1,7 @@
 name: Maison
 
 options:
-  bundleIdPrefix: me.theodaguier
+  bundleIdPrefix: com.theodaguier
   deploymentTarget:
     iOS: "26.0"
   createIntermediateGroups: true
@@ -25,7 +25,7 @@ targets:
       - path: Maison
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: me.theodaguier.maison
+        PRODUCT_BUNDLE_IDENTIFIER: com.theodaguier.maison
         INFOPLIST_KEY_CFBundleDisplayName: Maison
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
@@ -55,5 +55,5 @@ targets:
       - target: Maison
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: me.theodaguier.maison.tests
+        PRODUCT_BUNDLE_IDENTIFIER: com.theodaguier.maison.tests
         GENERATE_INFOPLIST_FILE: YES

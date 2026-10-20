@@ -56,4 +56,4 @@ Le plus simple : `./ci/setup-testflight.sh ~/Downloads/AuthKey_XXXX.p8 <issuer-i
 | `ASC_ISSUER_ID` | Issuer ID de la clé API |
 | `ASC_KEY_P8` | contenu complet du fichier `AuthKey_XXXX.p8` |
 
-La clé API se crée dans App Store Connect → *Utilisateurs et accès* → *Intégrations* → *App Store Connect API*, avec le rôle **App Manager** (nécessaire pour la signature automatique). L’app `me.theodaguier.maison` doit exister dans App Store Connect avant le premier envoi.
+La clé API se crée dans App Store Connect → *Utilisateurs et accès* → *Intégrations* → *App Store Connect API*, avec le rôle **App Manager** (nécessaire pour la signature automatique). L’app `com.theodaguier.maison` doit exister dans App Store Connect avant le premier envoi.
