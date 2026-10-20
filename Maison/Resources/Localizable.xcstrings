@@ -31,12 +31,142 @@
         }
       }
     },
+    "Blinds & Shutters": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Volets et stores"
+          }
+        }
+      }
+    },
+    "Buttons": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Boutons"
+          }
+        }
+      }
+    },
+    "Cameras": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Caméras"
+          }
+        }
+      }
+    },
+    "Climate": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Climatisation"
+          }
+        }
+      }
+    },
+    "Connecting…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connexion…"
+          }
+        }
+      }
+    },
+    "Couldn’t Connect": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connexion impossible"
+          }
+        }
+      }
+    },
+    "Detectors": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Détecteurs"
+          }
+        }
+      }
+    },
+    "Fans": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ventilateurs"
+          }
+        }
+      }
+    },
+    "Found on Your Network": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur votre réseau"
+          }
+        }
+      }
+    },
     "Home": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Maison"
+          }
+        }
+      }
+    },
+    "Humidifiers": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Humidificateurs"
+          }
+        }
+      }
+    },
+    "Lights": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lumières"
+          }
+        }
+      }
+    },
+    "Locks": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Serrures"
+          }
+        }
+      }
+    },
+    "Looking for Home Assistant…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recherche de Home Assistant…"
           }
         }
       }
@@ -91,6 +221,16 @@
         }
       }
     },
+    "Other": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autres"
+          }
+        }
+      }
+    },
     "Rooms": {
       "localizations": {
         "fr": {
@@ -107,6 +247,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "Les pièces seront importées depuis Home Assistant."
+          }
+        }
+      }
+    },
+    "Scenes": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scènes"
+          }
+        }
+      }
+    },
+    "Scripts": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scripts"
+          }
+        }
+      }
+    },
+    "Security": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sécurité"
+          }
+        }
+      }
+    },
+    "Sensors": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Capteurs"
           }
         }
       }
@@ -131,12 +311,92 @@
         }
       }
     },
+    "Sign Out": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se déconnecter"
+          }
+        }
+      }
+    },
+    "Speakers & TVs": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enceintes et TV"
+          }
+        }
+      }
+    },
+    "Switches": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prises et interrupteurs"
+          }
+        }
+      }
+    },
+    "The connection to Home Assistant was lost.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La connexion à Home Assistant a été perdue."
+          }
+        }
+      }
+    },
+    "Try Again": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réessayer"
+          }
+        }
+      }
+    },
+    "Vacuums": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aspirateurs"
+          }
+        }
+      }
+    },
+    "Valves": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vannes"
+          }
+        }
+      }
+    },
     "Version": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Version"
+          }
+        }
+      }
+    },
+    "You’ll sign in with your Home Assistant account. Your password stays with Home Assistant.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vous vous connecterez avec votre compte Home Assistant. Votre mot de passe reste chez Home Assistant."
           }
         }
       }

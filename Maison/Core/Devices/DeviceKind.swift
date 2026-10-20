@@ -51,3 +51,52 @@ enum QuickAction: Sendable, Equatable {
     case run
     case state
 }
+
+extension DeviceKind {
+    /// Section title used when grouping devices by kind.
+    var title: LocalizedStringResource {
+        switch self {
+        case .light: "Lights"
+        case .switch: "Switches"
+        case .climate: "Climate"
+        case .cover: "Blinds & Shutters"
+        case .lock: "Locks"
+        case .mediaPlayer: "Speakers & TVs"
+        case .fan: "Fans"
+        case .sensor: "Sensors"
+        case .binarySensor: "Detectors"
+        case .vacuum: "Vacuums"
+        case .camera: "Cameras"
+        case .alarm: "Security"
+        case .humidifier: "Humidifiers"
+        case .valve: "Valves"
+        case .scene: "Scenes"
+        case .script: "Scripts"
+        case .button: "Buttons"
+        case .other: "Other"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .light: "lightbulb.fill"
+        case .switch: "powerplug.fill"
+        case .climate: "thermometer.sun.fill"
+        case .cover: "blinds.horizontal.closed"
+        case .lock: "lock.fill"
+        case .mediaPlayer: "hifispeaker.fill"
+        case .fan: "fan.fill"
+        case .sensor: "gauge.with.dots.needle.33percent"
+        case .binarySensor: "sensor.fill"
+        case .vacuum: "fan.oscillation.fill"
+        case .camera: "video.fill"
+        case .alarm: "shield.lefthalf.filled"
+        case .humidifier: "humidifier.fill"
+        case .valve: "spigot.fill"
+        case .scene: "sparkles"
+        case .script: "scroll.fill"
+        case .button: "button.programmable"
+        case .other: "square.dashed"
+        }
+    }
+}

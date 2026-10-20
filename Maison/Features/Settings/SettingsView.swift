@@ -1,11 +1,20 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @Environment(HomeStore.self) private var store
+
     var body: some View {
         NavigationStack {
             List {
                 Section("Server") {
-                    LabeledContent("Home Assistant", value: String(localized: "Not Connected"))
+                    if let serverURL = store.serverURL {
+                        LabeledContent("Home Assistant", value: serverURL.host() ?? serverURL.absoluteString)
+                        Button("Sign Out", role: .destructive) {
+                            Task { await store.signOut() }
+                        }
+                    } else {
+                        LabeledContent("Home Assistant", value: String(localized: "Not Connected"))
+                    }
                 }
                 Section("App") {
                     LabeledContent("Version", value: Bundle.main.versionString)
@@ -26,4 +35,5 @@ private extension Bundle {
 
 #Preview {
     SettingsView()
+        .environment(HomeStore())
 }

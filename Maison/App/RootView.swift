@@ -22,4 +22,5 @@ struct RootView: View {
 
 #Preview {
     RootView()
+        .environment(HomeStore())
 }
