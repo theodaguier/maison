@@ -46,6 +46,15 @@ targets:
           - _home-assistant._tcp
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
+        # Lets the system hand household invitations (CKShare links) to the app.
+        CKSharingSupported: true
+    entitlements:
+      path: Maison/Maison.entitlements
+      properties:
+        com.apple.developer.icloud-container-identifiers:
+          - iCloud.com.theodaguier.maison
+        com.apple.developer.icloud-services:
+          - CloudKit
     scheme:
       testTargets:
         - MaisonTests

@@ -21,26 +21,25 @@ final class HomeStore {
     private(set) var serverURL: URL?
     private(set) var serverVersion: String?
     private(set) var lastUpdate: Date?
-    private(set) var favoriteIDs: [String]
     private(set) var currentUser: HomeAssistantUser?
     private(set) var serverConfig: ServerConfig?
     private(set) var integrations: [Integration] = []
     /// Recent round-trip times to the server, oldest first.
     private(set) var latencies: [Duration] = []
     let discovery = ServerDiscovery()
+    /// The household shared through iCloud, which also keeps the favourites.
+    let household: HouseholdStore
 
     @ObservationIgnored private let credentialStore: CredentialStore
-    @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private var credentials: Credentials?
     @ObservationIgnored private var connection: HomeAssistantConnection?
     @ObservationIgnored private var updatesTask: Task<Void, Never>?
     @ObservationIgnored private var retryTask: Task<Void, Never>?
     @ObservationIgnored private let isDemo: Bool
 
-    init(credentialStore: CredentialStore = CredentialStore(), defaults: UserDefaults = .standard) {
+    init(credentialStore: CredentialStore = CredentialStore(), defaults: UserDefaults = .standard, household: HouseholdStore? = nil) {
         self.credentialStore = credentialStore
-        self.defaults = defaults
-        favoriteIDs = defaults.stringArray(forKey: Self.favoritesKey) ?? []
+        self.household = household ?? HouseholdStore(cloud: CloudKitHousehold.isEntitled ? CloudKitHousehold() : nil, defaults: defaults)
         isDemo = false
         let credentials = try? credentialStore.load()
         self.credentials = credentials
@@ -49,10 +48,9 @@ final class HomeStore {
     }
 
     /// A store filled with sample data, for previews and the `-demo` launch argument.
-    init(demo states: [EntityState], layout: HomeLayout, phase: Phase = .connected) {
+    init(demo states: [EntityState], layout: HomeLayout, household: HouseholdStore, phase: Phase = .connected) {
         credentialStore = CredentialStore(service: "com.theodaguier.maison.demo")
-        defaults = UserDefaults(suiteName: "demo") ?? .standard
-        favoriteIDs = []
+        self.household = household
         isDemo = true
         self.states = Dictionary(states.map { ($0.entityID, $0) }, uniquingKeysWith: { _, last in last })
         self.layout = layout
@@ -70,12 +68,11 @@ final class HomeStore {
         latencies = [34, 30, 41, 36, 52, 33, 31, 35].map { .milliseconds($0) }
     }
 
-    private static let favoritesKey = "favoriteEntityIDs"
-
     // MARK: - Session
 
     func start() async {
         guard !isDemo else { return }
+        Task { await household.start() }
         if credentials == nil {
             discovery.start()
         } else {
@@ -173,6 +170,13 @@ final class HomeStore {
         currentUser = try? await connection.currentUser()
         serverConfig = try? await connection.serverConfig()
         integrations = (try? await connection.integrations()) ?? []
+        if let serverURL {
+            await household.serverConnected(Household(
+                name: serverConfig?.locationName ?? String(localized: "Home"),
+                serverURL: serverURL,
+                remoteURL: serverConfig?.externalURL.flatMap { $0.isEmpty ? nil : URL(string: $0) }
+            ))
+        }
     }
 
     /// How long the device was on today and yesterday.
@@ -265,13 +269,10 @@ final class HomeStore {
         await call("climate", "set_temperature", on: entity, data: ["temperature": .number(temperature)])
     }
 
+    var favoriteIDs: [String] { household.favoriteIDs }
+
     func toggleFavorite(_ entity: EntityState) {
-        if let index = favoriteIDs.firstIndex(of: entity.entityID) {
-            favoriteIDs.remove(at: index)
-        } else {
-            favoriteIDs.append(entity.entityID)
-        }
-        defaults.set(favoriteIDs, forKey: Self.favoritesKey)
+        household.toggleFavorite(entity.entityID)
     }
 
     func isFavorite(_ entity: EntityState) -> Bool {

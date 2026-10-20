@@ -1,0 +1,217 @@
+import CloudKit
+import Foundation
+import Observation
+
+/// The household shared through iCloud and the current member's favourites.
+///
+/// Favourites are kept in `UserDefaults` too, so they work without iCloud and show at once on launch;
+/// iCloud wins whenever it has a copy.
+@MainActor
+@Observable
+final class HouseholdStore {
+    enum Status: Equatable {
+        case loading
+        /// No iCloud account on this device: favourites stay on the device and sharing is off.
+        case unavailable
+        case ready
+        case failed(String)
+    }
+
+    private(set) var status: Status = .loading
+    private(set) var household: Household?
+    private(set) var location: HouseholdLocation?
+    private(set) var members: [HouseholdMember] = []
+    private(set) var favoriteIDs: [String]
+
+    @ObservationIgnored private let cloud: (any HouseholdCloud)?
+    @ObservationIgnored private let defaults: UserDefaults
+    @ObservationIgnored private var memberID: String?
+    @ObservationIgnored private var loadTask: Task<Void, Never>?
+    @ObservationIgnored private var saveTask: Task<Void, Never>?
+    /// Favourites changed before iCloud loaded: the device copy is newer than iCloud's.
+    @ObservationIgnored private var hasUnsyncedFavorites = false
+
+    /// Pass `nil` for `cloud` to keep everything on the device.
+    init(cloud: (any HouseholdCloud)?, defaults: UserDefaults = .standard) {
+        self.cloud = cloud
+        self.defaults = defaults
+        favoriteIDs = defaults.stringArray(forKey: Self.favoritesKey) ?? []
+        if cloud == nil {
+            status = .unavailable
+        }
+    }
+
+    /// A household filled with sample members, for previews and the `-demo` launch argument.
+    init(demo household: Household, members: [HouseholdMember]) {
+        cloud = nil
+        defaults = UserDefaults(suiteName: "demo") ?? .standard
+        favoriteIDs = []
+        self.household = household
+        self.members = members
+        location = .owned
+        status = .ready
+    }
+
+    private static let favoritesKey = "favoriteEntityIDs"
+
+    /// The role of the person using the app.
+    var currentRole: HouseholdRole {
+        members.first(where: \.isCurrentUser)?.role ?? (location?.isShared == true ? .resident : .owner)
+    }
+
+    var canInvite: Bool {
+        status == .ready && household != nil && currentRole.canManageMembers
+    }
+
+    // MARK: - Loading
+
+    /// Loads the household once; later calls wait for the first load.
+    func start() async {
+        let task = loadTask ?? Task { await load() }
+        loadTask = task
+        await task.value
+    }
+
+    func reload() async {
+        loadTask = Task { await load() }
+        await loadTask?.value
+    }
+
+    private func load() async {
+        guard let cloud else { return }
+        do {
+            guard let memberID = try await cloud.currentUserID() else {
+                status = .unavailable
+                return
+            }
+            self.memberID = memberID
+            if let stored = try await cloud.findHousehold() {
+                location = stored.location
+                household = stored.household
+                try await syncFavorites()
+                try await refreshMembers()
+            }
+            status = .ready
+        } catch {
+            status = .failed(error.localizedDescription)
+        }
+    }
+
+    /// Called once signed in to Home Assistant: creates the household on first use, or keeps the
+    /// owner's copy of the server details up to date.
+    func serverConnected(_ server: Household) async {
+        await start()
+        if case .failed = status {
+            await reload()
+        }
+        guard let cloud, status == .ready else { return }
+        do {
+            if let location {
+                guard !location.isShared, household != server else { return }
+                try await cloud.save(server, in: location)
+                household = server
+            } else {
+                location = try await cloud.create(server)
+                household = server
+                try await syncFavorites()
+                try await refreshMembers()
+            }
+        } catch {
+            // The household is retried on the next connection; favourites still work locally.
+        }
+    }
+
+    /// Joins the household of an invitation the user opened.
+    func accept(_ metadata: CKShare.Metadata) async {
+        guard let cloud else { return }
+        await start()
+        do {
+            _ = try await cloud.accept(metadata)
+            await reload()
+        } catch {
+            status = .failed(error.localizedDescription)
+        }
+    }
+
+    // MARK: - Members
+
+    func refreshMembers() async throws {
+        guard let cloud, let location else { return }
+        let members = try await cloud.members(in: location)
+        if members.isEmpty, !location.isShared, let memberID {
+            // Never shared yet: the owner is alone.
+            self.members = [HouseholdMember(id: memberID, name: nil, role: .owner, isCurrentUser: true)]
+        } else {
+            self.members = members.sortedForDisplay()
+        }
+    }
+
+    /// Returns the link to send to the person invited.
+    func invite(_ contact: String, as role: HouseholdRole) async throws -> URL {
+        guard let cloud, let household, let location else { throw HouseholdError.noShareLink }
+        let url = try await cloud.invite(contact, as: role, to: household, in: location)
+        try? await refreshMembers()
+        return url
+    }
+
+    func remove(_ member: HouseholdMember) async throws {
+        guard let cloud, let location else { return }
+        try await cloud.remove(member, from: location)
+        try? await refreshMembers()
+    }
+
+    /// Leaves a household someone else shared. Favourites stay on the device.
+    func leave() async throws {
+        guard let cloud, let location, location.isShared else { return }
+        try await cloud.leave(location)
+        self.location = nil
+        household = nil
+        members = []
+    }
+
+    // MARK: - Favourites
+
+    func toggleFavorite(_ entityID: String) {
+        if let index = favoriteIDs.firstIndex(of: entityID) {
+            favoriteIDs.remove(at: index)
+        } else {
+            favoriteIDs.append(entityID)
+        }
+        defaults.set(favoriteIDs, forKey: Self.favoritesKey)
+        uploadFavorites()
+    }
+
+    /// Takes the iCloud copy when there is one, otherwise uploads the favourites kept on the device.
+    private func syncFavorites() async throws {
+        guard let cloud, let location, let memberID else { return }
+        if hasUnsyncedFavorites {
+            try await cloud.saveFavorites(favoriteIDs, of: memberID, in: location)
+            hasUnsyncedFavorites = false
+        } else if let saved = try await cloud.favorites(of: memberID, in: location) {
+            favoriteIDs = saved
+            defaults.set(saved, forKey: Self.favoritesKey)
+        } else if !favoriteIDs.isEmpty {
+            try await cloud.saveFavorites(favoriteIDs, of: memberID, in: location)
+        }
+    }
+
+    /// Saves in order, so quick toggles can't land out of sequence.
+    private func uploadFavorites() {
+        guard let cloud else { return }
+        guard let location, let memberID else {
+            hasUnsyncedFavorites = true
+            return
+        }
+        let entityIDs = favoriteIDs
+        let previous = saveTask
+        saveTask = Task {
+            await previous?.value
+            try? await cloud.saveFavorites(entityIDs, of: memberID, in: location)
+        }
+    }
+
+    /// Waits for pending favourite uploads; used by tests.
+    func waitForUploads() async {
+        await saveTask?.value
+    }
+}

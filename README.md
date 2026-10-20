@@ -36,6 +36,18 @@ MaisonTests/      tests (Swift Testing)
 ci/               export options and helper scripts for GitHub Actions
 ```
 
+## Household sharing
+
+The household lives in a CloudKit zone (`Household`) in the owner's private database of `iCloud.com.theodaguier.maison`, shared as a whole with a zone-wide `CKShare`. It holds the household (name, server URLs) and one `MemberFavorites` record per member — never device state. A share doesn't grant Home Assistant access: everyone signs in with their own Home Assistant account.
+
+- **Invite**: Settings → Household → Invite Someone adds the person's iCloud email or phone number to the share as Resident (`privateUser`) or Administrator (`administrator`), then hands the link to the share sheet.
+- **Accept**: opening the link calls `SceneDelegate`, which accepts the share; the connect screen then offers the household's server.
+- **Favourites** stay in `UserDefaults` as a fallback and are mirrored to iCloud when an account is available.
+
+CloudKit calls go through the `HouseholdCloud` protocol; tests use an in-memory fake. Unsigned builds (`CODE_SIGNING_ALLOWED=NO`, as in CI) have no iCloud entitlement, so the app keeps everything on the device there.
+
+The record types are created in the Development environment the first time a debug build saves them. Before a TestFlight build can use them, deploy the schema to Production in the [CloudKit Console](https://icloud.developer.apple.com) (Schema → Deploy Schema Changes).
+
 ## Continuous integration and delivery
 
 | Workflow | Trigger | What it does |

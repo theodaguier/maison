@@ -31,6 +31,11 @@ struct SettingsView: View {
                     if store.serverURL != nil {
                         ProfileCard()
                         ServerCard()
+                    }
+                    group("Household") {
+                        HouseholdSection()
+                    }
+                    if store.serverURL != nil {
                         group("Connection") {
                             SettingsRow(symbol: "network", color: .black, title: "Remote Access",
                                         value: store.serverConfig?.externalURL.flatMap { URL(string: $0)?.host() } ?? String(localized: "Not Set Up"))
@@ -221,7 +226,7 @@ private struct LatencySparkline: View {
     }
 }
 
-private struct SettingsRow: View {
+struct SettingsRow: View {
     let symbol: String
     let color: Color
     let title: LocalizedStringKey
@@ -275,7 +280,7 @@ private struct IntegrationRow: View {
     }
 }
 
-private struct SettingsIcon: View {
+struct SettingsIcon: View {
     let symbol: String
     let color: Color
 

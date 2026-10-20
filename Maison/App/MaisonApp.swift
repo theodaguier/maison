@@ -5,6 +5,7 @@ struct MaisonApp: App {
     /// `-demo` fills the app with the sample home from the mock-ups, without a server.
     @State private var store = ProcessInfo.processInfo.arguments.contains("-demo") ? DemoHome.store() : HomeStore()
     @AppStorage("appearance") private var appearance: Appearance = .system
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     var body: some Scene {
         WindowGroup {
@@ -12,7 +13,12 @@ struct MaisonApp: App {
                 .fontDesign(.rounded)
                 .environment(store)
                 .preferredColorScheme(appearance.colorScheme)
-                .task { await store.start() }
+                .task {
+                    InvitationInbox.deliver { [store] metadata in
+                        Task { await store.household.accept(metadata) }
+                    }
+                    await store.start()
+                }
         }
     }
 }

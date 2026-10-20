@@ -571,6 +571,16 @@
         }
       }
     },
+    "Administrators control devices, keep their own favorites and can invite or remove people.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les administrateurs pilotent les appareils, gardent leurs propres favoris et peuvent inviter ou retirer des personnes."
+          }
+        }
+      }
+    },
     "All": {
       "localizations": {
         "fr": {
@@ -691,6 +701,16 @@
         }
       }
     },
+    "Away From Home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hors de la maison"
+          }
+        }
+      }
+    },
     "Blinds & Shutters": {
       "localizations": {
         "fr": {
@@ -727,6 +747,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Caméras"
+          }
+        }
+      }
+    },
+    "Cancel": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annuler"
           }
         }
       }
@@ -881,6 +911,26 @@
         }
       }
     },
+    "Couldn’t Load Household": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de charger le foyer"
+          }
+        }
+      }
+    },
+    "Create Invitation": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Créer l’invitation"
+          }
+        }
+      }
+    },
     "Dark": {
       "localizations": {
         "fr": {
@@ -951,6 +1001,16 @@
         }
       }
     },
+    "Done": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        }
+      }
+    },
     "Doors & Windows": {
       "localizations": {
         "fr": {
@@ -981,6 +1041,16 @@
         }
       }
     },
+    "Email or phone number": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "E-mail ou numéro de téléphone"
+          }
+        }
+      }
+    },
     "Enabled": {
       "localizations": {
         "fr": {
@@ -997,6 +1067,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Énergie"
+          }
+        }
+      }
+    },
+    "Enter an email address or a phone number.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saisissez une adresse e-mail ou un numéro de téléphone."
           }
         }
       }
@@ -1151,6 +1231,16 @@
         }
       }
     },
+    "Household": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Foyer"
+          }
+        }
+      }
+    },
     "Humid": {
       "localizations": {
         "fr": {
@@ -1201,6 +1291,46 @@
         }
       }
     },
+    "Invitation Ready": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invitation prête"
+          }
+        }
+      }
+    },
+    "Invite Someone": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inviter quelqu’un"
+          }
+        }
+      }
+    },
+    "Invited": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invité"
+          }
+        }
+      }
+    },
+    "Invited Person": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Personne invitée"
+          }
+        }
+      }
+    },
     "It’s %@": {
       "localizations": {
         "fr": {
@@ -1231,6 +1361,46 @@
         }
       }
     },
+    "Join %@ on Maison": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rejoignez %@ sur Maison"
+          }
+        }
+      }
+    },
+    "Join %@ on Maison. You’ll sign in to Home Assistant with your own account.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rejoignez %@ sur Maison. Vous vous connecterez à Home Assistant avec votre propre compte."
+          }
+        }
+      }
+    },
+    "Leave Household": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quitter le foyer"
+          }
+        }
+      }
+    },
+    "Leave this household?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quitter ce foyer ?"
+          }
+        }
+      }
+    },
     "Light": {
       "localizations": {
         "fr": {
@@ -1247,6 +1417,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Lumières"
+          }
+        }
+      }
+    },
+    "Loading Household…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chargement du foyer…"
           }
         }
       }
@@ -1431,6 +1611,16 @@
         }
       }
     },
+    "OK": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        }
+      }
+    },
     "Off": {
       "localizations": {
         "fr": {
@@ -1527,6 +1717,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Autres"
+          }
+        }
+      }
+    },
+    "Owner": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Propriétaire"
           }
         }
       }
@@ -1641,12 +1841,42 @@
         }
       }
     },
+    "Remove": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retirer"
+          }
+        }
+      }
+    },
+    "Remove %@?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retirer %@ ?"
+          }
+        }
+      }
+    },
     "Remove from Favorites": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Retirer des favoris"
+          }
+        }
+      }
+    },
+    "Remove from Household": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retirer du foyer"
           }
         }
       }
@@ -1661,12 +1891,32 @@
         }
       }
     },
+    "Residents control devices and keep their own favorites.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les résidents pilotent les appareils et gardent leurs propres favoris."
+          }
+        }
+      }
+    },
     "Return to Dock": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Retour à la base"
+          }
+        }
+      }
+    },
+    "Role": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rôle"
           }
         }
       }
@@ -1801,6 +2051,26 @@
         }
       }
     },
+    "Send Invitation": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Envoyer l’invitation"
+          }
+        }
+      }
+    },
+    "Send the link to %@. It only opens for their iCloud account, as %@.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Envoyez le lien à %1$@. Il ne s’ouvre qu’avec son compte iCloud, en tant que %2$@."
+          }
+        }
+      }
+    },
     "Sensors": {
       "localizations": {
         "fr": {
@@ -1861,12 +2131,42 @@
         }
       }
     },
+    "Sign in again to control %@.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reconnectez-vous pour piloter %@."
+          }
+        }
+      }
+    },
+    "Sign in to iCloud in the Settings app to share this home. Favorites stay on this iPhone until then.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connectez-vous à iCloud dans l’app Réglages pour partager cette maison. D’ici là, les favoris restent sur cet iPhone."
+          }
+        }
+      }
+    },
     "Since %@": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Depuis le %@"
+          }
+        }
+      }
+    },
+    "Something Went Wrong": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un problème est survenu"
           }
         }
       }
@@ -1941,12 +2241,42 @@
         }
       }
     },
+    "Their iCloud Account": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Son compte iCloud"
+          }
+        }
+      }
+    },
     "Theme": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Thème"
+          }
+        }
+      }
+    },
+    "They’ll lose access to the household’s favorites and settings. Their Home Assistant account isn’t affected.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette personne perdra l’accès aux favoris et réglages du foyer. Son compte Home Assistant n’est pas modifié."
+          }
+        }
+      }
+    },
+    "They’ll sign in to Home Assistant with their own account. Maison shares the household, never your Home Assistant password.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette personne se connectera à Home Assistant avec son propre compte. Maison partage le foyer, jamais votre mot de passe Home Assistant."
           }
         }
       }
@@ -2081,6 +2411,46 @@
         }
       }
     },
+    "You": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vous"
+          }
+        }
+      }
+    },
+    "You joined %@. Sign in with your own Home Assistant account to control it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vous avez rejoint %@. Connectez-vous avec votre propre compte Home Assistant pour le piloter."
+          }
+        }
+      }
+    },
+    "Your Household": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre foyer"
+          }
+        }
+      }
+    },
+    "You’ll need a new invitation to join again. You stay signed in to Home Assistant.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il vous faudra une nouvelle invitation pour revenir. Vous restez connecté à Home Assistant."
+          }
+        }
+      }
+    },
     "You’ll sign in with your Home Assistant account. Your password stays with Home Assistant.": {
       "localizations": {
         "fr": {
@@ -2107,6 +2477,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "h"
+          }
+        }
+      }
+    },
+    "iCloud Unavailable": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud indisponible"
+          }
+        }
+      }
+    },
+    "iCloud didn’t return an invitation link. Try again.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud n’a pas renvoyé de lien d’invitation. Réessayez."
           }
         }
       }

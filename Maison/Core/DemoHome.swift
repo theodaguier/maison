@@ -4,8 +4,16 @@ import Foundation
 enum DemoHome {
     @MainActor
     static func store(phase: HomeStore.Phase = .connected) -> HomeStore {
-        HomeStore(demo: states, layout: layout, phase: phase)
+        HomeStore(demo: states, layout: layout, household: HouseholdStore(demo: household, members: members), phase: phase)
     }
+
+    static let household = Household(name: "Maison", serverURL: URL(string: "http://homeassistant.local:8123")!)
+
+    static let members = [
+        HouseholdMember(id: "theo", name: "Théo", role: .owner, isCurrentUser: true),
+        HouseholdMember(id: "camille", name: "Camille", role: .administrator),
+        HouseholdMember(id: "jules", name: "jules@icloud.com", role: .resident, isPending: true),
+    ]
 
     static let layout: HomeLayout = {
         let areas = [
