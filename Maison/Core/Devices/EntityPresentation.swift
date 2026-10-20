@@ -130,6 +130,11 @@ extension EntityState {
 
     /// The short status shown under the name, without the room.
     var statusText: String {
+        // "Allumé · 40 %" agrees with the device's name, like the state label.
+        rawStatusText.components(separatedBy: " · ").map { Phrasing.agree($0, with: name) }.joined(separator: " · ")
+    }
+
+    private var rawStatusText: String {
         if isUnavailable { return String(localized: "No Response") }
         switch kind {
         case .light, .fan:

@@ -158,6 +158,78 @@ enum DemoHome {
         ]
     }
 
+    // MARK: Commands
+
+    /// The state a device takes after a service call, as Home Assistant would report it.
+    static func applying(_ domain: String, _ service: String, to entity: EntityState, data: [String: JSONValue]) -> EntityState? {
+        var state = entity.state
+        var attributes = entity.attributes
+        switch service {
+        case "toggle":
+            return applying(domain, entity.isActive ? "turn_off" : "turn_on", to: entity, data: data)
+        case "turn_on":
+            switch domain {
+            case "climate":
+                state = attributes["hvac_modes"]?.arrayValue?.compactMap(\.stringValue).first { $0 != "off" } ?? "heat"
+            case "media_player":
+                state = "playing"
+            default:
+                state = "on"
+            }
+            if let percent = data["brightness_pct"]?.doubleValue {
+                attributes["brightness"] = .number((percent * 2.55).rounded())
+            } else if domain == "light", attributes["brightness"] == nil {
+                attributes["brightness"] = 255
+            }
+            if let kelvin = data["color_temp_kelvin"] { attributes["color_temp_kelvin"] = kelvin }
+            if let rgb = data["rgb_color"] { attributes["rgb_color"] = rgb }
+        case "turn_off":
+            state = "off"
+        case "lock":
+            state = "locked"
+        case "unlock":
+            state = "unlocked"
+        case "open_cover":
+            state = "open"
+            attributes["current_position"] = 100
+        case "close_cover":
+            state = "closed"
+            attributes["current_position"] = 0
+        case "set_cover_position":
+            let position = data["position"]?.doubleValue ?? 0
+            state = position > 0 ? "open" : "closed"
+            attributes["current_position"] = .number(position)
+        case "media_play_pause":
+            state = state == "playing" ? "paused" : "playing"
+        case "media_play":
+            state = "playing"
+        case "media_pause":
+            state = "paused"
+        case "volume_set":
+            attributes["volume_level"] = data["volume_level"] ?? attributes["volume_level"]
+        case "set_temperature":
+            attributes["temperature"] = data["temperature"] ?? attributes["temperature"]
+        case "set_hvac_mode":
+            state = data["hvac_mode"]?.stringValue ?? state
+        case "set_fan_mode":
+            attributes["fan_mode"] = data["fan_mode"] ?? attributes["fan_mode"]
+        case "set_swing_mode":
+            attributes["swing_mode"] = data["swing_mode"] ?? attributes["swing_mode"]
+        case "set_percentage":
+            let percent = data["percentage"]?.doubleValue ?? 0
+            state = percent > 0 ? "on" : "off"
+            attributes["percentage"] = .number(percent)
+        case "set_preset_mode":
+            attributes["preset_mode"] = data["preset_mode"] ?? attributes["preset_mode"]
+        case "oscillate":
+            attributes["oscillating"] = data["oscillating"] ?? attributes["oscillating"]
+        default:
+            return nil
+        }
+        return EntityState(entityID: entity.entityID, state: state, attributes: attributes,
+                           lastChanged: state == entity.state ? entity.lastChanged : .now)
+    }
+
     // MARK: Plan
 
     /// The apartment of the mock-ups: six rooms, about 73 m².

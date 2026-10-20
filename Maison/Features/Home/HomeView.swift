@@ -229,7 +229,7 @@ private struct HomeDashboard: View {
                 symbol: "lightbulb.fill",
                 title: "Lights",
                 value: "\(store.lightsOn.count)",
-                unit: String(localized: "on")
+                unit: store.lightsOn.count == 1 ? String(localized: "light.on.one", defaultValue: "on") : String(localized: "on")
             )
             if let energy = store.energyToday {
                 MetricCard(

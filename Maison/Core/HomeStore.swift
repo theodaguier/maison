@@ -38,6 +38,8 @@ final class HomeStore {
     @ObservationIgnored private var updatesTask: Task<Void, Never>?
     @ObservationIgnored private var retryTask: Task<Void, Never>?
     @ObservationIgnored private let isDemo: Bool
+    /// The sample home, opened from onboarding or with `-demo`.
+    var isDemoHome: Bool { isDemo }
 
     init(credentialStore: CredentialStore = CredentialStore(), defaults: UserDefaults = .standard, household: HouseholdStore? = nil) {
         self.credentialStore = credentialStore
@@ -393,6 +395,13 @@ final class HomeStore {
     // MARK: - Actions
 
     func call(_ domain: String, _ service: String, on entity: EntityState, data: [String: JSONValue] = [:]) async {
+        if isDemo {
+            // The sample home answers like a server would, so the demo can be used for real.
+            if let updated = DemoHome.applying(domain, service, to: entity, data: data) {
+                states[entity.entityID] = updated
+            }
+            return
+        }
         guard let connection else { return }
         do {
             try await connection.callService(domain: domain, service: service, entityID: entity.entityID, data: data)

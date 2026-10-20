@@ -209,6 +209,7 @@ private extension Font {
 // MARK: - 1 · Welcome
 
 private struct WelcomeStep: View {
+    @Environment(\.setDemoMode) private var setDemoMode
     let onStart: () -> Void
     let onJoin: () -> Void
 
@@ -256,7 +257,10 @@ private struct WelcomeStep: View {
             .animation(.smooth, value: hasWiFi)
         } actions: {
             PrimaryButton(title: "Get Started", action: onStart)
-            LinkButton(title: "I Received an Invitation", action: onJoin)
+            HStack(spacing: 20) {
+                LinkButton(title: "I Received an Invitation", action: onJoin)
+                LinkButton(title: "Try a Demo Home") { setDemoMode(true) }
+            }
         }
         .task {
             async let iCloud = CloudKitHousehold.isAccountAvailable()
@@ -378,6 +382,7 @@ private struct JoinStep: View {
 // MARK: - 2 · Searching
 
 private struct SearchingStep: View {
+    @Environment(\.setDemoMode) private var setDemoMode
     let onEnterAddress: () -> Void
     @State private var isTakingLong = false
 
@@ -403,7 +408,10 @@ private struct SearchingStep: View {
                     .font(.roundedFootnote)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
-                LinkButton(title: "Enter the Address", action: onEnterAddress)
+                HStack(spacing: 20) {
+                    LinkButton(title: "Enter the Address", action: onEnterAddress)
+                    LinkButton(title: "Try a Demo Home") { setDemoMode(true) }
+                }
             }
         }
         .animation(.smooth, value: isTakingLong)

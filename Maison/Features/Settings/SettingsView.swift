@@ -22,6 +22,7 @@ enum Appearance: String, CaseIterable {
 
 struct SettingsView: View {
     @Environment(HomeStore.self) private var store
+    @Environment(\.setDemoMode) private var setDemoMode
     @AppStorage("appearance") private var appearance: Appearance = .system
     @AppStorage(DaySummarySetting.key) private var daySummary = true
 
@@ -29,6 +30,19 @@ struct SettingsView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
+                    if store.isDemoHome {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Label("Demo Home", systemImage: "play.rectangle.fill")
+                                .labelStyle(.compact)
+                                .font(.roundedHeadline)
+                            Text("Sample data: nothing here controls a real device. Leave the demo to connect your Home Assistant server.")
+                                .font(.roundedSubheadline)
+                                .foregroundStyle(.secondary)
+                            WideButton(title: "Leave the Demo", style: .secondary) { setDemoMode(false) }
+                        }
+                        .padding(16)
+                        .cardStyle()
+                    }
                     if store.serverURL != nil {
                         NavigationLink { ProfilePage() } label: { ProfileCard() }
                             .buttonStyle(.plain)
@@ -111,7 +125,7 @@ struct SettingsView: View {
                     SettingsGroup("App") {
                         SettingsRow(symbol: "info.circle.fill", color: .gray, title: "Version", value: Bundle.main.versionString)
                     }
-                    if store.serverURL != nil {
+                    if store.serverURL != nil, !store.isDemoHome {
                         SignOutButton()
                             .padding(.top, 8)
                     }
@@ -376,11 +390,12 @@ struct LatencySparkline: View {
 
 struct SignOutButton: View {
     @Environment(HomeStore.self) private var store
+    @Environment(\.setDemoMode) private var setDemoMode
     @State private var confirms = false
 
     var body: some View {
-        WideButton(title: "Sign Out", style: .destructive) {
-            confirms = true
+        WideButton(title: store.isDemoHome ? "Leave the Demo" : "Sign Out", style: .destructive) {
+            if store.isDemoHome { setDemoMode(false) } else { confirms = true }
         }
         .confirmationDialog("Sign out of Home Assistant?", isPresented: $confirms, titleVisibility: .visible) {
             Button("Sign Out", role: .destructive) {

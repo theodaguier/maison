@@ -1627,6 +1627,16 @@
         }
       }
     },
+    "At night, turn the hallway on at 20% when there’s motion": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La nuit, allume le couloir à 20 % s’il y a du mouvement"
+          }
+        }
+      }
+    },
     "At sunrise": {
       "localizations": {
         "fr": {
@@ -1987,6 +1997,16 @@
         }
       }
     },
+    "Close the living room blinds when it’s above 25°": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ferme les volets du salon quand il fait plus de 25°"
+          }
+        }
+      }
+    },
     "Closed": {
       "localizations": {
         "fr": {
@@ -2257,6 +2277,16 @@
         }
       }
     },
+    "Create Step by Step": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Créer étape par étape"
+          }
+        }
+      }
+    },
     "Create and edit rules": {
       "localizations": {
         "fr": {
@@ -2353,6 +2383,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "Supprimer cette règle ?"
+          }
+        }
+      }
+    },
+    "Demo Home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maison de démonstration"
+          }
+        }
+      }
+    },
+    "Describe a Rule": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Décrire une règle"
+          }
+        }
+      }
+    },
+    "Describe what the home should do": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Décrivez ce que la maison doit faire"
+          }
+        }
+      }
+    },
+    "Describing a rule needs Apple Intelligence": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Décrire une règle demande Apple Intelligence"
           }
         }
       }
@@ -2637,6 +2707,16 @@
         }
       }
     },
+    "Every evening at 7 PM, close the living room blinds": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chaque soir à 19 h, ferme les volets du salon"
+          }
+        }
+      }
+    },
     "Everyone leaves": {
       "localizations": {
         "fr": {
@@ -2653,6 +2733,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tout se fait tout seul. Vous pourrez tout modifier ensuite."
+          }
+        }
+      }
+    },
+    "Examples": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exemples"
           }
         }
       }
@@ -2723,6 +2813,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pour un frigo ou une box : ignorée par « Tout éteindre »"
+          }
+        }
+      }
+    },
+    "For simple rules: one trigger, a few conditions, actions on your devices. Nothing is saved without your OK.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour les règles simples : un déclencheur, quelques conditions, des actions sur vos appareils. Rien n’est enregistré sans votre accord."
           }
         }
       }
@@ -3097,6 +3197,16 @@
         }
       }
     },
+    "In your own words, as you’d say it to someone. Maison shows you the rule before saving it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avec vos mots, comme vous le diriez à quelqu’un. Maison vous montre la règle avant de l’enregistrer."
+          }
+        }
+      }
+    },
     "Installing the app is part of the link": {
       "localizations": {
         "fr": {
@@ -3337,12 +3447,32 @@
         }
       }
     },
+    "Leave the Demo": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quitter la démo"
+          }
+        }
+      }
+    },
     "Leave this household?": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Quitter ce foyer ?"
+          }
+        }
+      }
+    },
+    "Left out: %@.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Laissé de côté : %@."
           }
         }
       }
@@ -3557,12 +3687,32 @@
         }
       }
     },
+    "Maison couldn’t turn this into a rule. Try saying it differently.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maison n’a pas réussi à en faire une règle. Essayez de le dire autrement."
+          }
+        }
+      }
+    },
     "Maison is looking for Home Assistant on your Wi-Fi.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Maison cherche Home Assistant sur votre Wi-Fi."
+          }
+        }
+      }
+    },
+    "Maison suggests simple rules. Here’s what it understood; you can finish the rule by hand.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maison propose des règles simples. Voici ce qu’elle a compris ; vous pouvez finir la règle à la main."
           }
         }
       }
@@ -3837,6 +3987,16 @@
         }
       }
     },
+    "No matching device": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun appareil trouvé"
+          }
+        }
+      }
+    },
     "Nobody is home": {
       "localizations": {
         "fr": {
@@ -3927,12 +4087,32 @@
         }
       }
     },
+    "Not supported yet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas encore pris en charge"
+          }
+        }
+      }
+    },
     "Not the right server?": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Ce n’est pas le bon serveur ?"
+          }
+        }
+      }
+    },
+    "Nothing is saved until you confirm. Then the rule runs on your server, like the others.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rien n’est enregistré tant que vous n’avez pas validé. Ensuite, la règle tourne sur votre serveur, comme les autres."
           }
         }
       }
@@ -4113,6 +4293,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ouvrir Home Assistant"
+          }
+        }
+      }
+    },
+    "Open Home Assistant’s Editor": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir l’éditeur de Home Assistant"
+          }
+        }
+      }
+    },
+    "Open Settings": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir les Réglages"
           }
         }
       }
@@ -4547,6 +4747,16 @@
         }
       }
     },
+    "Rephrase": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reformuler"
+          }
+        }
+      }
+    },
     "Resident": {
       "localizations": {
         "fr": {
@@ -4733,6 +4943,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Même température qu’hier à la même heure."
+          }
+        }
+      }
+    },
+    "Sample data: nothing here controls a real device. Leave the demo to connect your Home Assistant server.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Données d’exemple : rien ici ne commande un vrai appareil. Quittez la démo pour connecter votre serveur Home Assistant."
           }
         }
       }
@@ -5267,6 +5487,16 @@
         }
       }
     },
+    "Start From What Was Understood": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Partir de ce qui a été compris"
+          }
+        }
+      }
+    },
     "Start Scanning": {
       "localizations": {
         "fr": {
@@ -5297,12 +5527,32 @@
         }
       }
     },
+    "Suggest a Rule": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proposer une règle"
+          }
+        }
+      }
+    },
     "Suggested Favorites": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Favoris proposés"
+          }
+        }
+      }
+    },
+    "Suggested Rule": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Règle proposée"
           }
         }
       }
@@ -5667,6 +5917,16 @@
         }
       }
     },
+    "This rule unlocks %@ on its own.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette règle déverrouille %@ toute seule."
+          }
+        }
+      }
+    },
     "This trigger was set up in Home Assistant. Maison keeps it as it is.": {
       "localizations": {
         "fr": {
@@ -5727,6 +5987,16 @@
         }
       }
     },
+    "Too much at once for a reliable suggestion": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trop de choses à la fois pour une proposition fiable"
+          }
+        }
+      }
+    },
     "Touch the plan where the device is, then drag to adjust.": {
       "localizations": {
         "fr": {
@@ -5753,6 +6023,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Réessayer"
+          }
+        }
+      }
+    },
+    "Try a Demo Home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Essayer la démo"
           }
         }
       }
@@ -5833,6 +6113,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Allumer"
+          }
+        }
+      }
+    },
+    "Turn everything off when everyone leaves": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Éteins tout quand tout le monde part"
+          }
+        }
+      }
+    },
+    "Turn it on in Settings › Apple Intelligence & Siri. It works on iPhone 15 Pro and later.\n\nYou can still create a rule step by step.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activez-la dans Réglages › Apple Intelligence et Siri. Elle fonctionne sur l’iPhone 15 Pro et les modèles plus récents.\n\nVous pouvez toujours créer une règle étape par étape."
           }
         }
       }
@@ -6287,6 +6587,16 @@
         }
       }
     },
+    "Writing the Rule…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rédaction de la règle…"
+          }
+        }
+      }
+    },
     "Writing your day…": {
       "localizations": {
         "fr": {
@@ -6413,6 +6723,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Votre plan"
+          }
+        }
+      }
+    },
+    "Your Request": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre demande"
           }
         }
       }
@@ -6692,6 +7012,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "intérieur"
+          }
+        }
+      }
+    },
+    "light.on.one": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "on"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "allumée"
           }
         }
       }
@@ -6994,6 +7330,9 @@
         }
       }
     },
+    "“%@”": {
+      "shouldTranslate": false
+    },
     "“%@” ran %lld times": {
       "localizations": {
         "en": {
@@ -7054,292 +7393,12 @@
         }
       }
     },
-    "Describe what the home should do": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Décrivez ce que la maison doit faire"
-          }
-        }
-      }
-    },
-    "In your own words, as you’d say it to someone. Maison shows you the rule before saving it.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Avec vos mots, comme vous le diriez à quelqu’un. Maison vous montre la règle avant de l’enregistrer."
-          }
-        }
-      }
-    },
-    "Maison couldn’t turn this into a rule. Try saying it differently.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Maison n’a pas réussi à en faire une règle. Essayez de le dire autrement."
-          }
-        }
-      }
-    },
-    "For simple rules: one trigger, a few conditions, actions on your devices. Nothing is saved without your OK.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pour les règles simples : un déclencheur, quelques conditions, des actions sur vos appareils. Rien n’est enregistré sans votre accord."
-          }
-        }
-      }
-    },
-    "Every evening at 7 PM, close the living room blinds": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Chaque soir à 19 h, ferme les volets du salon"
-          }
-        }
-      }
-    },
-    "Writing the Rule…": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rédaction de la règle…"
-          }
-        }
-      }
-    },
-    "Suggest a Rule": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Proposer une règle"
-          }
-        }
-      }
-    },
-    "Examples": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Exemples"
-          }
-        }
-      }
-    },
-    "Turn everything off when everyone leaves": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Éteins tout quand tout le monde part"
-          }
-        }
-      }
-    },
-    "At night, turn the hallway on at 20% when there’s motion": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La nuit, allume le couloir à 20 % s’il y a du mouvement"
-          }
-        }
-      }
-    },
-    "Close the living room blinds when it’s above 25°": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ferme les volets du salon quand il fait plus de 25°"
-          }
-        }
-      }
-    },
-    "Your Request": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Votre demande"
-          }
-        }
-      }
-    },
-    "Rephrase": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reformuler"
-          }
-        }
-      }
-    },
-    "Too much at once for a reliable suggestion": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Trop de choses à la fois pour une proposition fiable"
-          }
-        }
-      }
-    },
-    "Maison suggests simple rules. Here’s what it understood; you can finish the rule by hand.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Maison propose des règles simples. Voici ce qu’elle a compris ; vous pouvez finir la règle à la main."
-          }
-        }
-      }
-    },
-    "Start From What Was Understood": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Partir de ce qui a été compris"
-          }
-        }
-      }
-    },
-    "Open Home Assistant’s Editor": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ouvrir l’éditeur de Home Assistant"
-          }
-        }
-      }
-    },
-    "Not supported yet": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pas encore pris en charge"
-          }
-        }
-      }
-    },
-    "No matching device": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aucun appareil trouvé"
-          }
-        }
-      }
-    },
-    "Describing a rule needs Apple Intelligence": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Décrire une règle demande Apple Intelligence"
-          }
-        }
-      }
-    },
-    "Turn it on in Settings › Apple Intelligence & Siri. It works on iPhone 15 Pro and later.\n\nYou can still create a rule step by step.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Activez-la dans Réglages › Apple Intelligence et Siri. Elle fonctionne sur l’iPhone 15 Pro et les modèles plus récents.\n\nVous pouvez toujours créer une règle étape par étape."
-          }
-        }
-      }
-    },
-    "Create Step by Step": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Créer étape par étape"
-          }
-        }
-      }
-    },
-    "Open Settings": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ouvrir les Réglages"
-          }
-        }
-      }
-    },
-    "Describe a Rule": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Décrire une règle"
-          }
-        }
-      }
-    },
-    "Suggested Rule": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Règle proposée"
-          }
-        }
-      }
-    },
-    "Nothing is saved until you confirm. Then the rule runs on your server, like the others.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rien n’est enregistré tant que vous n’avez pas validé. Ensuite, la règle tourne sur votre serveur, comme les autres."
-          }
-        }
-      }
-    },
-    "Left out: %@.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Laissé de côté : %@."
-          }
-        }
-      }
-    },
     "“%@” stands for %@.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "« %1$@ » correspond à %2$@."
-          }
-        }
-      }
-    },
-    "This rule unlocks %@ on its own.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cette règle déverrouille %@ toute seule."
           }
         }
       }
