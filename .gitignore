@@ -1,0 +1,23 @@
+# Projet Xcode généré par XcodeGen depuis project.yml
+*.xcodeproj
+*.xcworkspace
+!*.xcodeproj/project.xcworkspace/
+
+# Builds
+build/
+DerivedData/
+*.xcarchive
+*.ipa
+*.dSYM.zip
+*.xcresult
+
+# Xcode / macOS
+xcuserdata/
+*.xcuserstate
+.DS_Store
+
+# Secrets — ne jamais committer
+*.p8
+*.p12
+*.mobileprovision
+.env

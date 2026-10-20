@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Build & tests
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Versions
+        run: xcodebuild -version && xcrun simctl list runtimes
+
+      - name: XcodeGen
+        run: |
+          brew install xcodegen xcbeautify
+          xcodegen generate
+
+      - name: Tests
+        run: |
+          UDID="$(./ci/simulator-udid.sh)"
+          echo "Simulateur : $UDID"
+          mkdir -p build
+          set -o pipefail
+          xcodebuild test \
+            -project Maison.xcodeproj \
+            -scheme Maison \
+            -destination "id=$UDID" \
+            -resultBundlePath build/Tests.xcresult \
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee build/xcodebuild.log | xcbeautify --renderer github-actions
+
+      - name: Résultats
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tests-xcresult
+          path: build/Tests.xcresult
+          if-no-files-found: ignore
