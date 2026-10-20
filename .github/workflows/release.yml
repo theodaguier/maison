@@ -41,6 +41,15 @@ jobs:
           chmod 600 "$KEY_PATH"
           echo "ASC_KEY_PATH=$KEY_PATH" >> "$GITHUB_ENV"
 
+      - name: Certificats intermédiaires Apple
+        # Sans eux, codesign n'embarque pas la chaîne complète et App Store Connect
+        # rejette la build (erreur 90035, « Invalid Signature »).
+        run: |
+          for ca in AppleWWDRCAG3 AppleWWDRCAG4 AppleWWDRCAG5 AppleWWDRCAG6 DeveloperIDG2CA; do
+            curl -fsSL "https://www.apple.com/certificateauthority/$ca.cer" -o "$RUNNER_TEMP/$ca.cer"
+            sudo security add-certificates -k /Library/Keychains/System.keychain "$RUNNER_TEMP/$ca.cer" || true
+          done
+
       - name: XcodeGen
         run: |
           brew install xcodegen xcbeautify
@@ -89,12 +98,18 @@ jobs:
             -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
             2>&1 | tee build/export.log | xcbeautify --renderer github-actions
 
+      - name: Journaux de distribution
+        if: failure()
+        run: find "${TMPDIR:-/tmp}" -maxdepth 2 -name '*.xcdistributionlogs' -exec cp -R {} build/ \; || true
+
       - name: Logs
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: release-logs
-          path: build/*.log
+          path: |
+            build/*.log
+            build/*.xcdistributionlogs
           if-no-files-found: ignore
 
       - name: Nettoyage de la clé
