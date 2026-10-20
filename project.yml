@@ -42,6 +42,8 @@ targets:
       properties:
         NSBonjourServices:
           - _home-assistant._tcp
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
     scheme:
       testTargets:
         - MaisonTests
