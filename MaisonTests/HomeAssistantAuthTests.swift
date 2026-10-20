@@ -12,7 +12,7 @@ struct HomeAssistantAuthTests {
 
         #expect(components.path == "/auth/authorize")
         #expect(query["response_type"] == "code")
-        #expect(query["client_id"] == "https://theodaguier.me/maison/")
+        #expect(query["client_id"] == "https://theodaguier.github.io/maison/")
         #expect(query["redirect_uri"] == "maison://auth-callback")
         #expect(query["state"] == "abc")
     }
@@ -47,7 +47,7 @@ struct HomeAssistantAuthTests {
         #expect(sent.url?.path() == "/auth/token")
         #expect(sent.httpMethod == "POST")
         let body = String(decoding: try #require(sent.httpBody), as: UTF8.self)
-        #expect(body == "client_id=https://theodaguier.me/maison/&code=xyz&grant_type=authorization_code")
+        #expect(body == "client_id=https://theodaguier.github.io/maison/&code=xyz&grant_type=authorization_code")
     }
 
     @Test func refreshKeepsTheRefreshToken() async throws {

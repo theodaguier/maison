@@ -38,7 +38,7 @@ struct URLSessionHTTPClient: HTTPClient {
 /// different host, the page at `clientID` must declare it with
 /// `<link rel="redirect_uri" href="maison://auth-callback">`.
 struct HomeAssistantAuth: Sendable {
-    static let clientID = URL(string: "https://theodaguier.me/maison/")!
+    static let clientID = URL(string: "https://theodaguier.github.io/maison/")!
     static let callbackScheme = "maison"
     static let redirectURI = URL(string: "maison://auth-callback")!
 
