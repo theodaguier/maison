@@ -4,11 +4,11 @@ struct AutomationsView: View {
     var body: some View {
         NavigationStack {
             ContentUnavailableView(
-                "Aucune automatisation",
+                "No Automations",
                 systemImage: "clock",
-                description: Text("Les règles sont exécutées par votre serveur, même quand l’iPhone est éteint.")
+                description: Text("Automations run on your server, even when your iPhone is off.")
             )
-            .navigationTitle("Automatisations")
+            .navigationTitle("Automations")
         }
     }
 }

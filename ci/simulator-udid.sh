@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Affiche l'UDID du simulateur iPhone disponible le plus récent (runtime iOS le plus haut).
+# Prints the UDID of an available iPhone simulator on the newest iOS runtime.
 set -euo pipefail
 xcrun simctl list devices available --json \
   | jq -r '

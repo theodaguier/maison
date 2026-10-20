@@ -4,11 +4,11 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             ContentUnavailableView(
-                "Aucun serveur connecté",
+                "No Server Connected",
                 systemImage: "house",
-                description: Text("Maison cherchera votre serveur Home Assistant sur le Wi-Fi.")
+                description: Text("Maison will look for your Home Assistant server on your Wi-Fi network.")
             )
-            .navigationTitle("Maison")
+            .navigationTitle("Home")
         }
     }
 }

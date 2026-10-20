@@ -4,11 +4,11 @@ struct RoomsView: View {
     var body: some View {
         NavigationStack {
             ContentUnavailableView(
-                "Pas encore de pièces",
+                "No Rooms Yet",
                 systemImage: "square.grid.2x2",
-                description: Text("Les pièces seront importées depuis Home Assistant.")
+                description: Text("Rooms will be imported from Home Assistant.")
             )
-            .navigationTitle("Pièces")
+            .navigationTitle("Rooms")
         }
     }
 }

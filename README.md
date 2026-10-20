@@ -1,16 +1,16 @@
 # Maison
 
-App iOS native (SwiftUI, Liquid Glass) pour piloter une installation [Home Assistant](https://www.home-assistant.io) : la puissance de Home Assistant, la simplicité de Maison d’Apple.
+A native iOS app (SwiftUI, Liquid Glass) for controlling a [Home Assistant](https://www.home-assistant.io) setup: the power of Home Assistant with the simplicity of Apple Home.
 
-- **Local d’abord** — l’app parle directement au serveur Home Assistant du foyer ; l’accès à distance passe par Tailscale.
-- **Les automatisations tournent sur le serveur**, pas sur l’iPhone.
-- **Partage du foyer via iCloud** (CloudKit) pour les données propres à l’app.
+- **Local first**: the app talks directly to the household's Home Assistant server; remote access goes through Tailscale.
+- **Automations run on the server**, not on the iPhone.
+- **Household sharing through iCloud** (CloudKit) for app-specific data.
 
-> Projet personnel en cours. Rien n’est encore branché à Home Assistant : la structure de navigation et le modèle d’appareils sont en place.
+> Personal project, work in progress. Nothing is wired to Home Assistant yet: the navigation structure and the device model are in place.
 
-## Démarrer
+## Getting started
 
-Le projet Xcode est généré depuis [`project.yml`](project.yml) avec [XcodeGen](https://github.com/yonaskolb/XcodeGen) et n’est pas versionné.
+The Xcode project is generated from [`project.yml`](project.yml) with [XcodeGen](https://github.com/yonaskolb/XcodeGen) and is not checked in.
 
 ```sh
 brew install xcodegen
@@ -18,42 +18,51 @@ xcodegen generate
 open Maison.xcodeproj
 ```
 
-Prérequis : Xcode 26 ou plus récent, cible iOS 26.
+Requires Xcode 26 or later and targets iOS 26. The base language is English, with a French localization in the string catalogs under `Maison/Resources`.
 
-## Structure
+## Layout
 
 ```
 Maison/
-  App/            point d’entrée, navigation par onglets
-  Features/       Maison, Pièces, Automatisations, Réglages
-  Core/Devices/   types d’appareils Home Assistant → action rapide
-  Resources/      catalogue d’assets
+  App/            entry point, tab navigation
+  Features/       Home, Rooms, Automations, Settings
+  Core/Devices/   Home Assistant device kinds and their inline controls
+  Resources/      asset catalog, string catalogs
 MaisonTests/      tests (Swift Testing)
-ci/               options d’export et utilitaires pour GitHub Actions
+ci/               export options and helper scripts for GitHub Actions
 ```
 
-## Intégration et livraison continues
+## Continuous integration and delivery
 
-| Workflow | Déclencheur | Ce qu’il fait |
+| Workflow | Trigger | What it does |
 | --- | --- | --- |
-| [`CI`](.github/workflows/ci.yml) | push sur `main`, pull request | génère le projet, compile et lance les tests sur simulateur |
-| [`TestFlight`](.github/workflows/release.yml) | tag `v*` ou lancement manuel | archive en Release et envoie la build sur TestFlight |
+| [`CI`](.github/workflows/ci.yml) | push to `main`, pull requests | generates the project, builds, runs the tests on a simulator |
+| [`TestFlight`](.github/workflows/release.yml) | `v*` tag or manual run | archives a Release build and uploads it to TestFlight |
 
-La version affichée vient du tag (`v0.2.0` → `0.2.0`), le numéro de build du compteur d’exécutions GitHub.
+The marketing version comes from the tag (`v0.2.0` → `0.2.0`) and the build number from the GitHub run counter.
 
 ```sh
 git tag v0.1.0 && git push origin v0.1.0
 ```
 
-### Secrets requis pour TestFlight
+### Secrets required for TestFlight
 
-Le plus simple : `./ci/setup-testflight.sh ~/Downloads/AuthKey_XXXX.p8 <issuer-id>`, qui les enregistre via `gh`. Sinon, à ajouter dans *Settings → Secrets and variables → Actions* :
-
-| Secret | Contenu |
+| Secret | Content |
 | --- | --- |
-| `APPLE_TEAM_ID` | identifiant d’équipe Apple Developer (10 caractères) |
-| `ASC_KEY_ID` | Key ID de la clé API App Store Connect |
-| `ASC_ISSUER_ID` | Issuer ID de la clé API |
-| `ASC_KEY_P8` | contenu complet du fichier `AuthKey_XXXX.p8` |
+| `APPLE_TEAM_ID` | Apple Developer team ID (10 characters) |
+| `ASC_KEY_ID` | key ID of the App Store Connect API key |
+| `ASC_ISSUER_ID` | issuer ID of the API key |
+| `ASC_KEY_P8` | full content of the `AuthKey_XXXX.p8` file |
+| `DIST_CERT_P12` | Apple Distribution certificate, base64-encoded `.p12` |
+| `DIST_CERT_PASSWORD` | password of that `.p12` |
 
-La clé API se crée dans App Store Connect → *Utilisateurs et accès* → *Intégrations* → *App Store Connect API*, avec le rôle **App Manager** (nécessaire pour la signature automatique). L’app `com.theodaguier.maison` doit exister dans App Store Connect avant le premier envoi.
+Two scripts store them through `gh` without printing them:
+
+```sh
+./ci/setup-testflight.sh ~/Downloads/AuthKey_XXXX.p8 <issuer-id>
+./ci/setup-signing-certificate.sh ~/Desktop/distribution.p12
+```
+
+Create the API key in App Store Connect → *Users and Access* → *Integrations* → *App Store Connect API* with the **App Manager** role. The app `com.theodaguier.maison` must exist in App Store Connect before the first upload.
+
+The build is signed with a real Apple Distribution certificate rather than cloud-managed signing: cloud signing writes the certificate name into the code requirement with a decomposed accented character, which App Store Connect then rejects (error 90035) when the account name contains one.

@@ -1,0 +1,16 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "NSLocalNetworkUsageDescription": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maison trouve votre serveur Home Assistant automatiquement, sans que vous ayez à saisir son adresse."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

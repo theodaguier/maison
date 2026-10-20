@@ -32,7 +32,7 @@ jobs:
       - name: Tests
         run: |
           UDID="$(./ci/simulator-udid.sh)"
-          echo "Simulateur : $UDID"
+          echo "Simulator: $UDID"
           mkdir -p build
           set -o pipefail
           xcodebuild test \
@@ -43,7 +43,7 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             2>&1 | tee build/xcodebuild.log | xcbeautify --renderer github-actions
 
-      - name: Résultats
+      - name: Test results
         if: always()
         uses: actions/upload-artifact@v4
         with:

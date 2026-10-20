@@ -1,6 +1,6 @@
 import Foundation
 
-/// Type d'appareil, déduit du domaine de l'entité Home Assistant principale.
+/// Device type, derived from the domain of its main Home Assistant entity.
 enum DeviceKind: String, CaseIterable, Sendable {
     case light
     case `switch`
@@ -30,7 +30,7 @@ enum DeviceKind: String, CaseIterable, Sendable {
         }
     }
 
-    /// Action rapide proposée dans les listes, sans ouvrir la fiche.
+    /// The inline control shown in lists, without opening the device sheet.
     var quickAction: QuickAction {
         switch self {
         case .light, .cover, .fan: .gauge

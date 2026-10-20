@@ -4,14 +4,14 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section("Serveur") {
-                    LabeledContent("Home Assistant", value: "Non connecté")
+                Section("Server") {
+                    LabeledContent("Home Assistant", value: String(localized: "Not Connected"))
                 }
-                Section("Application") {
+                Section("App") {
                     LabeledContent("Version", value: Bundle.main.versionString)
                 }
             }
-            .navigationTitle("Réglages")
+            .navigationTitle("Settings")
         }
     }
 }

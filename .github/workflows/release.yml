@@ -1,6 +1,6 @@
 name: TestFlight
 
-# Publie une build sur TestFlight à chaque tag vX.Y.Z, ou à la main.
+# Uploads a build to TestFlight for every vX.Y.Z tag, or on demand.
 on:
   push:
     tags: ["v*"]
@@ -25,14 +25,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Vérifier les secrets
+      - name: Check secrets
         run: |
           for name in APPLE_TEAM_ID ASC_KEY_ID ASC_ISSUER_ID; do
-            [ -n "${!name}" ] || { echo "::error::Secret $name manquant"; exit 1; }
+            [ -n "${!name}" ] || { echo "::error::Missing secret $name"; exit 1; }
           done
-          [ -n "${{ secrets.ASC_KEY_P8 }}" ] || { echo "::error::Secret ASC_KEY_P8 manquant"; exit 1; }
+          [ -n "${{ secrets.ASC_KEY_P8 }}" ] || { echo "::error::Missing secret ASC_KEY_P8"; exit 1; }
+          [ -n "${{ secrets.DIST_CERT_P12 }}" ] || { echo "::error::Missing secret DIST_CERT_P12"; exit 1; }
 
-      - name: Clé App Store Connect
+      - name: App Store Connect key
         env:
           ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
         run: |
@@ -41,14 +42,27 @@ jobs:
           chmod 600 "$KEY_PATH"
           echo "ASC_KEY_PATH=$KEY_PATH" >> "$GITHUB_ENV"
 
-      - name: Certificats intermédiaires Apple
-        # Sans eux, codesign n'embarque pas la chaîne complète et App Store Connect
-        # rejette la build (erreur 90035, « Invalid Signature »).
+      - name: Distribution certificate
+        # Cloud-managed signing writes the certificate name into the code requirement
+        # with a decomposed "é", which no longer matches the certificate and App Store
+        # Connect rejects the upload (90035). Signing locally with the real
+        # Apple Distribution certificate avoids that path.
+        env:
+          DIST_CERT_P12: ${{ secrets.DIST_CERT_P12 }}
+          DIST_CERT_PASSWORD: ${{ secrets.DIST_CERT_PASSWORD }}
         run: |
-          for ca in AppleWWDRCAG3 AppleWWDRCAG4 AppleWWDRCAG5 AppleWWDRCAG6 DeveloperIDG2CA; do
-            curl -fsSL "https://www.apple.com/certificateauthority/$ca.cer" -o "$RUNNER_TEMP/$ca.cer"
-            sudo security add-certificates -k /Library/Keychains/System.keychain "$RUNNER_TEMP/$ca.cer" || true
-          done
+          KEYCHAIN="$RUNNER_TEMP/signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -base64 24)"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          printf '%s' "$DIST_CERT_P12" | base64 --decode > "$RUNNER_TEMP/dist.p12"
+          security import "$RUNNER_TEMP/dist.p12" -k "$KEYCHAIN" -P "$DIST_CERT_PASSWORD" -f pkcs12 -A -T /usr/bin/codesign -T /usr/bin/security
+          rm -f "$RUNNER_TEMP/dist.p12"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" > /dev/null
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+          security find-identity -v -p codesigning "$KEYCHAIN" | grep -q "Apple Distribution" || { echo "::error::No Apple Distribution identity in DIST_CERT_P12"; exit 1; }
+          echo "SIGNING_KEYCHAIN=$KEYCHAIN" >> "$GITHUB_ENV"
 
       - name: XcodeGen
         run: |
@@ -83,7 +97,7 @@ jobs:
             CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
             2>&1 | tee build/archive.log | xcbeautify --renderer github-actions
 
-      - name: Upload TestFlight
+      - name: Upload to TestFlight
         run: |
           sed "s/TEAM_ID_PLACEHOLDER/$APPLE_TEAM_ID/" ci/ExportOptions.plist > "$RUNNER_TEMP/ExportOptions.plist"
           mkdir -p build
@@ -98,7 +112,7 @@ jobs:
             -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
             2>&1 | tee build/export.log | xcbeautify --renderer github-actions
 
-      - name: Journaux de distribution
+      - name: Distribution logs
         if: failure()
         run: find "${TMPDIR:-/tmp}" -maxdepth 2 -name '*.xcdistributionlogs' -exec cp -R {} build/ \; || true
 
@@ -112,6 +126,8 @@ jobs:
             build/*.xcdistributionlogs
           if-no-files-found: ignore
 
-      - name: Nettoyage de la clé
+      - name: Clean up
         if: always()
-        run: rm -f "$RUNNER_TEMP"/AuthKey_*.p8
+        run: |
+          rm -f "$RUNNER_TEMP"/AuthKey_*.p8 "$RUNNER_TEMP"/dist.p12
+          [ -z "${SIGNING_KEYCHAIN:-}" ] || security delete-keychain "$SIGNING_KEYCHAIN" || true

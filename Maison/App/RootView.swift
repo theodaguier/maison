@@ -1,19 +1,19 @@
 import SwiftUI
 
-/// Navigation principale : quatre onglets, tab bar Liquid Glass du système.
+/// Main navigation: four tabs on the system Liquid Glass tab bar.
 struct RootView: View {
     var body: some View {
         TabView {
-            Tab("Maison", systemImage: "house.fill") {
+            Tab("Home", systemImage: "house.fill") {
                 HomeView()
             }
-            Tab("Pièces", systemImage: "square.grid.2x2.fill") {
+            Tab("Rooms", systemImage: "square.grid.2x2.fill") {
                 RoomsView()
             }
-            Tab("Automatisation", systemImage: "clock.fill") {
+            Tab("Automations", systemImage: "clock.fill") {
                 AutomationsView()
             }
-            Tab("Réglages", systemImage: "gearshape.fill") {
+            Tab("Settings", systemImage: "gearshape.fill") {
                 SettingsView()
             }
         }

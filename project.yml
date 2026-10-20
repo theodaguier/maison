@@ -2,6 +2,7 @@ name: Maison
 
 options:
   bundleIdPrefix: com.theodaguier
+  developmentLanguage: en
   deploymentTarget:
     iOS: "26.0"
   createIntermediateGroups: true
@@ -30,7 +31,7 @@ targets:
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
-        INFOPLIST_KEY_NSLocalNetworkUsageDescription: Pour trouver votre serveur Home Assistant automatiquement, sans saisir d’adresse.
+        INFOPLIST_KEY_NSLocalNetworkUsageDescription: Maison finds your Home Assistant server automatically, so you never have to type its address.
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
         GENERATE_INFOPLIST_FILE: YES
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
