@@ -1,12 +1,52 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "NSCameraUsageDescription": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maison utilise l’appareil photo et le capteur LiDAR pour dessiner le plan de votre logement. Le scan reste sur votre iPhone."
+          }
+        }
+      }
+    },
+    "NSFaceIDUsageDescription": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Face ID confirme que c’est bien vous avant que Maison déverrouille une porte."
+          }
+        }
+      }
+    },
     "NSLocalNetworkUsageDescription": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Maison trouve votre serveur Home Assistant automatiquement, sans que vous ayez à saisir son adresse."
+          }
+        }
+      }
+    },
+    "NSLocationAlwaysAndWhenInUseUsageDescription": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maison indique à Home Assistant quand vous partez ou rentrez, même app fermée, pour que des règles comme « Quand tout le monde part » fonctionnent."
+          }
+        }
+      }
+    },
+    "NSLocationWhenInUseUsageDescription": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maison indique à Home Assistant quand vous partez ou rentrez, pour que vos règles réagissent."
           }
         }
       }

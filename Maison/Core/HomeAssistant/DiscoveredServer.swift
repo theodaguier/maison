@@ -6,6 +6,8 @@ struct DiscoveredServer: Sendable, Hashable, Identifiable {
     let name: String
     let version: String?
     let url: URL
+    /// The address set for reaching the server away from home, if any.
+    let externalURL: URL?
 
     /// Builds a server from the TXT record Home Assistant publishes
     /// (`uuid`, `location_name`, `version`, `internal_url`, `base_url`, `external_url`).
@@ -20,5 +22,8 @@ struct DiscoveredServer: Sendable, Hashable, Identifiable {
         self.id = txtRecord["uuid"].flatMap { $0.isEmpty ? nil : $0 } ?? url.absoluteString
         self.name = txtRecord["location_name"].flatMap { $0.isEmpty ? nil : $0 } ?? url.host() ?? "Home Assistant"
         self.version = txtRecord["version"].flatMap { $0.isEmpty ? nil : $0 }
+        self.externalURL = txtRecord["external_url"]
+            .flatMap(URL.init(string:))
+            .flatMap { $0.host() == nil || $0 == url ? nil : $0 }
     }
 }

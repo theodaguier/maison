@@ -23,63 +23,97 @@ enum Appearance: String, CaseIterable {
 struct SettingsView: View {
     @Environment(HomeStore.self) private var store
     @AppStorage("appearance") private var appearance: Appearance = .system
+    @AppStorage(DaySummarySetting.key) private var daySummary = true
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
                     if store.serverURL != nil {
-                        ProfileCard()
-                        ServerCard()
+                        NavigationLink { ProfilePage() } label: { ProfileCard() }
+                            .buttonStyle(.plain)
+                        NavigationLink { ServerPage() } label: { ServerCard(showsArrow: true) }
+                            .buttonStyle(.plain)
                     }
-                    group("Household") {
+                    SettingsGroup("Household") {
                         HouseholdSection()
                     }
                     if store.serverURL != nil {
-                        group("Connection") {
-                            SettingsRow(symbol: "network", color: .black, title: "Remote Access",
-                                        value: store.serverConfig?.externalURL.flatMap { URL(string: $0)?.host() } ?? String(localized: "Not Set Up"))
-                            SettingsRow(symbol: "wifi", color: .teal, title: "Local Network",
-                                        value: store.serverURL?.host() ?? "")
-                            SettingsRow(symbol: "person.badge.shield.checkmark.fill", color: .blue, title: "Home Assistant Permissions",
-                                        value: store.currentUser?.isAdmin == true ? String(localized: "Full") : String(localized: "Standard"))
-                        }
-                        if !store.integrations.isEmpty {
-                            group("Integrations") {
-                                ForEach(integrationSummaries, id: \.domain) { item in
-                                    IntegrationRow(domain: item.domain, title: item.title, count: item.count)
+                        SettingsGroup("Connection") {
+                            NavigationLink { RemoteAccessPage() } label: {
+                                SettingsRow(symbol: "network", color: .black, title: "Remote Access",
+                                            value: store.remoteAccessName ?? String(localized: "Not Set Up"),
+                                            dot: store.remoteAccessName == nil ? nil : .green, showsChevron: true)
+                            }
+                            SettingsDivider()
+                            NavigationLink { LocalNetworkPage() } label: {
+                                SettingsRow(symbol: "wifi", color: .teal, title: "Local Network",
+                                            value: store.serverURL?.host() ?? "", showsChevron: true)
+                            }
+                            SettingsDivider()
+                            NavigationLink { PermissionsPage() } label: {
+                                SettingsRow(title: "Home Assistant Permissions",
+                                            value: store.currentUser?.isAdmin == true ? String(localized: "Full") : String(localized: "Standard"),
+                                            showsChevron: true) {
+                                    HomeAssistantTile(size: 30)
                                 }
                             }
                         }
+                        .buttonStyle(.plain)
+                        if !store.integrationSummaries.isEmpty {
+                            SettingsGroup("Integrations") {
+                                ForEach(Array(store.integrationSummaries.prefix(8).enumerated()), id: \.element.domain) { index, item in
+                                    if index > 0 { SettingsDivider() }
+                                    NavigationLink { IntegrationPage(integration: item) } label: {
+                                        SettingsRow(title: LocalizedStringKey(stringLiteral: item.title), detail: store.integrationDetail(item),
+                                                    showsChevron: true) {
+                                            IntegrationLogo(domain: item.domain)
+                                        }
+                                    }
+                                }
+                            }
+                            .buttonStyle(.plain)
+                        }
                     }
-                    group("Appearance") {
+                    SettingsGroup("Appearance") {
                         HStack(spacing: 12) {
                             SettingsIcon(symbol: "sun.max.fill", color: .orange)
                             Text("Theme")
                                 .font(.roundedBody)
                             Spacer()
-                            Picker("Theme", selection: $appearance) {
-                                ForEach(Appearance.allCases, id: \.self) { Text($0.title).tag($0) }
+                            Menu {
+                                Picker("Theme", selection: $appearance) {
+                                    ForEach(Appearance.allCases, id: \.self) { Text($0.title).tag($0) }
+                                }
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Text(appearance.title)
+                                    Image(systemName: "chevron.up.chevron.down").font(.footnote)
+                                }
+                                .font(.roundedSubheadline)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                                .fixedSize()
                             }
-                            .labelsHidden()
                             .tint(.secondary)
                         }
                         .padding(.vertical, 6)
+                        SettingsDivider()
+                        NavigationLink { DaySummaryPage() } label: {
+                            SettingsRow(symbol: "sparkles", color: .indigo, title: "Day Summary",
+                                        value: !DayDigest.isAvailable ? String(localized: "Unavailable")
+                                            : daySummary ? String(localized: "setting.enabled", defaultValue: "On")
+                                            : String(localized: "setting.disabled", defaultValue: "Off"),
+                                        showsChevron: true)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    group("App") {
+                    SettingsGroup("App") {
                         SettingsRow(symbol: "info.circle.fill", color: .gray, title: "Version", value: Bundle.main.versionString)
                     }
                     if store.serverURL != nil {
-                        Button(role: .destructive) {
-                            Task { await store.signOut() }
-                        } label: {
-                            Text("Sign Out")
-                                .font(.roundedHeadline)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 6)
-                        }
-                        .buttonStyle(.glass)
-                        .padding(.top, 8)
+                        SignOutButton()
+                            .padding(.top, 8)
                     }
                 }
                 .padding(.horizontal, Theme.screenPadding)
@@ -90,24 +124,39 @@ struct SettingsView: View {
             .navigationTitle("Settings")
         }
     }
+}
 
-    private var integrationSummaries: [(domain: String, title: String, count: Int)] {
-        let grouped = Dictionary(grouping: store.integrations, by: \.domain)
-        return grouped
-            .map { (domain: $0.key, title: $0.value.first?.title ?? $0.key, count: $0.value.count) }
-            .sorted { $0.title.localizedStandardCompare($1.title) == .orderedAscending }
-            .prefix(8)
-            .map { $0 }
+/// The "Day Summary" switch, on by default; the home screen reads it before writing the summary.
+enum DaySummarySetting {
+    static let key = "daySummaryEnabled"
+
+    static var isEnabled: Bool {
+        UserDefaults.standard.object(forKey: key) as? Bool ?? true
+    }
+}
+
+// MARK: - Building blocks
+
+/// A titled card of rows, as on the Settings screen.
+struct SettingsGroup<Content: View>: View {
+    let title: LocalizedStringKey?
+    @ViewBuilder var content: Content
+
+    init(_ title: LocalizedStringKey? = nil, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.content = content()
     }
 
-    private func group<Content: View>(_ title: LocalizedStringKey, @ViewBuilder content: () -> Content) -> some View {
+    var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.roundedTitle3)
-                .padding(.leading, 4)
-                .padding(.top, 10)
+            if let title {
+                Text(title)
+                    .font(.roundedTitle3)
+                    .padding(.leading, 4)
+                    .padding(.top, 10)
+            }
             VStack(spacing: 0) {
-                content()
+                content
             }
             .frame(maxWidth: .infinity)
             .padding(.horizontal, 16)
@@ -117,8 +166,82 @@ struct SettingsView: View {
     }
 }
 
-private struct ProfileCard: View {
+struct SettingsDivider: View {
+    var body: some View {
+        Theme.separator.frame(height: 1).padding(.leading, 42)
+    }
+}
+
+struct SettingsRow<Icon: View>: View {
+    let title: LocalizedStringKey
+    var detail: String?
+    var value: String?
+    var dot: Color?
+    var showsChevron = false
+    @ViewBuilder var icon: Icon
+
+    var body: some View {
+        HStack(spacing: 12) {
+            icon
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title)
+                    .font(.roundedBody)
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                if let detail {
+                    Text(detail)
+                        .font(.roundedFootnote)
+                        .foregroundStyle(.tertiary)
+                        .lineLimit(1)
+                }
+            }
+            Spacer(minLength: 8)
+            if let dot {
+                Circle().fill(dot).frame(width: 7, height: 7)
+            }
+            if let value {
+                Text(value)
+                    .font(.roundedSubheadline)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+            if showsChevron {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.tertiary)
+            }
+        }
+        .padding(.vertical, 10)
+        .contentShape(.rect)
+    }
+}
+
+extension SettingsRow where Icon == SettingsIcon {
+    init(symbol: String, color: Color, title: LocalizedStringKey, detail: String? = nil, value: String? = nil,
+         dot: Color? = nil, showsChevron: Bool = false) {
+        self.init(title: title, detail: detail, value: value, dot: dot, showsChevron: showsChevron) {
+            SettingsIcon(symbol: symbol, color: color)
+        }
+    }
+}
+
+struct SettingsIcon: View {
+    let symbol: String
+    let color: Color
+
+    var body: some View {
+        Image(systemName: symbol)
+            .font(.system(size: 15, weight: .semibold))
+            .foregroundStyle(.white)
+            .frame(width: 30, height: 30)
+            .background(color, in: .rect(cornerRadius: 8))
+    }
+}
+
+/// The person signed in, as at the top of Settings.
+struct ProfileCard: View {
     @Environment(HomeStore.self) private var store
+    var showsChevron = true
 
     var body: some View {
         let name = store.currentUser?.name ?? ""
@@ -130,30 +253,47 @@ private struct ProfileCard: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text(name.isEmpty ? String(localized: "Home Assistant") : name)
                     .font(.roundedHeadline)
-                Text(store.currentUser?.isAdmin == true ? "Administrator" : "Resident")
+                Text(store.profileSubtitle)
                     .font(.roundedFootnote)
                     .foregroundStyle(.secondary)
             }
             Spacer()
+            if showsChevron {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.tertiary)
+            }
         }
         .padding(16)
         .cardStyle()
+        .contentShape(.rect)
     }
 }
 
 /// Server health: round-trip time with a small history, and how the app reaches it.
-private struct ServerCard: View {
+struct ServerCard: View {
     @Environment(HomeStore.self) private var store
+    var showsArrow = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Label("Home Server", systemImage: "server.rack")
+            HStack {
+                Label {
+                    Text("Home Server")
+                } icon: {
+                    HomeAssistantTile(size: 18)
+                }
                 .labelStyle(.compact)
                 .font(.roundedSubheadlineEmphasized)
                 .foregroundStyle(.secondary)
-                .padding(.horizontal, 16)
-                .padding(.top, 13)
-                .padding(.bottom, 12)
+                Spacer()
+                if showsArrow {
+                    Image(systemName: "arrow.right").font(.roundedSubheadline).foregroundStyle(.tertiary)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 13)
+            .padding(.bottom, 12)
             Theme.separator.frame(height: 1)
             HStack(alignment: .center) {
                 VStack(alignment: .leading, spacing: 4) {
@@ -168,13 +308,15 @@ private struct ServerCard: View {
                     .frame(width: 130, height: 40)
             }
             .padding(16)
-            Text("Home Assistant \(store.serverVersion ?? "") · \(store.serverURL?.host() ?? "")")
+            Theme.separator.frame(height: 1)
+            Text(footer)
                 .font(.roundedFootnote)
                 .foregroundStyle(.tertiary)
                 .padding(.horizontal, 16)
-                .padding(.bottom, 13)
+                .padding(.vertical, 12)
         }
         .cardStyle()
+        .contentShape(.rect)
         .task {
             while !Task.isCancelled {
                 await store.measureLatency()
@@ -189,13 +331,19 @@ private struct ServerCard: View {
         store.latencies.last.map { Int($0.milliseconds) }
     }
 
+    private var footer: String {
+        store.household.status == .ready && store.household.household != nil
+            ? String(localized: "Home Assistant \(store.serverVersion ?? "") · synced with iCloud")
+            : String(localized: "Home Assistant \(store.serverVersion ?? "") · \(store.serverURL?.host() ?? "")")
+    }
+
     private var connectionText: String {
         guard isConnected else { return String(localized: "Not connected") }
         return store.serverURL?.isLocalNetwork == true ? String(localized: "Connected locally") : String(localized: "Connected remotely")
     }
 }
 
-private struct LatencySparkline: View {
+struct LatencySparkline: View {
     let samples: [Double]
 
     var body: some View {
@@ -226,74 +374,59 @@ private struct LatencySparkline: View {
     }
 }
 
-struct SettingsRow: View {
-    let symbol: String
-    let color: Color
-    let title: LocalizedStringKey
-    var value: String?
+struct SignOutButton: View {
+    @Environment(HomeStore.self) private var store
+    @State private var confirms = false
 
     var body: some View {
-        HStack(spacing: 12) {
-            SettingsIcon(symbol: symbol, color: color)
-            Text(title)
-                .font(.roundedBody)
-            Spacer()
-            if let value {
-                Text(value)
-                    .font(.roundedSubheadline)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
+        WideButton(title: "Sign Out", style: .destructive) {
+            confirms = true
         }
-        .padding(.vertical, 10)
-    }
-}
-
-/// An integration with its official logo from the Home Assistant brands CDN.
-private struct IntegrationRow: View {
-    let domain: String
-    let title: String
-    let count: Int
-
-    var body: some View {
-        HStack(spacing: 12) {
-            AsyncImage(url: URL(string: "https://brands.home-assistant.io/_/\(domain)/icon.png")) { image in
-                image.resizable().scaledToFit()
-            } placeholder: {
-                Image(systemName: "puzzlepiece.extension.fill")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(.secondary)
+        .confirmationDialog("Sign out of Home Assistant?", isPresented: $confirms, titleVisibility: .visible) {
+            Button("Sign Out", role: .destructive) {
+                Task { await store.signOut() }
             }
-            .frame(width: 30, height: 30)
-            .accessibilityHidden(true)
-            Text(verbatim: title)
-                .font(.roundedBody)
-                .lineLimit(1)
-            Spacer()
-            if count > 1 {
-                Text("\(count) entries")
-                    .font(.roundedSubheadline)
-                    .foregroundStyle(.secondary)
-            }
+        } message: {
+            Text("The household, plan and favorites stay in iCloud.")
         }
-        .padding(.vertical, 10)
     }
 }
 
-struct SettingsIcon: View {
-    let symbol: String
-    let color: Color
+// MARK: - Derived text
 
-    var body: some View {
-        Image(systemName: symbol)
-            .font(.system(size: 15, weight: .semibold))
-            .foregroundStyle(.white)
-            .frame(width: 30, height: 30)
-            .background(color, in: .rect(cornerRadius: 8))
+extension HomeStore {
+    /// "Administrator · Apple Account"
+    var profileSubtitle: String {
+        let rights = currentUser?.isAdmin == true ? String(localized: "Administrator") : String(localized: "Resident")
+        return household.status == .ready ? String(localized: "\(rights) · Apple Account") : rights
+    }
+
+    /// "Tailscale", "Nabu Casa" or the remote host; `nil` when the server has no external address.
+    var remoteAccessName: String? {
+        guard let host = serverConfig?.externalURL.flatMap({ URL(string: $0)?.host() }), !host.isEmpty else { return nil }
+        if host.hasSuffix(".ts.net") { return "Tailscale" }
+        if host.hasSuffix(".ui.nabu.casa") { return "Nabu Casa" }
+        return host
+    }
+
+    /// Devices the integration provides: "2 speakers", "3 devices".
+    func devices(of integration: IntegrationSummary) -> [EntityState] {
+        devices.filter { layout.platformByEntity[$0.entityID] == integration.domain }.sortedByName()
+    }
+
+    func integrationDetail(_ integration: IntegrationSummary) -> String? {
+        let devices = devices(of: integration)
+        guard !devices.isEmpty else { return integration.count > 1 ? String(localized: "\(integration.count) entries") : nil }
+        let kinds = Set(devices.map(\.kind))
+        if kinds == [.mediaPlayer], devices.allSatisfy({ $0.deviceClass == "speaker" }) {
+            return String(localized: "\(devices.count) speakers")
+        }
+        if kinds == [.light] { return String(localized: "\(devices.count) lights") }
+        return String(localized: "\(devices.count) devices")
     }
 }
 
-private extension Duration {
+extension Duration {
     var milliseconds: Double {
         Double(components.seconds) * 1000 + Double(components.attoseconds) / 1e15
     }
@@ -310,7 +443,7 @@ extension URL {
     }
 }
 
-private extension Bundle {
+extension Bundle {
     var versionString: String {
         let version = infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
         let build = infoDictionary?["CFBundleVersion"] as? String ?? "?"

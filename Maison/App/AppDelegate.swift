@@ -3,6 +3,15 @@ import UIKit
 
 /// Installs `SceneDelegate`, the only way a SwiftUI app hears about accepted iCloud shares.
 final class AppDelegate: NSObject, UIApplicationDelegate {
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
+        // Navigation titles are UIKit text: SwiftUI's rounded font design does not reach them.
+        let bar = UINavigationBar.appearance()
+        bar.largeTitleTextAttributes = [.font: UIFont.rounded(size: 34, weight: .bold)]
+        bar.titleTextAttributes = [.font: UIFont.rounded(size: 17, weight: .semibold)]
+        PresenceReporter.shared.resume()
+        return true
+    }
+
     func application(
         _ application: UIApplication,
         configurationForConnecting connectingSceneSession: UISceneSession,
@@ -46,5 +55,13 @@ enum InvitationInbox {
         self.handler = handler
         pending.forEach(handler)
         pending.removeAll()
+    }
+}
+
+private extension UIFont {
+    static func rounded(size: CGFloat, weight: UIFont.Weight) -> UIFont {
+        let font = UIFont.systemFont(ofSize: size, weight: weight)
+        guard let descriptor = font.fontDescriptor.withDesign(.rounded) else { return font }
+        return UIFont(descriptor: descriptor, size: size)
     }
 }

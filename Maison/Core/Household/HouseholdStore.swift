@@ -22,6 +22,12 @@ final class HouseholdStore {
     private(set) var location: HouseholdLocation?
     private(set) var members: [HouseholdMember] = []
     private(set) var favoriteIDs: [String]
+    /// An invitation opened but not accepted yet: the app asks first.
+    var pendingInvitation: CKShare.Metadata?
+    /// Set once an invitation is accepted, to welcome the person on the home screen.
+    var joinedHouseholdName: String?
+    /// The scanned plan; kept on the device too, so it shows without iCloud.
+    private(set) var floorPlan: FloorPlan?
 
     @ObservationIgnored private let cloud: (any HouseholdCloud)?
     @ObservationIgnored private let defaults: UserDefaults
@@ -36,16 +42,18 @@ final class HouseholdStore {
         self.cloud = cloud
         self.defaults = defaults
         favoriteIDs = defaults.stringArray(forKey: Self.favoritesKey) ?? []
+        floorPlan = defaults.data(forKey: Self.planKey).flatMap { try? JSONDecoder().decode(FloorPlan.self, from: $0) }
         if cloud == nil {
             status = .unavailable
         }
     }
 
     /// A household filled with sample members, for previews and the `-demo` launch argument.
-    init(demo household: Household, members: [HouseholdMember]) {
+    init(demo household: Household, members: [HouseholdMember], plan: FloorPlan? = nil) {
         cloud = nil
         defaults = UserDefaults(suiteName: "demo") ?? .standard
         favoriteIDs = []
+        floorPlan = plan
         self.household = household
         self.members = members
         location = .owned
@@ -53,6 +61,7 @@ final class HouseholdStore {
     }
 
     private static let favoritesKey = "favoriteEntityIDs"
+    private static let planKey = "floorPlan"
 
     /// The role of the person using the app.
     var currentRole: HouseholdRole {
@@ -89,6 +98,7 @@ final class HouseholdStore {
                 location = stored.location
                 household = stored.household
                 try await syncFavorites()
+                if let plan = try await cloud.floorPlan(in: stored.location) { keepPlan(plan) }
                 try await refreshMembers()
             }
             status = .ready
@@ -128,6 +138,7 @@ final class HouseholdStore {
         do {
             _ = try await cloud.accept(metadata)
             await reload()
+            joinedHouseholdName = household?.name ?? metadata.share[CKShare.SystemFieldKey.title] as? String
         } catch {
             status = .failed(error.localizedDescription)
         }
@@ -154,6 +165,16 @@ final class HouseholdStore {
         return url
     }
 
+    func setRole(_ role: HouseholdRole, of member: HouseholdMember) async throws {
+        guard let cloud, let location else {
+            // The demo household has no iCloud: change it in place.
+            members = members.map { $0.id == member.id ? HouseholdMember(id: $0.id, name: $0.name, role: role, isPending: $0.isPending, isCurrentUser: $0.isCurrentUser) : $0 }
+            return
+        }
+        try await cloud.setRole(role, of: member, in: location)
+        try? await refreshMembers()
+    }
+
     func remove(_ member: HouseholdMember) async throws {
         guard let cloud, let location else { return }
         try await cloud.remove(member, from: location)
@@ -167,6 +188,20 @@ final class HouseholdStore {
         self.location = nil
         household = nil
         members = []
+    }
+
+    // MARK: - Floor plan
+
+    /// Saves on the device at once, then in iCloud for the rest of the household.
+    func saveFloorPlan(_ plan: FloorPlan) async throws {
+        keepPlan(plan)
+        guard let cloud, let location else { return }
+        try await cloud.saveFloorPlan(plan, in: location)
+    }
+
+    private func keepPlan(_ plan: FloorPlan) {
+        floorPlan = plan
+        defaults.set(try? JSONEncoder().encode(plan), forKey: Self.planKey)
     }
 
     // MARK: - Favourites

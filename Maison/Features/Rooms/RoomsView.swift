@@ -2,6 +2,11 @@ import SwiftUI
 
 struct RoomsView: View {
     @Environment(HomeStore.self) private var store
+    @State private var mode: Mode = .list
+    @State private var opened: OpenedDevice?
+    @State private var isScanning = false
+
+    enum Mode: Hashable { case list, plan }
 
     var body: some View {
         NavigationStack {
@@ -14,12 +19,20 @@ struct RoomsView: View {
                     )
                 } else {
                     ScrollView {
-                        LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
-                            ForEach(store.rooms) { room in
-                                NavigationLink(value: room) {
-                                    RoomCard(room: room)
+                        VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
+                            PillPicker(options: [(.list, "List", nil), (.plan, "Plan", nil)], selection: $mode)
+                            switch mode {
+                            case .list:
+                                LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
+                                    ForEach(store.rooms) { room in
+                                        NavigationLink(value: room) {
+                                            RoomCard(room: room)
+                                        }
+                                        .buttonStyle(.pressable)
+                                    }
                                 }
-                                .buttonStyle(.plain)
+                            case .plan:
+                                PlanTab(opened: $opened, isScanning: $isScanning)
                             }
                         }
                         .padding(.horizontal, Theme.screenPadding)
@@ -30,6 +43,19 @@ struct RoomsView: View {
             }
             .navigationTitle("Rooms")
             .navigationDestination(for: Area.self) { RoomView(room: $0) }
+            .toolbar {
+                if mode == .plan, store.household.floorPlan != nil {
+                    ToolbarItemGroup(placement: .topBarTrailing) {
+                        Button("Scan Again", systemImage: "viewfinder") { isScanning = true }
+                    }
+                }
+            }
+            .sheet(item: $opened) { DeviceSheet(entityID: $0.id) }
+            .fullScreenCover(isPresented: $isScanning) { ScanScreen() }
+            .onAppear {
+                // `-plan` opens the plan straight away, to check its design.
+                if UserDefaults.standard.bool(forKey: "plan") { mode = .plan }
+            }
         }
     }
 }
@@ -60,8 +86,10 @@ private struct RoomCard: View {
                 Text(active.isEmpty ? String(localized: "All off") : String(localized: "\(active.count) on"))
                     .font(.roundedFootnote)
                     .foregroundStyle(active.isEmpty ? Color.secondary : Color.orange)
+                    .contentTransition(.numericText())
             }
         }
+        .animation(.smooth, value: active.count)
         .padding(14)
         .frame(maxWidth: .infinity, minHeight: 110, alignment: .topLeading)
         .cardStyle(radius: Theme.tileRadius)

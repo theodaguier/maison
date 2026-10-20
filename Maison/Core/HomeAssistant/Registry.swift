@@ -19,6 +19,8 @@ struct EntityRegistryEntry: Sendable, Hashable, Decodable {
     let hiddenBy: String?
     let disabledBy: String?
     let entityCategory: String?
+    /// The integration that provides the entity ("sonos", "hue").
+    var platform: String?
 
     var isVisible: Bool {
         hiddenBy == nil && disabledBy == nil && entityCategory == nil
@@ -31,6 +33,7 @@ struct EntityRegistryEntry: Sendable, Hashable, Decodable {
         case hiddenBy = "hidden_by"
         case disabledBy = "disabled_by"
         case entityCategory = "entity_category"
+        case platform
     }
 }
 
@@ -50,6 +53,7 @@ struct HomeLayout: Sendable, Hashable {
     var areaByEntity: [String: String] = [:]
     var deviceByEntity: [String: String] = [:]
     var hiddenEntities: Set<String> = []
+    var platformByEntity: [String: String] = [:]
 
     init() {}
 
@@ -63,6 +67,9 @@ struct HomeLayout: Sendable, Hashable {
             if let device = entry.deviceID {
                 deviceByEntity[entry.entityID] = device
             }
+            if let platform = entry.platform {
+                platformByEntity[entry.entityID] = platform
+            }
             if !entry.isVisible {
                 hiddenEntities.insert(entry.entityID)
             }
@@ -71,10 +78,12 @@ struct HomeLayout: Sendable, Hashable {
 }
 
 struct HomeAssistantUser: Sendable, Hashable, Decodable {
+    var id: String?
     let name: String
     let isAdmin: Bool
 
     private enum CodingKeys: String, CodingKey {
+        case id
         case name
         case isAdmin = "is_admin"
     }
@@ -114,11 +123,12 @@ struct DayUsage: Sendable, Equatable {
         var periods: [DateInterval] = []
         var onSince: Date?
         for change in changes.sorted(by: { $0.date < $1.date }) {
-            let date = max(change.date, day.start)
+            // Changes after the day (yesterday's usage is read from a history that runs to now) are clamped to its end.
+            let date = min(max(change.date, day.start), end)
             if isOn(change.state) {
                 if onSince == nil { onSince = date }
             } else if let start = onSince {
-                if date > start { periods.append(DateInterval(start: start, end: min(date, end))) }
+                if date > start { periods.append(DateInterval(start: start, end: date)) }
                 onSince = nil
             }
         }

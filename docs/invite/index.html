@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Invitation Maison</title>
+  <meta name="description" content="Rejoindre une maison dans l’app Maison.">
+  <meta name="robots" content="noindex">
+  <style>
+    :root { color-scheme: light dark; --bg: #fff; --card: #fff; --fg: #000; --muted: rgba(60, 60, 67, .6);
+            --faint: rgba(60, 60, 67, .3); --border: rgba(0, 0, 0, .07); --pill: #eef4ff; --blue: #0088ff; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #000; --card: #1c1c1e; --fg: #fff; --muted: rgba(235, 235, 245, .6); --faint: rgba(235, 235, 245, .3);
+              --border: rgba(255, 255, 255, .1); --pill: #0b2540; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--fg); font-family: ui-rounded, -apple-system, system-ui, sans-serif; }
+    main { max-width: 402px; margin: 0 auto; padding: 56px 20px 32px; text-align: center; }
+    .icon { position: relative; width: 60px; height: 60px; margin: 0 auto 14px; border-radius: 14px; background: #1c1c1e;
+            display: grid; place-items: center; }
+    .icon svg { width: 30px; height: 30px; fill: #fff; }
+    .beta { position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); background: #ff9500; color: #fff;
+            font-size: 8px; font-weight: 700; padding: 1px 5px; border-radius: 5px; letter-spacing: .03em; }
+    h1 { font-size: 22px; line-height: 1.25; margin: 0 0 10px; }
+    .lead { color: var(--muted); font-size: 15px; line-height: 1.4; margin: 0 0 16px; }
+    ol { list-style: none; margin: 0 0 16px; padding: 0 16px; border: 1px solid var(--border); border-radius: 22px;
+         background: var(--card); text-align: left; }
+    li { display: flex; gap: 12px; align-items: center; padding: 13px 0; }
+    li + li { border-top: 1px solid var(--border); }
+    .step-icon { flex: none; width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; color: #fff;
+                 font-weight: 700; }
+    .text { flex: 1; }
+    .text b { display: block; font-size: 15px; font-weight: 600; }
+    .text span { color: var(--muted); font-size: 12px; }
+    .get { flex: none; background: var(--pill); color: var(--blue); font-weight: 600; font-size: 14px; padding: 6px 14px;
+           border-radius: 99px; text-decoration: none; }
+    .open { display: block; background: var(--blue); color: #fff; font-weight: 600; font-size: 17px; padding: 15px;
+            border-radius: 99px; text-decoration: none; }
+    .note { color: var(--faint); font-size: 12px; margin-top: 12px; }
+    .error { color: #ff3b30; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M12 3 2 11.5h3V21h5.5v-5.5h3V21H19v-9.5h3z"/></svg>
+      <span class="beta">BÊTA</span>
+    </div>
+    <h1 id="title">Vous êtes invité à rejoindre une maison</h1>
+    <p class="lead" id="lead">Maison est en version de test. Trois étapes, une seule fois.</p>
+    <ol>
+      <li>
+        <div class="step-icon" style="background:#0a84ff">1</div>
+        <div class="text"><b id="s1">Installer TestFlight</b><span id="s1d">L’app d’Apple pour les versions de test</span></div>
+        <a class="get" href="https://apps.apple.com/app/testflight/id899247664" id="s1b">Obtenir</a>
+      </li>
+      <li>
+        <div class="step-icon" style="background:#1c1c1e">2</div>
+        <div class="text"><b id="s2">Installer Maison</b><span id="s2d">Depuis TestFlight</span></div>
+        <a class="get" id="testflight" href="#">Installer</a>
+      </li>
+      <li>
+        <div class="step-icon" style="background:#34c759">3</div>
+        <div class="text"><b id="s3">Ouvrir l’invitation</b><span id="s3d">L’app s’ouvre sur la maison</span></div>
+      </li>
+    </ol>
+    <a class="open" id="open" href="#">Ouvrir l’invitation</a>
+    <p class="note" id="note">Si Maison est déjà installée, ce lien l’ouvre directement.</p>
+  </main>
+  <script>
+    // The public TestFlight link of the app (App Store Connect → TestFlight → Public Link).
+    const TESTFLIGHT_URL = "";
+
+    const params = new URLSearchParams(location.search);
+    const share = params.get("s") || "";
+    const home = params.get("h") || "";
+    const from = params.get("f") || "";
+    const english = !navigator.language.toLowerCase().startsWith("fr");
+    const t = english ? {
+      title: from ? `${from} invites you to join ${home ? "“" + home + "”" : "their home"}` : "You’re invited to join a home",
+      lead: "Maison is in beta. Three steps, only once.",
+      s1: "Install TestFlight", s1d: "Apple’s app for beta versions", s1b: "Get",
+      s2: "Install Maison", s2d: "From TestFlight", s2b: "Install",
+      s3: "Open the invitation", s3d: "The app opens on the home",
+      open: "Open the Invitation", note: "If Maison is already installed, this link opens it directly.",
+      bad: "This invitation link is incomplete. Ask for a new one.",
+      noTestflight: `Ask ${from || "the person who invited you"} for the TestFlight link`,
+    } : {
+      title: from ? `${from} vous invite à rejoindre sa maison` : "Vous êtes invité à rejoindre une maison",
+      lead: "Maison est en version de test. Trois étapes, une seule fois.",
+      s1: "Installer TestFlight", s1d: "L’app d’Apple pour les versions de test", s1b: "Obtenir",
+      s2: "Installer Maison", s2d: "Depuis TestFlight", s2b: "Installer",
+      s3: "Ouvrir l’invitation", s3d: "L’app s’ouvre sur la maison",
+      open: "Ouvrir l’invitation", note: "Si Maison est déjà installée, ce lien l’ouvre directement.",
+      bad: "Ce lien d’invitation est incomplet. Demandez-en un nouveau.",
+      noTestflight: `Demandez le lien TestFlight à ${from || "la personne qui vous invite"}`,
+    };
+    document.documentElement.lang = english ? "en" : "fr";
+    for (const id of ["title", "lead", "s1", "s1d", "s1b", "s2", "s2d", "s3", "s3d", "open", "note"]) {
+      document.getElementById(id).textContent = t[id];
+    }
+    const testflight = document.getElementById("testflight");
+    testflight.textContent = t.s2b;
+    if (TESTFLIGHT_URL) { testflight.href = TESTFLIGHT_URL; } else { testflight.remove(); document.getElementById("s2d").textContent = t.noTestflight; }
+
+    // Only iCloud share links are followed, so the page can't be used to send people elsewhere.
+    const open = document.getElementById("open");
+    if (/^https:\/\/www\.icloud\.com\/share\/[A-Za-z0-9_-]+(#[^<>\"]*)?$/.test(share)) {
+      open.href = share;
+    } else {
+      open.removeAttribute("href");
+      open.style.opacity = .4;
+      const note = document.getElementById("note");
+      note.textContent = t.bad;
+      note.classList.add("error");
+    }
+  </script>
+</body>
+</html>

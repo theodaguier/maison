@@ -130,7 +130,7 @@ struct RoomView: View {
             cards.append(RingMetricCard(
                 title: "Motion", value: "\(min(minutes, 99))",
                 unit: String(localized: "min"),
-                caption: minutes == 0 ? String(localized: "Detected") : motion.formatted(date: .omitted, time: .shortened),
+                caption: minutes == 0 ? String(localized: "Detected") : Phrasing.time(motion),
                 symbol: "figure.walk.motion", color: .indigo, progress: max(0.05, 1 - Double(minutes) / 60)
             ))
         }

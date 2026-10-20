@@ -7,8 +7,8 @@ struct HomeView: View {
         NavigationStack {
             switch store.phase {
             case .signedOut:
-                ConnectView()
-                    .navigationTitle("Home")
+                // Signed-out users see onboarding instead of the tabs.
+                Color.clear
             case .connecting where store.states.isEmpty:
                 ProgressView("Connecting…")
                     .navigationTitle("Home")
@@ -49,8 +49,16 @@ private struct HomeDashboard: View {
     @Environment(HomeStore.self) private var store
     @Environment(\.openURL) private var openURL
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var opened: OpenedDevice?
     @State private var showsAllScenes = false
+    /// Today's energy use compared with the same time yesterday.
+    @State private var energyTrend: Trend?
+    @State private var temperatureChange: Double?
+    @State private var confirmsTurnOff = false
+    /// The day summary written on the iPhone; `nil` when Apple Intelligence isn't available.
+    @State private var digest: DayDigest? = DayDigest.isAvailable && DaySummarySetting.isEnabled ? DayDigest() : nil
+    @State private var readsDigest = false
     /// Height of the navigation bar area above the scroll content; the hero extends under it.
     @State private var topInset: CGFloat = 0
     /// The bar gets its opaque edge only once the illustration has scrolled away.
@@ -65,7 +73,7 @@ private struct HomeDashboard: View {
             VStack(spacing: Theme.sectionSpacing) {
                 hero
                 metrics
-                SummaryCard(summary: store.summary)
+                SummaryCard(summary: summary, digest: digest) { readsDigest = true }
                 scenes
                 favorites
             }
@@ -83,7 +91,7 @@ private struct HomeDashboard: View {
         .background(Theme.background)
         .scrollEdgeEffectStyle(.hard, for: .top)
         .navigationTitle(store.serverConfig?.locationName ?? String(localized: "Home"))
-        .navigationSubtitle(Text(Date.now, format: .dateTime.weekday(.wide).day().month(.wide).hour().minute()))
+        .navigationSubtitle(subtitle)
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 if let serverURL = store.serverURL {
@@ -92,6 +100,10 @@ private struct HomeDashboard: View {
                     }
                 }
                 Menu("More", systemImage: "ellipsis") {
+                    Button("Turn Everything Off", systemImage: "power") {
+                        confirmsTurnOff = true
+                    }
+                    .disabled(store.devicesToTurnOff.isEmpty)
                     Button("Refresh", systemImage: "arrow.clockwise") {
                         Task { await store.connect() }
                     }
@@ -102,7 +114,60 @@ private struct HomeDashboard: View {
             }
         }
         .refreshable { await store.connect() }
+        .task(id: store.indoorTemperatureSensors.map(\.entityID)) {
+            temperatureChange = await store.temperatureChangeSinceYesterday()
+        }
+        .task(id: store.phase == .connected) {
+            guard store.phase == .connected, let digest else { return }
+            await digest.refreshIfNeeded(from: store, now: summary.sentences + summary.more)
+        }
         .sheet(item: $opened) { DeviceSheet(entityID: $0.id) }
+        .sheet(isPresented: $readsDigest) {
+            if let digest { DaySummarySheet(digest: digest, current: summary.sentences + summary.more) }
+        }
+        #if DEBUG
+        // `-sheet light.lampadaire` opens a device sheet at launch, to check its design; `-sheet day` the day summary.
+        .onAppear {
+            guard let id = UserDefaults.standard.string(forKey: "sheet") else { return }
+            if id == "day" { readsDigest = digest != nil } else { opened = OpenedDevice(id: id) }
+        }
+        #endif
+        .overlay(alignment: .bottom) {
+            if let joined = store.household.joinedHouseholdName {
+                Label("You joined \(joined)", systemImage: "checkmark.circle.fill")
+                    .font(.roundedSubheadlineEmphasized)
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(Color(white: 0.12), in: .capsule)
+                    .padding(.bottom, 12)
+                    .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
+                    .task {
+                        try? await Task.sleep(for: .seconds(4))
+                        withAnimation(.smooth) { store.household.joinedHouseholdName = nil }
+                    }
+            }
+        }
+        // The name is set by the iCloud share callback, outside any transaction.
+        .animation(.smooth, value: store.household.joinedHouseholdName)
+        .confirmationDialog("Turn Everything Off?", isPresented: $confirmsTurnOff, titleVisibility: .visible) {
+            Button("Turn Off \(store.devicesToTurnOff.count) Devices", role: .destructive) {
+                Task { await store.turnEverythingOff() }
+            }
+        } message: {
+            Text("Lights, plugs, fans and speakers. Devices set to “Never Turn Off” stay on.")
+        }
+    }
+
+    private var summary: HomeSummary { store.summary(temperatureChange: temperatureChange) }
+
+    /// "Tuesday 20 October · 15:49".
+    private var subtitle: Text {
+        let day = Date.now.formatted(.dateTime.weekday(.wide).day().month(.wide))
+        let time = Date.now.formatted(date: .omitted, time: .shortened)
+        return Text(verbatim: "\(day.prefix(1).localizedUppercase)\(day.dropFirst()) · \(time)")
+            .fontWeight(.medium)
+            .foregroundStyle(.secondary)
     }
 
     // MARK: Hero
@@ -115,10 +180,6 @@ private struct HomeDashboard: View {
             .frame(height: heroHeight)
             .frame(maxWidth: .infinity)
             .clipped()
-            .overlay(alignment: .bottom) {
-                LinearGradient(colors: [Theme.background.opacity(0), Theme.background], startPoint: .top, endPoint: .bottom)
-                    .frame(height: 90)
-            }
             .padding(.horizontal, -Theme.screenPadding)
             .accessibilityHidden(true)
     }
@@ -128,12 +189,14 @@ private struct HomeDashboard: View {
             if case .offline(let since) = store.phase {
                 OfflineBanner(since: since)
                     .padding(.bottom, 10)
+                    .transition(.opacity.combined(with: .scale(0.96, anchor: .bottom)))
             } else {
                 Spacer().frame(height: 9)
             }
             HeroRing(temperature: store.heroTemperature, isDimmed: store.phase != .connected)
             Spacer(minLength: 0)
         }
+        .animation(.smooth, value: store.phase)
         .frame(height: heroSpace - Theme.sectionSpacing)
     }
 
@@ -152,8 +215,13 @@ private struct HomeDashboard: View {
                     symbol: "bolt.fill",
                     title: "Energy",
                     value: energy.numericState?.formatted(.number.precision(.fractionLength(0...1))) ?? energy.state,
-                    unit: energy.unit
+                    unit: energy.unit,
+                    trend: energyTrend
                 )
+                .task(id: energy.entityID) {
+                    guard let change = await store.changeSinceYesterday(of: energy), change != 0 else { return }
+                    energyTrend = change < 0 ? .down : .up
+                }
             } else {
                 MetricCard(
                     symbol: "power",
@@ -173,6 +241,10 @@ private struct HomeDashboard: View {
                 if scenes.count > 4 {
                     SectionHeader(title: "Scenes", actionTitle: showsAllScenes ? "Show Less" : "See All") {
                         withAnimation(.smooth) { showsAllScenes.toggle() }
+                    }
+                } else if let serverURL = store.serverURL {
+                    SectionHeader(title: "Scenes", actionTitle: "Edit") {
+                        openURL(serverURL.appending(path: "config/scene/dashboard"))
                     }
                 } else {
                     SectionHeader(title: "Scenes")

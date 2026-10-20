@@ -37,6 +37,7 @@ struct NumberLabel: View {
                 .font(size.value)
                 .monospacedDigit()
                 .contentTransition(.numericText())
+                .animation(.smooth, value: value)
             if let unit {
                 Text(unit)
                     .font(size.unit)
@@ -98,23 +99,73 @@ struct MetricCard: View {
 }
 
 /// The plain-language summary of the home ("All Quiet at Home").
+/// With a day digest, a calm home shows the summary written on the iPhone instead; anything worth a look
+/// keeps the plain sentences, which are always right.
 struct SummaryCard: View {
     let summary: HomeSummary
+    var digest: DayDigest?
+    var onRead: () -> Void = {}
+    @State private var isExpanded = false
+
+    private var written: WrittenDay? { summary.isCalm ? digest?.written : nil }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
-                Image(systemName: summary.isCalm ? "leaf.fill" : "exclamationmark.circle.fill")
-                    .foregroundStyle(summary.isCalm ? .green : .orange)
-                Text(summary.title)
-                    .font(.roundedHeadline)
+                if written != nil {
+                    Image(systemName: "sparkles")
+                        .foregroundStyle(Theme.generated)
+                    Text("Your Day in Brief")
+                        .font(.roundedHeadline)
+                } else {
+                    Image(systemName: summary.isCalm ? "leaf.fill" : "exclamationmark.circle.fill")
+                        .foregroundStyle(summary.isCalm ? .green : .orange)
+                    Text(summary.title)
+                        .font(.roundedHeadline)
+                }
                 Spacer()
+                if written == nil, !summary.more.isEmpty {
+                    Button {
+                        withAnimation(.smooth) { isExpanded.toggle() }
+                    } label: {
+                        Image(systemName: isExpanded ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(.tertiary)
+                            .contentTransition(.symbolEffect(.replace))
+                            .frame(width: 30, height: 30)
+                            .contentShape(.rect)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(-7)
+                    .accessibilityLabel(isExpanded ? "Show Less" : "Show More")
+                }
             }
-            Text(summary.text)
-                .font(.roundedSubheadline)
+            Text(written?.brief ?? (isExpanded ? summary.sentences + summary.more : summary.sentences).joined(separator: " "))
+                .font(.subheadline)
+                .fontDesign(.default)
                 .lineSpacing(1)
                 .fixedSize(horizontal: false, vertical: true)
+                .contentTransition(.opacity)
+            if let digest, digest.written != nil || (summary.isCalm && digest.state == .writing) {
+                HStack {
+                    if written != nil {
+                        Text("Written on your iPhone").foregroundStyle(.tertiary)
+                    } else if digest.state == .writing {
+                        Text("Writing your day…").foregroundStyle(.tertiary)
+                    }
+                    Spacer()
+                    if digest.written != nil {
+                        Button("Read Summary", action: onRead)
+                            .fontWeight(.semibold)
+                            .buttonStyle(.plain)
+                            .foregroundStyle(.tint)
+                    }
+                }
+                .font(.roundedFootnote)
+                .padding(.top, 4)
+            }
         }
+        .animation(.smooth, value: digest?.state)
         .padding(.horizontal, 18)
         .padding(.top, 16)
         .padding(.bottom, 18)
@@ -164,9 +215,9 @@ struct RingMetricCard: View {
 
 // MARK: - Rings
 
-struct ProgressRing<Center: View>: View {
+struct ProgressRing<Fill: ShapeStyle, Center: View>: View {
     let progress: Double
-    let color: Color
+    let color: Fill
     var lineWidth: CGFloat = 6
     @ViewBuilder var center: Center
 
@@ -194,7 +245,7 @@ struct HeroRing: View {
         ZStack {
             Circle().fill(.ultraThinMaterial)
             Circle().fill(Theme.card.opacity(0.9))
-            ProgressRing(progress: progress, color: .orange, lineWidth: 13) {
+            ProgressRing(progress: progress, color: Self.arc, lineWidth: 13) {
                 VStack(spacing: 0) {
                     if let temperature {
                         NumberLabel(
@@ -220,7 +271,15 @@ struct HeroRing: View {
         }
         .frame(width: 160, height: 160)
         .opacity(isDimmed ? 0.55 : 1)
+        .animation(.smooth, value: isDimmed)
     }
+
+    /// Yellow at the top of the ring turning orange towards the bottom.
+    private static let arc = LinearGradient(
+        colors: [Color(red: 1, green: 0.839, blue: 0.039), Color(red: 1, green: 0.584, blue: 0)],
+        startPoint: .top,
+        endPoint: .bottom
+    )
 
     /// Maps 10…30 °C onto the ring.
     private var progress: Double {
@@ -290,6 +349,7 @@ struct TemperatureStepper: View {
                 .font(.roundedHeadline)
                 .monospacedDigit()
                 .contentTransition(.numericText())
+                .animation(.snappy, value: value)
                 .padding(.horizontal, 4)
             Button {
                 if let value { onChange(value + step) }
@@ -309,6 +369,8 @@ struct TemperatureStepper: View {
 struct PillPicker<Value: Hashable>: View {
     let options: [(value: Value, title: LocalizedStringKey, symbol: String?)]
     @Binding var selection: Value
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Namespace private var indicator
 
     var body: some View {
         ScrollView(.horizontal) {
@@ -328,9 +390,19 @@ struct PillPicker<Value: Hashable>: View {
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
                         .foregroundStyle(isSelected ? Theme.textOnPillActive : Color.secondary)
-                        .background(isSelected ? Theme.pillActive : Theme.pill, in: .capsule)
+                        .background {
+                            // The active capsule slides to the new pill; with Reduce Motion it crossfades in place.
+                            if isSelected {
+                                if reduceMotion {
+                                    Capsule().fill(Theme.pillActive)
+                                } else {
+                                    Capsule().fill(Theme.pillActive).matchedGeometryEffect(id: "selection", in: indicator)
+                                }
+                            }
+                        }
+                        .background(Theme.pill, in: .capsule)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.pressable)
                 }
             }
         }
@@ -348,6 +420,82 @@ struct CompactLabelStyle: LabelStyle {
         HStack(spacing: 6) {
             configuration.icon
             configuration.title
+        }
+    }
+}
+
+// MARK: - Buttons
+
+extension ButtonStyle where Self == PressableButtonStyle {
+    /// A plain button that sinks slightly under the finger: cards, tiles and pills.
+    static var pressable: PressableButtonStyle { PressableButtonStyle() }
+}
+
+/// Plain style with press feedback. Reduce Motion keeps the feedback as a dim instead of a scale.
+struct PressableButtonStyle: ButtonStyle {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.97 : 1)
+            .opacity(configuration.isPressed && reduceMotion ? 0.7 : 1)
+            .animation(.snappy(duration: 0.16), value: configuration.isPressed)
+    }
+}
+
+/// The full-width button of the "Bouton" component in Figma, on the system Liquid Glass styles.
+struct WideButton: View {
+    enum Style {
+        /// Blue, filled: the main action of a screen.
+        case primary
+        /// Plain glass: a secondary action.
+        case secondary
+        /// Glass with a red label: an action that removes something or someone's access.
+        case destructive
+        /// Red, filled: the final confirmation of a deletion.
+        case destructiveProminent
+
+        var isDestructive: Bool { self == .destructive || self == .destructiveProminent }
+    }
+
+    let title: LocalizedStringKey
+    var style: Style = .primary
+    var isBusy = false
+    let action: () -> Void
+
+    var body: some View {
+        Button(role: style.isDestructive ? .destructive : nil, action: action) {
+            ZStack {
+                Text(title).opacity(isBusy ? 0 : 1)
+                if isBusy { ProgressView().tint(style == .primary || style == .destructiveProminent ? .white : .secondary) }
+            }
+            .font(.roundedHeadline)
+            .foregroundStyle(labelColor)
+            .frame(maxWidth: .infinity)
+        }
+        .modifier(GlassStyle(prominent: style == .primary || style == .destructiveProminent))
+        .tint(style == .destructiveProminent ? .red : nil)
+        .controlSize(.large)
+        .disabled(isBusy)
+    }
+
+    private var labelColor: Color {
+        switch style {
+        case .primary, .destructiveProminent: .white
+        case .secondary: .primary
+        case .destructive: .red
+        }
+    }
+
+    private struct GlassStyle: ViewModifier {
+        let prominent: Bool
+
+        func body(content: Content) -> some View {
+            if prominent {
+                content.buttonStyle(.glassProminent)
+            } else {
+                content.buttonStyle(.glass)
+            }
         }
     }
 }

@@ -73,9 +73,8 @@ final class HomeStore {
     func start() async {
         guard !isDemo else { return }
         Task { await household.start() }
-        if credentials == nil {
-            discovery.start()
-        } else {
+        // Without credentials, onboarding starts discovery once it has explained why it needs the local network.
+        if credentials != nil {
             await connect()
         }
     }
@@ -203,6 +202,19 @@ final class HomeStore {
         return (DayUsage(changes: todayChanges, day: today), DayUsage(changes: changes, day: yesterday))
     }
 
+    /// How much a sensor's value differs from its value at the same time yesterday.
+    func changeSinceYesterday(of entity: EntityState) async -> Double? {
+        guard let current = entity.numericState else { return nil }
+        if isDemo { return -0.6 }
+        let sameTimeYesterday = Date.now.addingTimeInterval(-86_400)
+        guard
+            let connection,
+            let changes = try? await connection.history(of: entity.entityID, since: sameTimeYesterday.addingTimeInterval(-3600)),
+            let then = changes.last(where: { $0.date <= sameTimeYesterday }).flatMap({ Double($0.state) })
+        else { return nil }
+        return current - then
+    }
+
     /// Keeps the changes from `start`, prefixed with the state that was current at `start`.
     private static func changes(_ changes: [StateChange], startingAt start: Date) -> [StateChange] {
         let before = changes.last { $0.date <= start }
@@ -227,6 +239,153 @@ final class HomeStore {
         layout = HomeLayout()
         phase = .signedOut
         discovery.start()
+    }
+
+    // MARK: - Device details
+
+    /// State changes since `start`, oldest first; the first entry is the state at `start`.
+    func changes(of entityID: String, since start: Date) async -> [StateChange] {
+        if isDemo { return DemoHome.changes(of: entityID, since: start) }
+        guard let connection else { return [] }
+        return (try? await connection.history(of: entityID, since: start)) ?? []
+    }
+
+    func logbook(of entityID: String, since start: Date) async -> [LogbookEntry] {
+        if isDemo { return DemoHome.logbook(of: entityID) }
+        guard let connection else { return [] }
+        return (try? await connection.logbook(of: entityID, since: start)) ?? []
+    }
+
+    func statistics(of entityID: String, since start: Date, period: String) async -> [StatisticPoint] {
+        if isDemo { return DemoHome.statistics(of: entityID, since: start, period: period) }
+        guard let connection else { return [] }
+        return (try? await connection.statistics(of: entityID, since: start, period: period)) ?? []
+    }
+
+    /// Automations that act on or watch the entity.
+    func automations(using entity: EntityState) async -> [EntityState] {
+        if isDemo { return entity.kind == .cover ? [states["automation.trop_chaud"]].compactMap { $0 } : [] }
+        guard let connection, let ids = try? await connection.automations(using: entity.entityID) else { return [] }
+        return ids.compactMap { states[$0] }
+    }
+
+    /// Saves automations and scripts on the server; `nil` when signed out or in the demo.
+    var configEditor: ConfigEditor? {
+        guard !isDemo, let credentials else { return nil }
+        return ConfigEditor(serverURL: credentials.serverURL, accessToken: credentials.accessToken)
+    }
+
+    /// Notify services available on the server (`mobile_app_iphone_de_theo`, `notify`).
+    func notifyServices() async -> [String] {
+        if isDemo { return ["mobile_app_iphone"] }
+        guard let connection, let services = try? await connection.send(["type": "get_services"]) else { return [] }
+        return services["notify"]?.objectValue.map { Array($0.keys).sorted() } ?? []
+    }
+
+    func runScript(_ scriptID: String, variables: [String: JSONValue] = [:]) async throws {
+        guard !isDemo else { return }
+        guard let connection else { throw HomeAssistantError.connectionClosed }
+        try await connection.callService(domain: "script", service: "turn_on", entityID: "script.\(scriptID)",
+                                         data: variables.isEmpty ? [:] : ["variables": .object(variables)])
+    }
+
+    func stopScript(_ scriptID: String) async {
+        guard !isDemo, let connection else { return }
+        try? await connection.callService(domain: "script", service: "turn_off", entityID: "script.\(scriptID)")
+    }
+
+    // MARK: - Presence
+
+    /// Registers Maison as a mobile app device for the signed-in user (`/api/mobile_app/registrations`).
+    func registerMobileApp(deviceName: String) async throws -> Webhook {
+        if isDemo { return Webhook(id: "demo", localURL: nil, remoteURL: nil) }
+        guard let credentials else { throw HomeAssistantError.connectionClosed }
+        var request = URLRequest(url: credentials.serverURL.appending(path: "api/mobile_app/registrations"))
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(credentials.accessToken)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+        request.httpBody = try JSONEncoder().encode(JSONValue.object([
+            "device_id": .string(UUID().uuidString),
+            "app_id": "com.theodaguier.maison",
+            "app_name": "Maison",
+            "app_version": .string(version),
+            "device_name": .string(deviceName),
+            "manufacturer": "Apple",
+            "model": "iPhone",
+            "os_name": "iOS",
+            "os_version": .string(ProcessInfo.processInfo.operatingSystemVersionString),
+            "supports_encryption": false,
+        ]))
+        let (data, response) = try await URLSession.shared.data(for: request)
+        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        guard (200..<300).contains(status),
+              let id = try JSONDecoder().decode(JSONValue.self, from: data)["webhook_id"]?.stringValue else {
+            throw HomeAssistantError.invalidResponse(statusCode: status)
+        }
+        let remote = serverConfig?.externalURL.flatMap { $0.isEmpty ? nil : URL(string: $0) }
+        return Webhook(id: id, localURL: credentials.serverURL, remoteURL: remote)
+    }
+
+    /// Adds the iPhone's tracker to the person linked to the signed-in user, so they count as home or away.
+    func attachTracker(webhookID: String) async throws {
+        guard !isDemo, let connection, let userID = currentUser?.id else { return }
+        let entities = try await connection.send(["type": "config/entity_registry/list"])
+        guard let tracker = entities.arrayValue?.first(where: {
+            $0["platform"]?.stringValue == "mobile_app" && $0["unique_id"]?.stringValue == webhookID
+                && $0["entity_id"]?.stringValue?.hasPrefix("device_tracker.") == true
+        })?["entity_id"]?.stringValue else { return }
+        let persons = try await connection.send(["type": "person/list"])
+        guard let person = persons["storage"]?.arrayValue?.first(where: { $0["user_id"]?.stringValue == userID }),
+              let personID = person["id"]?.stringValue else { return }
+        let trackers = person["device_trackers"]?.arrayValue?.compactMap(\.stringValue) ?? []
+        guard !trackers.contains(tracker) else { return }
+        _ = try await connection.send([
+            "type": "person/update",
+            "person_id": .string(personID),
+            "device_trackers": .array((trackers + [tracker]).map { .string($0) }),
+        ])
+    }
+
+    /// Whether the signed-in user's person already has a tracker (often Home Assistant's own app).
+    var isTrackedByHomeAssistant: Bool {
+        guard let userID = currentUser?.id else { return false }
+        return states.values.contains {
+            $0.domain == "person" && $0.attributes["user_id"]?.stringValue == userID
+                && !($0.attributes["device_trackers"]?.arrayValue?.isEmpty ?? true)
+        }
+    }
+
+    // MARK: - Automations
+
+    /// Recent runs of every automation, from the traces Home Assistant keeps.
+    func automationRuns() async -> [AutomationRun] {
+        if isDemo { return DemoHome.runs }
+        guard let connection else { return [] }
+        return (try? await connection.automationRuns()) ?? []
+    }
+
+    /// The rule behind an automation entity, or `nil` when it isn't stored in the UI editor's file.
+    func rule(for automation: EntityState) async throws -> AutomationRule? {
+        guard let id = automation.attributes["id"]?.stringValue else { return nil }
+        if isDemo { return DemoHome.rules[id].map { AutomationRule(id: id, config: $0) } }
+        guard let editor = configEditor else { throw HomeAssistantError.connectionClosed }
+        return try await editor.load(.automation, id: id).map { AutomationRule(id: id, config: $0) }
+    }
+
+    func save(_ rule: AutomationRule) async throws {
+        if isDemo {
+            DemoHome.rules[rule.id] = rule.config
+            return
+        }
+        guard let editor = configEditor else { throw HomeAssistantError.connectionClosed }
+        try await editor.save(.automation, id: rule.id, config: rule.config)
+    }
+
+    func delete(_ rule: AutomationRule) async throws {
+        if isDemo { return }
+        guard let editor = configEditor else { throw HomeAssistantError.connectionClosed }
+        try await editor.delete(.automation, id: rule.id)
     }
 
     // MARK: - Actions
@@ -335,16 +494,32 @@ extension HomeStore {
         states.values.filter { $0.kind == .automation }.sortedByName()
     }
 
+    /// One entry per integration, with how many times it is set up, by name.
+    var integrationSummaries: [IntegrationSummary] {
+        Dictionary(grouping: integrations, by: \.domain)
+            .map { IntegrationSummary(domain: $0.key, title: $0.value.first?.title ?? $0.key, count: $0.value.count) }
+            .sorted { $0.title.localizedStandardCompare($1.title) == .orderedAscending }
+    }
+
+    /// Entities kept out of the app: hidden in Home Assistant or of no use to someone at home.
+    var technicalEntityCount: Int {
+        states.values.filter { layout.hiddenEntities.contains($0.entityID) || $0.kind == .other || $0.kind == .button }.count
+    }
+
     var lightsOn: [EntityState] {
         devices.filter { $0.kind == .light && $0.state == "on" }
     }
 
-    /// The temperature shown in the hero ring, with where it comes from.
-    var heroTemperature: HeroTemperature? {
-        let indoorSensors = devices.filter {
+    var indoorTemperatureSensors: [EntityState] {
+        devices.filter {
             $0.kind == .sensor && $0.deviceClass == "temperature" && $0.numericState != nil
                 && !$0.name.lowercased().contains("ext") && !$0.name.lowercased().contains("out")
         }
+    }
+
+    /// The temperature shown in the hero ring, with where it comes from.
+    var heroTemperature: HeroTemperature? {
+        let indoorSensors = indoorTemperatureSensors
         if !indoorSensors.isEmpty {
             let values = indoorSensors.compactMap(\.numericState)
             return HeroTemperature(value: values.reduce(0, +) / Double(values.count), source: .indoor)
@@ -381,25 +556,26 @@ extension HomeStore {
             .max()
     }
 
-    /// The short sentences of the home summary card.
-    var summary: HomeSummary {
+    /// The sentences of the home summary card, most important first.
+    /// `temperatureChange` is the indoor temperature compared with the same time yesterday.
+    func summary(temperatureChange: Double? = nil) -> HomeSummary {
         var sentences: [String] = []
         let locks = devices.filter { $0.kind == .lock }
         let openings = devices.filter { $0.kind == .binarySensor && ["door", "window", "garage_door", "opening"].contains($0.deviceClass ?? "") && $0.isActive }
         let unlocked = locks.filter { $0.state == "unlocked" }
 
+        for lock in unlocked {
+            sentences.append(String(localized: "\(Phrasing.subject(lock.name)) is unlocked."))
+        }
+        for opening in openings {
+            sentences.append(String(localized: "\(Phrasing.subject(opening.name)) is open."))
+        }
         if let lock = locks.first(where: { $0.state == "locked" }), unlocked.isEmpty {
             if let since = lock.lastChanged {
-                sentences.append(String(localized: "\(lock.name) has been locked since \(since.formatted(date: .omitted, time: .shortened))."))
+                sentences.append(String(localized: "\(Phrasing.subject(lock.name)) has been locked since \(Phrasing.time(since))."))
             } else {
-                sentences.append(String(localized: "\(lock.name) is locked."))
+                sentences.append(String(localized: "\(Phrasing.subject(lock.name)) is locked."))
             }
-        }
-        for lock in unlocked {
-            sentences.append(String(localized: "\(lock.name) is unlocked."))
-        }
-        for opening in openings.prefix(2) {
-            sentences.append(String(localized: "\(opening.name) is open."))
         }
 
         let lights = lightsOn
@@ -407,20 +583,73 @@ extension HomeStore {
             sentences.append(String(localized: "All lights are off."))
         } else {
             let rooms = Set(lights.compactMap { area(of: $0)?.name })
-            if rooms.count == 1, let room = rooms.first {
-                sentences.append(String(localized: "\(lights.count) lights on, all in \(room)."))
-            } else {
-                sentences.append(String(localized: "\(lights.count) lights on."))
+            let room = rooms.count == 1 ? rooms.first : nil
+            switch (lights.count, room) {
+            case (1, let room?):
+                sentences.append(String(localized: "One light is on, \(Phrasing.location(room))."))
+            case (1, nil):
+                sentences.append(String(localized: "One light is on."))
+            case (_, let room?):
+                sentences.append(String(localized: "\(Phrasing.count(lights.count, capitalized: true)) lights are on, all \(Phrasing.location(room))."))
+            default:
+                sentences.append(String(localized: "\(Phrasing.count(lights.count, capitalized: true)) lights are on, in \(rooms.count) rooms."))
             }
+        }
+
+        if let change = temperatureChange {
+            let degrees = abs(change).formatted(.number.precision(.fractionLength(1)))
+            if abs(change) < 0.3 {
+                sentences.append(String(localized: "Same temperature as yesterday at this time."))
+            } else if change > 0 {
+                sentences.append(String(localized: "It’s \(degrees)° warmer than yesterday at this time."))
+            } else {
+                sentences.append(String(localized: "It’s \(degrees)° cooler than yesterday at this time."))
+            }
+        }
+
+        // Shown once the card is expanded.
+        var more: [String] = []
+        for player in devices.filter({ $0.kind == .mediaPlayer && $0.state == "playing" }) {
+            if let title = player.attributes["media_title"]?.stringValue {
+                more.append(String(localized: "\(player.name) is playing “\(title)”."))
+            } else {
+                more.append(String(localized: "\(player.name) is playing."))
+            }
+        }
+        for climate in devices.filter({ $0.kind == .climate && $0.state != "off" }) {
+            if let target = climate.targetTemperature {
+                more.append(String(localized: "\(Phrasing.subject(climate.name)) is set to \(EntityState.degrees(target))."))
+            }
+        }
+        let silent = devices.filter(\.isUnavailable)
+        if !silent.isEmpty {
+            more.append(String(localized: "\(silent.count) devices aren’t responding: \(silent.map(\.name).formatted(.list(type: .and)))."))
         }
 
         let isCalm = unlocked.isEmpty && openings.isEmpty
         return HomeSummary(
             title: isCalm ? String(localized: "All Quiet at Home") : String(localized: "Worth a Look"),
-            text: sentences.joined(separator: " "),
+            sentences: sentences,
+            more: more,
             isCalm: isCalm
         )
     }
+
+    /// How much warmer the indoor sensors are than at the same time yesterday.
+    func temperatureChangeSinceYesterday() async -> Double? {
+        if isDemo { return 1.2 }
+        var changes: [Double] = []
+        for sensor in indoorTemperatureSensors {
+            if let change = await changeSinceYesterday(of: sensor) { changes.append(change) }
+        }
+        return changes.isEmpty ? nil : changes.reduce(0, +) / Double(changes.count)
+    }
+}
+
+struct IntegrationSummary: Equatable {
+    let domain: String
+    let title: String
+    let count: Int
 }
 
 struct HeroTemperature: Equatable {
@@ -431,8 +660,12 @@ struct HeroTemperature: Equatable {
 
 struct HomeSummary: Equatable {
     let title: String
-    let text: String
+    let sentences: [String]
+    /// Details that don't need attention, shown once the card is expanded.
+    var more: [String] = []
     let isCalm: Bool
+
+    var text: String { sentences.joined(separator: " ") }
 }
 
 extension Sequence where Element == EntityState {

@@ -13,6 +13,13 @@ enum Theme {
     static let trendDownBackground = Color("TrendDownBackground")
     static let cardBorder = Color("CardBorder")
 
+    /// Marks text written on the iPhone by the language model (the "Symbole/Génération" sparkles).
+    static let generated = LinearGradient(
+        colors: [Color(red: 1, green: 0.6, blue: 0.15), Color(red: 0.95, green: 0.25, blue: 0.5), Color(red: 0.42, green: 0.36, blue: 1)],
+        startPoint: .bottomLeading,
+        endPoint: .topTrailing
+    )
+
     static let cardRadius: CGFloat = 26
     static let rowRadius: CGFloat = 20
     static let tileRadius: CGFloat = 22

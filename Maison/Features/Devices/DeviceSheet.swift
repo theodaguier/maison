@@ -34,6 +34,12 @@ struct DeviceSheet: View {
         case .light: LightControls(entity: entity)
         case .climate: ClimateControls(entity: entity)
         case .cover: CoverControls(entity: entity)
+        case .switch: SwitchControls(entity: entity)
+        case .lock: LockControls(entity: entity)
+        case .mediaPlayer: MediaControls(entity: entity)
+        case .fan: FanControls(entity: entity)
+        case .sensor where entity.numericState != nil: SensorControls(entity: entity)
+        case .binarySensor: OpeningControls(entity: entity)
         default: GenericControls(entity: entity)
         }
     }
@@ -121,6 +127,8 @@ private struct LightControls: View {
             }
 
             UsageCard(entity: entity)
+            SheetFooter(entity: entity)
+                .frame(maxWidth: .infinity)
         }
         .padding(.top, 8)
     }
@@ -222,7 +230,7 @@ private struct UsageCard: View {
                         Spacer()
                         comparison(today: usage.today.total, yesterday: usage.yesterday.total)
                     }
-                    Timeline(usage: usage.today)
+                    UsageTimeline(usage: usage.today)
                     HStack {
                         Text("0 h"); Spacer(); Text("6 h"); Spacer(); Text("12 h"); Spacer(); Text("18 h"); Spacer(); Text("24 h")
                     }
@@ -265,30 +273,6 @@ private struct UsageCard: View {
                     .background(trend.background, in: .rect(cornerRadius: 7))
             }
         }
-    }
-}
-
-private struct Timeline: View {
-    let usage: DayUsage
-
-    var body: some View {
-        GeometryReader { proxy in
-            let width = proxy.size.width
-            ZStack(alignment: .leading) {
-                Capsule().fill(Theme.gaugeTrack)
-                ForEach(usage.periods, id: \.start) { period in
-                    let x = width * period.start.timeIntervalSince(usage.day.start) / usage.day.duration
-                    let w = max(3, width * period.duration / usage.day.duration)
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(Color.yellow.opacity(0.75))
-                        .frame(width: w)
-                        .offset(x: x)
-                }
-            }
-        }
-        .frame(height: 26)
-        .clipShape(.rect(cornerRadius: 8))
-        .accessibilityHidden(true)
     }
 }
 
@@ -429,10 +413,7 @@ private struct ClimateControls: View {
                 .cardStyle(radius: Theme.rowRadius)
             }
 
-            Label("Via Home Assistant", systemImage: "house.fill")
-                .labelStyle(.compact)
-                .font(.roundedFootnote)
-                .foregroundStyle(.tertiary)
+            SheetFooter(entity: entity)
         }
         .padding(.top, 8)
     }
@@ -574,44 +555,130 @@ private struct CoverControls: View {
     let entity: EntityState
 
     var body: some View {
+        let open = entity.level ?? (entity.state == "closed" ? 0 : 1)
         VStack(alignment: .leading, spacing: 18) {
-            NumberLabel(
-                value: ((entity.level ?? (entity.state == "closed" ? 0 : 1)) * 100).formatted(.number.precision(.fractionLength(0))),
+            SheetHeader(
+                value: (open * 100).formatted(.number.precision(.fractionLength(0))),
                 unit: "%",
-                size: .xLarge
+                caption: String(localized: "open"),
+                status: status(open),
+                statusColor: open <= 0.01 ? .secondary : open >= 0.99 ? .green : .orange,
+                room: store.area(of: entity)?.name
             )
-            Text(entity.statusText)
-                .font(.roundedFootnote)
-                .foregroundStyle(.secondary)
+            ShutterSlider(level: open, isEnabled: entity.supportsLevel) { level in
+                Task { await store.setLevel(level, on: entity) }
+            }
+            .frame(maxWidth: .infinity)
+            HStack(spacing: 28) {
+                coverButton(LocalizedStringKey("action.open"), symbol: "chevron.up", service: "open_cover")
+                coverButton("Stop", symbol: "stop.fill", service: "stop_cover")
+                coverButton("Close", symbol: "chevron.down", service: "close_cover")
+            }
+            .frame(maxWidth: .infinity)
             if entity.supportsLevel {
-                VerticalLevelSlider(
-                    level: entity.level ?? 0,
-                    colors: [Color.orange.opacity(0.85), Color.orange.opacity(0.45)],
-                    symbol: entity.symbolName
-                ) { level in
-                    Task { await store.setLevel(level, on: entity) }
+                HStack(spacing: 8) {
+                    preset("Fully Open", level: 1)
+                    preset("Halfway", level: 0.5)
+                    preset("Closed", level: 0)
                 }
                 .frame(maxWidth: .infinity)
             }
-            HStack(spacing: 12) {
-                coverButton("Open", symbol: "arrow.up", service: "open_cover")
-                coverButton("Stop", symbol: "stop.fill", service: "stop_cover")
-                coverButton("Close", symbol: "arrow.down", service: "close_cover")
-            }
+            SheetFooter(entity: entity)
+                .frame(maxWidth: .infinity)
         }
         .padding(.top, 8)
     }
 
+    private func status(_ open: Double) -> String {
+        if open <= 0.01 { return String(localized: "Closed") }
+        if open >= 0.99 { return String(localized: "Open") }
+        return String(localized: "Partly Open")
+    }
+
     private func coverButton(_ title: LocalizedStringKey, symbol: String, service: String) -> some View {
-        Button {
-            Task { await store.call("cover", service, on: entity) }
-        } label: {
-            Label(title, systemImage: symbol)
-                .font(.roundedSubheadlineEmphasized)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 6)
+        VStack(spacing: 6) {
+            Button {
+                Task { await store.call("cover", service, on: entity) }
+            } label: {
+                Image(systemName: symbol)
+                    .font(.system(size: 20, weight: .semibold))
+                    .frame(width: 44, height: 44)
+            }
+            .buttonStyle(.glass)
+            .buttonBorderShape(.circle)
+            Text(title)
+                .font(.roundedFootnote)
+                .foregroundStyle(.secondary)
         }
-        .buttonStyle(.glass)
+    }
+
+    private func preset(_ title: LocalizedStringKey, level: Double) -> some View {
+        Button {
+            Task { await store.setLevel(level, on: entity) }
+        } label: {
+            Text(title)
+                .font(.roundedSubheadlineEmphasized)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(Theme.pill, in: .capsule)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// A window with its shutter: slats come down from the top as it closes, daylight shows below.
+private struct ShutterSlider: View {
+    let level: Double
+    var isEnabled = true
+    let onCommit: (Double) -> Void
+
+    @State private var dragLevel: Double?
+    private let size = CGSize(width: 190, height: 300)
+
+    var body: some View {
+        let open = dragLevel ?? level
+        let closedHeight = size.height * (1 - open)
+        ZStack(alignment: .top) {
+            Color(red: 0.8, green: 0.9, blue: 0.98)
+            VStack(spacing: 0) {
+                ForEach(0..<max(0, Int(closedHeight / 12)), id: \.self) { _ in
+                    Color(white: 0.86)
+                        .frame(height: 11)
+                        .overlay(alignment: .bottom) { Color(white: 0.72).frame(height: 1) }
+                    Color(white: 0.8).frame(height: 1)
+                }
+            }
+            .frame(height: closedHeight, alignment: .top)
+            .clipped()
+            .overlay(alignment: .bottom) {
+                Capsule().fill(.white.opacity(0.95)).frame(width: 44, height: 4).padding(.bottom, 8)
+                    .opacity(closedHeight > 24 ? 1 : 0)
+            }
+            .frame(maxHeight: .infinity, alignment: .top)
+        }
+        .frame(width: size.width, height: size.height)
+        .clipShape(.rect(cornerRadius: 28, style: .continuous))
+        .overlay { RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(Theme.cardBorder, lineWidth: 1) }
+        .contentShape(.rect(cornerRadius: 28))
+        .gesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { value in
+                    guard isEnabled else { return }
+                    dragLevel = 1 - min(max(value.location.y / size.height, 0), 1)
+                }
+                .onEnded { _ in
+                    if let dragLevel { onCommit(dragLevel) }
+                    dragLevel = nil
+                }
+        )
+        .animation(.smooth, value: level)
+        .sensoryFeedback(.selection, trigger: dragLevel.map { Int($0 * 20) })
+        .accessibilityElement()
+        .accessibilityValue(open.formatted(.percent.precision(.fractionLength(0))))
+        .accessibilityAdjustableAction { direction in
+            onCommit(min(max(level + (direction == .increment ? 0.1 : -0.1), 0), 1))
+        }
     }
 }
 

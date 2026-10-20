@@ -15,7 +15,7 @@ struct MaisonApp: App {
                 .preferredColorScheme(appearance.colorScheme)
                 .task {
                     InvitationInbox.deliver { [store] metadata in
-                        Task { await store.household.accept(metadata) }
+                        store.household.pendingInvitation = metadata
                     }
                     await store.start()
                 }

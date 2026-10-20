@@ -2,25 +2,36 @@ import SwiftUI
 
 struct AutomationsView: View {
     @Environment(HomeStore.self) private var store
-    @Environment(\.openURL) private var openURL
     @State private var filter: Filter = .all
+    @State private var rules: [String: AutomationRule] = [:]
+    @State private var runs: [AutomationRun] = []
+    @State private var editor: EditorTarget?
 
     enum Filter: Hashable { case all, enabled, disabled }
+
+    struct EditorTarget: Identifiable {
+        let rule: AutomationRule
+        let isNew: Bool
+        var id: String { rule.id }
+    }
 
     var body: some View {
         NavigationStack {
             Group {
                 if store.automations.isEmpty {
-                    ContentUnavailableView(
-                        "No Automations",
-                        systemImage: "clock",
-                        description: Text("Automations run on your server, even when your iPhone is off.")
-                    )
+                    ContentUnavailableView {
+                        Label("No Automations", systemImage: "clock")
+                    } description: {
+                        Text("Automations run on your server, even when your iPhone is off.")
+                    } actions: {
+                        Button("New Rule") { editor = EditorTarget(rule: .new(), isNew: true) }
+                            .buttonStyle(.glassProminent)
+                    }
                 } else {
                     ScrollView {
                         VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
                             PillPicker(options: [(.all, "All", nil), (.enabled, "Enabled", nil), (.disabled, "Disabled", nil)], selection: $filter)
-                            RunsTodayCard(automations: store.automations)
+                            RunsTodayCard(automations: store.automations, runs: runs)
                             HStack(alignment: .firstTextBaseline) {
                                 Text("Rules").font(.roundedTitle3)
                                 Spacer()
@@ -31,7 +42,14 @@ struct AutomationsView: View {
                             .padding(.horizontal, 4)
                             .padding(.top, 10)
                             ForEach(filtered) { automation in
-                                AutomationCard(automation: automation)
+                                let id = automation.attributes["id"]?.stringValue
+                                AutomationCard(
+                                    automation: automation,
+                                    rule: id.flatMap { rules[$0] },
+                                    runsToday: runs.filter { $0.automationID == id && $0.didRun && Calendar.current.isDateInToday($0.start) }
+                                ) {
+                                    if let rule = id.flatMap({ rules[$0] }) { editor = EditorTarget(rule: rule, isNew: false) }
+                                }
                             }
                         }
                         .padding(.horizontal, Theme.screenPadding)
@@ -43,15 +61,27 @@ struct AutomationsView: View {
             }
             .navigationTitle("Automations")
             .toolbar {
-                if let serverURL = store.serverURL {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button("New Automation", systemImage: "plus") {
-                            openURL(serverURL.appending(path: "config/automation/edit/new"))
-                        }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("New Rule", systemImage: "plus") {
+                        editor = EditorTarget(rule: .new(), isNew: true)
                     }
                 }
             }
+            .sheet(item: $editor, onDismiss: { Task { await load() } }) { target in
+                RuleEditor(rule: target.rule, isNew: target.isNew)
+            }
+            .task(id: store.automations.map(\.entityID)) { await load() }
+            .refreshable { await load() }
         }
+    }
+
+    private func load() async {
+        runs = await store.automationRuns()
+        var loaded: [String: AutomationRule] = [:]
+        for automation in store.automations {
+            if let rule = try? await store.rule(for: automation) { loaded[rule.id] = rule }
+        }
+        rules = loaded
     }
 
     private var filtered: [EntityState] {
@@ -69,17 +99,20 @@ extension EntityState {
     }
 }
 
-/// How many rules ran today, with a bar per hour.
+/// How many rules ran today, whether they all went well, with a bar per hour.
 private struct RunsTodayCard: View {
     let automations: [EntityState]
+    let runs: [AutomationRun]
 
     var body: some View {
-        let runs = automations.compactMap(\.lastTriggered).filter { Calendar.current.isDateInToday($0) }
-        let hours = Set(runs.map { Calendar.current.component(.hour, from: $0) })
+        let today = runs.filter { $0.didRun && Calendar.current.isDateInToday($0.start) }
+        let failed = today.filter(\.failed).count
+        let perHour = Dictionary(grouping: today) { Calendar.current.component(.hour, from: $0.start) }.mapValues(\.count)
+        let peak = max(perHour.values.max() ?? 1, 1)
         let enabled = automations.filter { $0.state == "on" }.count
 
         VStack(alignment: .leading, spacing: 0) {
-            Label("Rules Run Today", systemImage: "bolt.fill")
+            Label("Runs Today", systemImage: "bolt.fill")
                 .labelStyle(.compact)
                 .font(.roundedSubheadlineEmphasized)
                 .foregroundStyle(.secondary)
@@ -88,23 +121,31 @@ private struct RunsTodayCard: View {
                 .padding(.bottom, 12)
             Theme.separator.frame(height: 1)
             VStack(alignment: .leading, spacing: 12) {
-                HStack(alignment: .bottom) {
-                    NumberLabel(value: "\(runs.count)", unit: String(localized: "today"), size: .xLarge)
+                HStack(alignment: .top) {
+                    NumberLabel(value: "\(today.count)", unit: today.count == 1 ? String(localized: "time") : String(localized: "times"), size: .xLarge)
                     Spacer()
-                    Text("\(enabled) of \(automations.count) rules enabled")
-                        .font(.roundedSubheadlineEmphasized)
-                        .foregroundStyle(.secondary)
-                        .padding(.bottom, 6)
+                    VStack(alignment: .trailing, spacing: 2) {
+                        if !today.isEmpty {
+                            Text(failed == 0 ? String(localized: "All succeeded") : String(localized: "\(failed) failed"))
+                                .font(.roundedHeadline)
+                                .foregroundStyle(failed == 0 ? .green : .red)
+                        }
+                        Text("\(enabled) of \(automations.count) rules enabled")
+                            .font(.roundedSubheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.top, 10)
                 }
                 HStack(alignment: .bottom, spacing: 0) {
                     ForEach(0..<24, id: \.self) { hour in
+                        let count = perHour[hour] ?? 0
                         Capsule()
-                            .fill(hours.contains(hour) ? Color.indigo : Theme.gaugeTrack)
-                            .frame(width: 6, height: hours.contains(hour) ? 22 : 6)
+                            .fill(count > 0 ? Color.indigo : Theme.gaugeTrack)
+                            .frame(width: 6, height: count > 0 ? 14 + 20 * CGFloat(count) / CGFloat(peak) : 6)
                             .frame(maxWidth: .infinity)
                     }
                 }
-                .frame(height: 24)
+                .frame(height: 34, alignment: .bottom)
                 HStack {
                     Text("0 h"); Spacer(); Text("6 h"); Spacer(); Text("12 h"); Spacer(); Text("18 h"); Spacer(); Text("24 h")
                 }
@@ -122,57 +163,96 @@ private struct RunsTodayCard: View {
 private struct AutomationCard: View {
     @Environment(HomeStore.self) private var store
     let automation: EntityState
+    let rule: AutomationRule?
+    let runsToday: [AutomationRun]
+    let onOpen: () -> Void
+    @State private var disabledBy: String?
 
     var body: some View {
         let isOn = automation.state == "on"
         VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(alignment: .center) {
+                    if let trigger = rule?.triggers.first.map(store.describe) {
+                        Label {
+                            Text(trigger.title).lineLimit(1)
+                        } icon: {
+                            Image(systemName: trigger.symbol).foregroundStyle(isOn ? trigger.color : Color.secondary)
+                        }
+                        .labelStyle(.compact)
+                        .font(.roundedSubheadlineEmphasized)
+                        .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Toggle("Enabled", isOn: Binding(
+                        get: { isOn },
+                        set: { on in Task { await store.call("automation", on ? "turn_on" : "turn_off", on: automation) } }
+                    ))
+                    .labelsHidden()
+                    .tint(.green)
+                }
                 Text(automation.name)
                     .font(.system(size: 20, weight: .semibold, design: .rounded))
                     .foregroundStyle(isOn ? Color.primary : Color.secondary)
                     .lineLimit(2)
-                Spacer()
-                Toggle("Enabled", isOn: Binding(
-                    get: { isOn },
-                    set: { on in Task { await store.call("automation", on ? "turn_on" : "turn_off", on: automation) } }
-                ))
-                .labelsHidden()
-                .tint(.green)
+                if let rule {
+                    Text(store.summary(of: rule))
+                        .font(.roundedSubheadline)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 14)
             Theme.separator.frame(height: 1)
             HStack(spacing: 6) {
-                Image(systemName: footerSymbol)
+                Image(systemName: isOn ? "checkmark.circle.fill" : "power")
                     .foregroundStyle(isOn ? Color.green : Color.secondary)
                 Text(footer)
                     .foregroundStyle(.secondary)
                 Spacer()
+                if rule != nil {
+                    Image(systemName: "arrow.right").foregroundStyle(.tertiary)
+                }
             }
             .font(.roundedFootnote)
             .padding(.horizontal, 16)
             .padding(.vertical, 11)
         }
         .cardStyle()
+        .contentShape(.rect(cornerRadius: Theme.cardRadius))
+        .onTapGesture(perform: onOpen)
         .contextMenu {
             Button("Run Now", systemImage: "play.fill") {
                 Task { await store.call("automation", "trigger", on: automation) }
             }
+            if rule != nil {
+                Button("Edit", systemImage: "pencil", action: onOpen)
+            }
         }
-    }
-
-    private var footerSymbol: String {
-        automation.state == "on" ? "checkmark.circle.fill" : "pause.circle"
+        .task(id: automation.state) {
+            guard automation.state != "on" else { disabledBy = nil; return }
+            let entries = await store.logbook(of: automation.entityID, since: .now.addingTimeInterval(-30 * 86_400))
+            disabledBy = entries.last { $0.state == "off" }?.userID.flatMap(store.personName(userID:))
+        }
     }
 
     private var footer: String {
-        guard automation.state == "on" else { return String(localized: "Disabled") }
+        guard automation.state == "on" else {
+            return disabledBy.map { String(localized: "Disabled by \($0)") } ?? String(localized: "Disabled")
+        }
+        if runsToday.count > 1, let last = runsToday.map(\.start).max(), Calendar.current.component(.hour, from: last) < 6 {
+            return String(localized: "Ran \(runsToday.count) times last night")
+        }
+        if runsToday.count > 1 {
+            return String(localized: "Ran \(runsToday.count) times today")
+        }
         guard let last = automation.lastTriggered else { return String(localized: "Never run") }
         if Calendar.current.isDateInToday(last) {
-            return String(localized: "Ran today at \(last.formatted(date: .omitted, time: .shortened))")
+            return String(localized: "Ran today at \(Phrasing.time(last))")
         }
         if Calendar.current.isDateInYesterday(last) {
-            return String(localized: "Ran yesterday at \(last.formatted(date: .omitted, time: .shortened))")
+            return String(localized: "Ran yesterday at \(Phrasing.time(last))")
         }
         return String(localized: "Ran \(last.formatted(.relative(presentation: .named)))")
     }

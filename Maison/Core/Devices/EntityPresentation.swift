@@ -162,7 +162,7 @@ extension EntityState {
             }
             return state == "off" ? String(localized: "Off") : mediaStateText
         case .lock:
-            let since = lastChanged.map { String(localized: "since \($0.formatted(date: .omitted, time: .shortened))") }
+            let since = lastChanged.map { String(localized: "since \(Phrasing.time($0))") }
             return since ?? lockStateText
         case .sensor:
             return valueText
@@ -177,7 +177,18 @@ extension EntityState {
 
     /// The coloured state label used by read-only rows (locks, sensors…).
     var stateLabel: String {
-        switch kind {
+        Phrasing.agree(rawStateLabel, with: name)
+    }
+
+    private var rawStateLabel: String {
+        if domain == "person" || domain == "device_tracker" {
+            switch state {
+            case "home": return String(localized: "At Home")
+            case "not_home": return String(localized: "Away")
+            default: return state
+            }
+        }
+        return switch kind {
         case .lock: lockStateText
         case .binarySensor: binaryStateText
         case .sensor: valueText

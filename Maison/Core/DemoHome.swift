@@ -4,7 +4,7 @@ import Foundation
 enum DemoHome {
     @MainActor
     static func store(phase: HomeStore.Phase = .connected) -> HomeStore {
-        HomeStore(demo: states, layout: layout, household: HouseholdStore(demo: household, members: members), phase: phase)
+        HomeStore(demo: states, layout: layout, household: HouseholdStore(demo: household, members: members, plan: plan), phase: phase)
     }
 
     static let household = Household(name: "Maison", serverURL: URL(string: "http://homeassistant.local:8123")!)
@@ -22,6 +22,8 @@ enum DemoHome {
             Area(id: "kitchen", name: "Cuisine"),
             Area(id: "entrance", name: "Entrée"),
             Area(id: "hallway", name: "Couloir"),
+            Area(id: "office", name: "Bureau"),
+            Area(id: "bathroom", name: "Salle de bain"),
         ]
         let placement: [String: String] = [
             "light.lampadaire": "living_room", "light.bandeau_led": "living_room", "light.plafonnier": "living_room",
@@ -31,11 +33,21 @@ enum DemoHome {
             "climate.climatiseur": "bedroom", "sensor.chambre_temperature": "bedroom",
             "switch.prise_cafe": "kitchen", "sensor.prise_cafe_power": "kitchen",
             "lock.porte_entree": "entrance",
-            "binary_sensor.couloir_motion": "hallway",
+            "binary_sensor.couloir_motion": "hallway", "light.couloir": "hallway",
+            "fan.ventilateur": "office",
+            "sensor.sdb_temperature": "bathroom", "sensor.sdb_humidity": "bathroom", "sensor.sdb_battery": "bathroom",
+            "binary_sensor.fenetre_chambre": "bedroom", "media_player.sonos_cuisine": "kitchen",
         ]
         var layout = HomeLayout()
         layout.areas = areas
         layout.areaByEntity = placement
+        layout.deviceByEntity = [
+            "switch.prise_cafe": "plug", "sensor.prise_cafe_power": "plug",
+            "lock.porte_entree": "lock", "sensor.porte_entree_battery": "lock",
+            "sensor.sdb_temperature": "bathroom_sensor", "sensor.sdb_humidity": "bathroom_sensor", "sensor.sdb_battery": "bathroom_sensor",
+        ]
+        layout.hiddenEntities = ["sensor.porte_entree_battery", "sensor.sdb_battery", "sensor.prise_cafe_power"]
+        layout.platformByEntity = ["media_player.sonos": "sonos", "media_player.sonos_cuisine": "sonos"]
         return layout
     }()
 
@@ -51,8 +63,8 @@ enum DemoHome {
             EntityState(entityID: "light.bandeau_led", state: "on", attributes: [
                 "friendly_name": "Bandeau LED", "brightness": 102, "supported_color_modes": ["hs"],
             ]),
-            EntityState(entityID: "light.plafonnier", state: "off", attributes: [
-                "friendly_name": "Plafonnier", "supported_color_modes": ["brightness"],
+            EntityState(entityID: "light.plafonnier", state: "on", attributes: [
+                "friendly_name": "Plafonnier", "brightness": 153, "supported_color_modes": ["brightness"],
             ]),
             EntityState(entityID: "switch.prise_cafe", state: "on", attributes: ["friendly_name": "Prise café"]),
             EntityState(entityID: "sensor.prise_cafe_power", state: "1240", attributes: [
@@ -69,8 +81,33 @@ enum DemoHome {
                 "hvac_modes": ["off", "heat"], "target_temp_step": 0.5,
             ]),
             EntityState(entityID: "media_player.sonos", state: "playing", attributes: [
-                "friendly_name": "Sonos", "media_title": "Clair de lune", "media_artist": "Debussy", "device_class": "speaker",
+                "friendly_name": "Sonos", "media_title": "Clair de lune", "media_artist": "Claude Debussy", "device_class": "speaker",
+                "media_duration": 315, "media_position": 134, "media_position_updated_at": .string(isoString(.now)),
+                "volume_level": 0.55, "group_members": ["media_player.sonos"],
             ]),
+            EntityState(entityID: "media_player.sonos_cuisine", state: "paused", attributes: [
+                "friendly_name": "Sonos cuisine", "device_class": "speaker", "volume_level": 0.3, "group_members": ["media_player.sonos_cuisine"],
+            ]),
+            EntityState(entityID: "fan.ventilateur", state: "on", attributes: [
+                "friendly_name": "Ventilateur", "percentage": 60, "percentage_step": 10, "oscillating": true,
+                "preset_modes": ["Doux", "Normal", "Turbo", "Nuit"], "preset_mode": "Normal",
+            ]),
+            EntityState(entityID: "sensor.sdb_temperature", state: "23.1", attributes: [
+                "friendly_name": "Capteur salle de bain", "device_class": "temperature", "unit_of_measurement": "°C", "state_class": "measurement",
+            ], lastChanged: .now.addingTimeInterval(-120)),
+            EntityState(entityID: "sensor.sdb_humidity", state: "64", attributes: [
+                "friendly_name": "Humidité salle de bain", "device_class": "humidity", "unit_of_measurement": "%",
+            ]),
+            EntityState(entityID: "sensor.sdb_battery", state: "90", attributes: [
+                "friendly_name": "Pile capteur salle de bain", "device_class": "battery", "unit_of_measurement": "%",
+            ]),
+            EntityState(entityID: "sensor.porte_entree_battery", state: "82", attributes: [
+                "friendly_name": "Pile porte d’entrée", "device_class": "battery", "unit_of_measurement": "%",
+            ]),
+            EntityState(entityID: "binary_sensor.fenetre_chambre", state: "off", attributes: [
+                "friendly_name": "Fenêtre de la chambre", "device_class": "window",
+            ], lastChanged: at(9, 40)),
+            EntityState(entityID: "person.theo", state: "home", attributes: ["friendly_name": "Théo", "user_id": "theo"]),
             EntityState(entityID: "media_player.fire_tv", state: "off", attributes: ["friendly_name": "Fire TV", "device_class": "tv"]),
             EntityState(entityID: "lock.porte_entree", state: "locked", attributes: ["friendly_name": "Porte d’entrée"], lastChanged: at(8, 12)),
             EntityState(entityID: "cover.volets_salon", state: "open", attributes: ["friendly_name": "Volets du salon", "current_position": 35]),
@@ -105,17 +142,179 @@ enum DemoHome {
                 "friendly_name": "Je pars", "entity_id": ["light.lampadaire", "climate.thermostat"],
             ]),
             EntityState(entityID: "automation.lumieres_du_soir", state: "on", attributes: [
-                "friendly_name": "Lumières du soir", "last_triggered": .string(isoString(at(19, 0).addingTimeInterval(-86400))),
+                "friendly_name": "Lumières du soir", "id": "lumieres_du_soir",
+                "last_triggered": .string(isoString(at(19, 0).addingTimeInterval(-86400))),
             ]),
             EntityState(entityID: "automation.dernier_depart", state: "on", attributes: [
-                "friendly_name": "Dernier départ", "last_triggered": .string(isoString(at(8, 12))),
+                "friendly_name": "Dernier départ", "id": "dernier_depart", "last_triggered": .string(isoString(at(8, 12))),
             ]),
             EntityState(entityID: "automation.couloir_la_nuit", state: "on", attributes: [
-                "friendly_name": "Couloir la nuit", "last_triggered": .string(isoString(at(3, 40))),
+                "friendly_name": "Couloir la nuit", "id": "couloir_la_nuit", "last_triggered": .string(isoString(at(3, 40))),
             ]),
-            EntityState(entityID: "automation.trop_chaud", state: "off", attributes: ["friendly_name": "Trop chaud"]),
+            EntityState(entityID: "automation.trop_chaud", state: "off", attributes: ["friendly_name": "Trop chaud", "id": "trop_chaud"]),
+            EntityState(entityID: "light.couloir", state: "off", attributes: [
+                "friendly_name": "Couloir", "supported_color_modes": ["brightness"],
+            ]),
         ]
     }
+
+    // MARK: Plan
+
+    /// The apartment of the mock-ups: six rooms, about 73 m².
+    static let plan: FloorPlan = {
+        typealias P = FloorPlan.Point
+        func rect(_ x0: Double, _ y0: Double, _ x1: Double, _ y1: Double) -> [P] {
+            [P(x: x0, y: y0), P(x: x1, y: y0), P(x: x1, y: y1), P(x: x0, y: y1)]
+        }
+        func seg(_ x0: Double, _ y0: Double, _ x1: Double, _ y1: Double) -> FloorPlan.Segment {
+            FloorPlan.Segment(start: P(x: x0, y: y0), end: P(x: x1, y: y1))
+        }
+        let rooms = [
+            FloorPlan.Room(id: UUID(), name: "Salon", areaID: "living_room", outline: rect(0, 0, 5.2, 4.8)),
+            FloorPlan.Room(id: UUID(), name: "Cuisine", areaID: "kitchen", outline: rect(5.2, 0, 9, 3.6)),
+            FloorPlan.Room(id: UUID(), name: "Entrée", areaID: "entrance", outline: rect(5.2, 3.6, 9, 4.8)),
+            FloorPlan.Room(id: UUID(), name: "Chambre", areaID: "bedroom", outline: rect(0, 4.8, 4, 8.1)),
+            FloorPlan.Room(id: UUID(), name: "Salle de bain", areaID: "bathroom", outline: rect(4, 4.8, 6.2, 8.1)),
+            FloorPlan.Room(id: UUID(), name: "Bureau", areaID: "office", outline: rect(6.2, 4.8, 9, 8.1)),
+        ]
+        let walls = [
+            seg(0, 0, 9, 0), seg(9, 0, 9, 8.1), seg(9, 8.1, 0, 8.1), seg(0, 8.1, 0, 0),
+            seg(5.2, 0, 5.2, 4.8), seg(0, 4.8, 9, 4.8), seg(5.2, 3.6, 9, 3.6), seg(4, 4.8, 4, 8.1), seg(6.2, 4.8, 6.2, 8.1),
+        ]
+        let doors = [
+            seg(5.2, 3.8, 5.2, 4.6), seg(6.2, 3.6, 7.0, 3.6), seg(2.6, 4.8, 3.4, 4.8), seg(4.6, 4.8, 5.3, 4.8),
+            seg(7.0, 4.8, 7.8, 4.8), seg(9, 3.8, 9, 4.6),
+        ]
+        let windows = [
+            seg(0.8, 0, 2.2, 0), seg(3.0, 0, 4.4, 0), seg(6.2, 0, 8.0, 0), seg(0, 1.0, 0, 3.4),
+            seg(0, 5.6, 0, 7.4), seg(1.0, 8.1, 3.0, 8.1), seg(6.8, 8.1, 8.4, 8.1),
+        ]
+        let objects = [
+            FloorPlan.Object(category: "sofa", center: P(x: 1.8, y: 3.9), width: 2.4, depth: 0.9, angle: 0),
+            FloorPlan.Object(category: "table", center: P(x: 4.0, y: 1.6), width: 1.0, depth: 1.0, angle: 0),
+            FloorPlan.Object(category: "storage", center: P(x: 1.6, y: 0.35), width: 2.0, depth: 0.4, angle: 0),
+            FloorPlan.Object(category: "refrigerator", center: P(x: 7.1, y: 0.35), width: 3.4, depth: 0.6, angle: 0),
+            FloorPlan.Object(category: "bed", center: P(x: 1.0, y: 6.4), width: 1.6, depth: 2.0, angle: 0),
+            FloorPlan.Object(category: "bathtub", center: P(x: 5.1, y: 7.6), width: 1.7, depth: 0.7, angle: 0),
+            FloorPlan.Object(category: "table", center: P(x: 8.3, y: 7.6), width: 1.2, depth: 0.7, angle: 0),
+        ]
+        var plan = FloorPlan(rooms: rooms, walls: walls, doors: doors, windows: windows, objects: objects,
+                             scannedAt: Calendar.current.startOfDay(for: .now).addingTimeInterval(11 * 3600), scannedBy: "Théo")
+        plan.devices = [
+            "light.bandeau_led": P(x: 1.7, y: 0.9), "media_player.sonos": P(x: 3.1, y: 0.9),
+            "cover.volets_salon": P(x: 0.4, y: 2.2), "light.lampadaire": P(x: 0.4, y: 3.6),
+            "light.plafonnier": P(x: 2.6, y: 3.0), "climate.thermostat": P(x: 4.9, y: 3.4),
+            "light.couloir": P(x: 5.8, y: 4.2), "lock.porte_entree": P(x: 8.6, y: 4.2),
+            "climate.climatiseur": P(x: 2.0, y: 5.2), "fan.ventilateur": P(x: 7.6, y: 6.0),
+            "binary_sensor.fenetre_chambre": P(x: 0.4, y: 6.5),
+        ]
+        return plan
+    }()
+
+    // MARK: History
+
+    /// Made-up history matching the mock-ups, so every sheet has something to show.
+    static func changes(of entityID: String, since start: Date) -> [StateChange] {
+        let today = Calendar.current.startOfDay(for: .now)
+        func at(_ hour: Double) -> Date { today.addingTimeInterval(hour * 3600) }
+        func upToNow(_ list: [(Double, String)], from initial: String = "off") -> [StateChange] {
+            [StateChange(state: initial, date: start)]
+                + list.map { StateChange(state: $0.1, date: at($0.0)) }.filter { $0.date > start && $0.date <= .now }
+        }
+        switch entityID {
+        case "sensor.prise_cafe_power":
+            return upToNow([(6.6, "1240"), (6.75, "3"), (7.1, "1240"), (7.2, "3"), (12.5, "1180"), (12.6, "3"), (15.8, "1240"), (16, "3")], from: "0")
+        case "climate.climatiseur":
+            return upToNow([(15.2, "cool"), (17.9, "off"), (19.4, "cool")])
+        case "binary_sensor.fenetre_chambre":
+            return upToNow([(7, "on"), (7.5, "off"), (9.03, "on"), (9.67, "off")])
+        case "sensor.sdb_temperature":
+            let values: [(Double, Double)] = [(-24, 22.6), (-21, 22.2), (-18, 22.1), (-16, 22.1), (-14, 23.9), (-12.5, 23), (-11, 22.7), (-9, 22.9), (-7, 23.2), (-5, 23.1), (-3.5, 23.5), (-2.4, 24.6), (-1.6, 23.6), (-0.8, 23.2), (-0.2, 23.1)]
+            return values.map { StateChange(state: String($0.1), date: Date.now.addingTimeInterval($0.0 * 3600)) }
+        default:
+            return [StateChange(state: "off", date: start)]
+        }
+    }
+
+    static func logbook(of entityID: String) -> [LogbookEntry] {
+        let today = Calendar.current.startOfDay(for: .now)
+        if entityID == "automation.trop_chaud" {
+            return [LogbookEntry(date: today.addingTimeInterval(-5 * 86_400), state: "off", userID: "theo", automationName: nil)]
+        }
+        guard entityID == "lock.porte_entree" else { return [] }
+        return [
+            LogbookEntry(date: today.addingTimeInterval(-3600 + 4 * 60), state: "locked", userID: "theo", automationName: nil),
+            LogbookEntry(date: today.addingTimeInterval(7 * 3600 + 58 * 60), state: "unlocked", userID: "theo", automationName: nil),
+            LogbookEntry(date: today.addingTimeInterval(8 * 3600 + 12 * 60), state: "locked", userID: nil, automationName: "Dernier départ"),
+        ].filter { $0.date >= today }
+    }
+
+    static func statistics(of entityID: String, since start: Date, period: String) -> [StatisticPoint] {
+        guard entityID.hasSuffix("temperature") else { return [] }
+        let step: TimeInterval = period == "day" ? 86_400 : 3600
+        return stride(from: start.timeIntervalSince1970, to: Date.now.timeIntervalSince1970, by: step).map { time in
+            let date = Date(timeIntervalSince1970: time)
+            let hour = Double(Calendar.current.component(.hour, from: date))
+            let mean = 22.6 + 0.8 * sin((hour - 9) / 24 * 2 * .pi) + (period == "day" ? sin(time / 400_000) * 0.6 : 0)
+            return StatisticPoint(start: date, mean: mean, min: mean - 0.4, max: mean + 0.4)
+        }
+    }
+
+    // MARK: Automations
+
+    static var runs: [AutomationRun] {
+        let today = Calendar.current.startOfDay(for: .now)
+        func at(_ hour: Double) -> Date { today.addingTimeInterval(hour * 3600) }
+        return [
+            AutomationRun(automationID: "lumieres_du_soir", start: at(19 - 24), execution: "finished"),
+            AutomationRun(automationID: "dernier_depart", start: at(8.2), execution: "finished"),
+            AutomationRun(automationID: "couloir_la_nuit", start: at(1.2), execution: "finished"),
+            AutomationRun(automationID: "couloir_la_nuit", start: at(2.5), execution: "finished"),
+            AutomationRun(automationID: "couloir_la_nuit", start: at(3.67), execution: "finished"),
+            AutomationRun(automationID: "couloir_la_nuit", start: at(4.5), execution: "failed_conditions"),
+        ].filter { $0.start <= .now }
+    }
+
+    /// The configurations of the sample rules, as Home Assistant stores them.
+    @MainActor static var rules: [String: JSONValue] = [
+        "lumieres_du_soir": [
+            "alias": "Lumières du soir", "description": "", "mode": "single",
+            "triggers": [["trigger": "time", "at": "19:00:00"]],
+            "conditions": [["condition": "sun", "after": "sunset"], ["condition": "numeric_state", "entity_id": "zone.home", "above": 0]],
+            "actions": [
+                ["action": "light.turn_on", "target": ["entity_id": "light.lampadaire"], "data": ["brightness_pct": 60, "color_temp_kelvin": 2700]],
+                ["action": "light.turn_on", "target": ["entity_id": "light.plafonnier"], "data": ["brightness_pct": 40]],
+                ["action": "cover.close_cover", "target": ["entity_id": "cover.volets_salon"]],
+            ],
+        ],
+        "dernier_depart": [
+            "alias": "Dernier départ", "description": "", "mode": "single",
+            "triggers": [["trigger": "numeric_state", "entity_id": "zone.home", "below": 1]],
+            "conditions": [],
+            "actions": [
+                ["action": "light.turn_off", "target": ["entity_id": "light.lampadaire"]],
+                ["action": "light.turn_off", "target": ["entity_id": "light.plafonnier"]],
+                ["action": "light.turn_off", "target": ["entity_id": "light.bandeau_led"]],
+                ["action": "lock.lock", "target": ["entity_id": "lock.porte_entree"]],
+            ],
+        ],
+        "couloir_la_nuit": [
+            "alias": "Couloir la nuit", "description": "", "mode": "restart",
+            "triggers": [["trigger": "state", "entity_id": "binary_sensor.couloir_motion", "to": "on"]],
+            "conditions": [["condition": "time", "after": "23:00:00", "before": "06:00:00"]],
+            "actions": [
+                ["action": "light.turn_on", "target": ["entity_id": "light.couloir"], "data": ["brightness_pct": 20]],
+                ["delay": ["hours": 0, "minutes": 2, "seconds": 0]],
+                ["action": "light.turn_off", "target": ["entity_id": "light.couloir"]],
+            ],
+        ],
+        "trop_chaud": [
+            "alias": "Trop chaud", "description": "", "mode": "single",
+            "triggers": [["trigger": "numeric_state", "entity_id": "sensor.salon_temperature", "above": 25]],
+            "conditions": [],
+            "actions": [["action": "cover.close_cover", "target": ["entity_id": "cover.volets_salon"]]],
+        ],
+    ]
 
     private static func isoString(_ date: Date) -> String {
         ISO8601DateFormatter().string(from: date)

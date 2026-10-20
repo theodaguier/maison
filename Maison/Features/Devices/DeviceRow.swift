@@ -16,6 +16,7 @@ struct DeviceRow: View {
                 .font(.system(size: 20, weight: .medium))
                 .foregroundStyle(entity.showsAccent ? entity.accent : Color(.tertiaryLabel))
                 .symbolRenderingMode(.hierarchical)
+                .contentTransition(.symbolEffect(.replace))
                 .frame(width: 26, height: 26)
             VStack(alignment: .leading, spacing: 1) {
                 Text(entity.name)
@@ -31,6 +32,9 @@ struct DeviceRow: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             control
         }
+        // State changes arrive from the server without a transaction; cross-fade them instead of snapping.
+        .animation(.smooth, value: entity.isActive)
+        .animation(.smooth, value: entity.isUnavailable)
         .padding(.leading, 16)
         .padding(.trailing, 14)
         .frame(minHeight: 66)
@@ -40,7 +44,7 @@ struct DeviceRow: View {
         .contextMenu {
             Button(store.isFavorite(entity) ? "Remove from Favorites" : "Add to Favorites",
                    systemImage: store.isFavorite(entity) ? "star.slash" : "star") {
-                store.toggleFavorite(entity)
+                withAnimation(.smooth) { store.toggleFavorite(entity) }
             }
         }
         .accessibilityElement(children: .combine)
@@ -180,7 +184,7 @@ struct SceneTile: View {
             .frame(maxWidth: .infinity, minHeight: 130, alignment: .topLeading)
             .cardStyle(radius: Theme.tileRadius)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressable)
         .sensoryFeedback(.success, trigger: didRun) { _, new in new }
     }
 

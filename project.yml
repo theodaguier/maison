@@ -33,6 +33,10 @@ targets:
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_NSCameraUsageDescription: Maison uses the camera and the LiDAR sensor to draw the plan of your home. The scan stays on your iPhone.
+        INFOPLIST_KEY_NSFaceIDUsageDescription: Face ID confirms it’s you before Maison unlocks a door.
+        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: Maison tells Home Assistant when you leave or come home, so your rules can react.
+        INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription: Maison tells Home Assistant when you leave or come home, even when the app is closed, so rules like “When everyone leaves” work.
         INFOPLIST_KEY_NSLocalNetworkUsageDescription: Maison finds your Home Assistant server automatically, so you never have to type its address.
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
         GENERATE_INFOPLIST_FILE: YES
@@ -48,6 +52,9 @@ targets:
           NSAllowsLocalNetworking: true
         # Lets the system hand household invitations (CKShare links) to the app.
         CKSharingSupported: true
+        # Significant location changes wake the app to tell Home Assistant you left or came home.
+        UIBackgroundModes:
+          - location
     entitlements:
       path: Maison/Maison.entitlements
       properties:

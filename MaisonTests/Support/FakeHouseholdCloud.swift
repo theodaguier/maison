@@ -7,6 +7,7 @@ actor FakeHouseholdCloud: HouseholdCloud {
     private let userID: String?
     private var households: [HouseholdLocation: Household] = [:]
     private var favorites: [String: [String]] = [:]
+    private var plans: [HouseholdLocation: FloorPlan] = [:]
     private var participants: [HouseholdLocation: [HouseholdMember]] = [:]
     private(set) var createdCount = 0
     private(set) var savedHouseholds: [Household] = []
@@ -56,6 +57,14 @@ actor FakeHouseholdCloud: HouseholdCloud {
         favorites[key(memberID, location)]
     }
 
+    func floorPlan(in location: HouseholdLocation) async throws -> FloorPlan? {
+        plans[location]
+    }
+
+    func saveFloorPlan(_ plan: FloorPlan, in location: HouseholdLocation) async throws {
+        plans[location] = plan
+    }
+
     func saveFavorites(_ entityIDs: [String], of memberID: String, in location: HouseholdLocation) async throws {
         favorites[key(memberID, location)] = entityIDs
     }
@@ -70,6 +79,12 @@ actor FakeHouseholdCloud: HouseholdCloud {
         members.append(HouseholdMember(id: contact, name: contact, role: role, isPending: true))
         participants[location] = members
         return URL(string: "https://www.icloud.com/share/fake")!
+    }
+
+    func setRole(_ role: HouseholdRole, of member: HouseholdMember, in location: HouseholdLocation) async throws {
+        guard let index = participants[location]?.firstIndex(where: { $0.id == member.id }) else { return }
+        let old = participants[location]![index]
+        participants[location]![index] = HouseholdMember(id: old.id, name: old.name, role: role, isPending: old.isPending, isCurrentUser: old.isCurrentUser)
     }
 
     func remove(_ member: HouseholdMember, from location: HouseholdLocation) async throws {

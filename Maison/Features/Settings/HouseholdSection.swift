@@ -7,6 +7,7 @@ struct HouseholdSection: View {
     @State private var memberToRemove: HouseholdMember?
     @State private var isConfirmingLeave = false
     @State private var errorMessage: String?
+    @State private var sentConfirmation: String?
 
     var body: some View {
         let household = store.household
@@ -43,8 +44,12 @@ struct HouseholdSection: View {
                     .padding(.vertical, 12)
                 }
             case .ready:
-                ForEach(household.members) { member in
-                    MemberRow(member: member, fallbackName: store.currentUser?.name)
+                ForEach(Array(household.members.enumerated()), id: \.element.id) { index, member in
+                    if index > 0 { SettingsDivider() }
+                    NavigationLink { MemberPage(member: member) } label: {
+                        MemberRow(member: member, fallbackName: store.currentUser?.name)
+                    }
+                    .buttonStyle(.plain)
                         .contextMenu {
                             if household.currentRole.canManageMembers, !member.isCurrentUser, member.role != .owner {
                                 Button("Remove from Household", systemImage: "person.badge.minus", role: .destructive) {
@@ -53,12 +58,29 @@ struct HouseholdSection: View {
                             }
                         }
                 }
+                if let sentConfirmation {
+                    Label(sentConfirmation, systemImage: "checkmark.circle.fill")
+                        .font(.roundedSubheadlineEmphasized)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 9)
+                        .background(Color(white: 0.12), in: .capsule)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 6)
+                        .transition(.scale(0.95).combined(with: .opacity))
+                }
                 if household.canInvite {
+                    SettingsDivider()
                     Button {
                         isInviting = true
                     } label: {
-                        SettingsRow(symbol: "person.badge.plus", color: .blue, title: "Invite Someone")
-                            .contentShape(.rect)
+                        HStack(spacing: 12) {
+                            SettingsIcon(symbol: "person.badge.plus", color: .blue)
+                            Text("Invite Someone").font(.roundedBody).foregroundStyle(.blue)
+                            Spacer()
+                        }
+                        .padding(.vertical, 10)
+                        .contentShape(.rect)
                     }
                     .buttonStyle(.plain)
                 }
@@ -74,7 +96,13 @@ struct HouseholdSection: View {
             }
         }
         .sheet(isPresented: $isInviting) {
-            InviteSheet()
+            InviteSheet { channel in
+                withAnimation(.smooth) { sentConfirmation = String(localized: "Invitation sent with \(channel)") }
+                Task {
+                    try? await Task.sleep(for: .seconds(4))
+                    withAnimation(.smooth) { sentConfirmation = nil }
+                }
+            }
         }
         .confirmationDialog(
             "Remove \(memberToRemove?.name ?? "")?",
@@ -119,27 +147,34 @@ private struct MemberRow: View {
     var body: some View {
         let name = member.name ?? (member.isCurrentUser ? fallbackName : nil)
         HStack(spacing: 12) {
-            Text((name ?? "?").prefix(1).uppercased())
+            Text(member.isPending ? "?" : (name ?? "?").prefix(1).uppercased())
                 .font(.system(size: 14, weight: .semibold, design: .rounded))
+                .foregroundStyle(member.isPending ? .secondary : .primary)
                 .frame(width: 30, height: 30)
                 .background(Theme.pill, in: .circle)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 1) {
-                Text(name ?? String(localized: "Invited Person"))
+                Text(member.isPending ? String(localized: "Invitation Sent") : name ?? String(localized: "Invited Person"))
                     .font(.roundedBody)
+                    .foregroundStyle(.primary)
                     .lineLimit(1)
                 if member.isCurrentUser {
-                    Text("You")
+                    Text("You").font(.roundedFootnote).foregroundStyle(.tertiary)
+                } else if member.isPending {
+                    Text([name, String(localized: "Waiting via iCloud")].compactMap { $0 }.joined(separator: " · "))
                         .font(.roundedFootnote)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.tertiary)
+                        .lineLimit(1)
                 }
             }
             Spacer()
-            Text(member.isPending ? String(localized: "Invited") : member.role.title)
-                .font(.roundedSubheadline)
-                .foregroundStyle(member.isPending ? AnyShapeStyle(.orange) : AnyShapeStyle(.secondary))
+            RoleBadge(role: member.role)
+            Image(systemName: "chevron.right")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.tertiary)
         }
         .padding(.vertical, 10)
+        .contentShape(.rect)
         .accessibilityElement(children: .combine)
     }
 }
@@ -150,153 +185,6 @@ extension HouseholdRole {
         case .owner: String(localized: "Owner")
         case .administrator: String(localized: "Administrator")
         case .resident: String(localized: "Resident")
-        }
-    }
-}
-
-/// Picks who to invite and their role, then hands the iCloud link to the share sheet.
-private struct InviteSheet: View {
-    @Environment(HomeStore.self) private var store
-    @Environment(\.dismiss) private var dismiss
-    @State private var contact = ""
-    @State private var role: HouseholdRole = .resident
-    @State private var link: URL?
-    @State private var isCreating = false
-    @State private var errorMessage: String?
-    @FocusState private var isContactFocused: Bool
-
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
-                    if let link {
-                        ready(link)
-                    } else {
-                        form
-                    }
-                }
-                .padding(.horizontal, Theme.screenPadding)
-                .padding(.bottom, 24)
-            }
-            .background(Theme.background)
-            .navigationTitle("Invite Someone")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(link == nil ? "Cancel" : "Done") { dismiss() }
-                }
-            }
-        }
-        .presentationDetents([.large])
-    }
-
-    private var householdName: String {
-        store.household.household?.name ?? String(localized: "Home")
-    }
-
-    @ViewBuilder private var form: some View {
-        SectionHeader(title: "Their iCloud Account")
-        TextField("Email or phone number", text: $contact)
-            .font(.roundedBody)
-            .keyboardType(.emailAddress)
-            .textContentType(.emailAddress)
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled()
-            .submitLabel(.done)
-            .focused($isContactFocused)
-            .padding(16)
-            .cardStyle(radius: Theme.rowRadius)
-
-        SectionHeader(title: "Role")
-        PillPicker(options: [
-            (value: HouseholdRole.resident, title: "Resident", symbol: "person.fill"),
-            (value: HouseholdRole.administrator, title: "Administrator", symbol: "person.badge.key.fill"),
-        ], selection: $role)
-        Text(role == .administrator
-             ? "Administrators control devices, keep their own favorites and can invite or remove people."
-             : "Residents control devices and keep their own favorites.")
-            .font(.roundedFootnote)
-            .foregroundStyle(.secondary)
-            .padding(.horizontal, 4)
-
-        Label {
-            Text("They’ll sign in to Home Assistant with their own account. Maison shares the household, never your Home Assistant password.")
-        } icon: {
-            Image(systemName: "lock.fill")
-        }
-        .labelStyle(.compact)
-        .font(.roundedFootnote)
-        .foregroundStyle(.secondary)
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .cardStyle(radius: Theme.rowRadius)
-        .padding(.top, 8)
-
-        if let errorMessage {
-            Text(errorMessage)
-                .font(.roundedFootnote)
-                .foregroundStyle(.red)
-                .padding(.horizontal, 4)
-        }
-
-        Button {
-            Task { await createInvitation() }
-        } label: {
-            Group {
-                if isCreating {
-                    ProgressView()
-                } else {
-                    Text("Create Invitation")
-                }
-            }
-            .font(.roundedHeadline)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 6)
-        }
-        .buttonStyle(.glassProminent)
-        .disabled(contact.trimmingCharacters(in: .whitespaces).isEmpty || isCreating)
-        .padding(.top, 8)
-        .onAppear { isContactFocused = true }
-    }
-
-    @ViewBuilder private func ready(_ link: URL) -> some View {
-        VStack(spacing: 10) {
-            Image(systemName: "envelope.badge.fill")
-                .font(.system(size: 40, weight: .semibold))
-                .foregroundStyle(.blue)
-                .padding(.top, 24)
-            Text("Invitation Ready")
-                .font(.roundedTitle3)
-            Text("Send the link to \(contact). It only opens for their iCloud account, as \(role.title.lowercased()).")
-                .font(.roundedSubheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.bottom, 8)
-
-        ShareLink(
-            item: link,
-            subject: Text("Join \(householdName) on Maison"),
-            message: Text("Join \(householdName) on Maison. You’ll sign in to Home Assistant with your own account.")
-        ) {
-            Label("Send Invitation", systemImage: "square.and.arrow.up")
-                .font(.roundedHeadline)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 6)
-        }
-        .buttonStyle(.glassProminent)
-    }
-
-    private func createInvitation() async {
-        isCreating = true
-        errorMessage = nil
-        defer { isCreating = false }
-        do {
-            let url = try await store.household.invite(contact, as: role)
-            withAnimation(.smooth) { link = url }
-        } catch {
-            errorMessage = error.localizedDescription
         }
     }
 }

@@ -20,11 +20,15 @@ protocol HouseholdCloud: Sendable {
     /// `nil` when the member never saved favourites in this household.
     func favorites(of memberID: String, in location: HouseholdLocation) async throws -> [String]?
     func saveFavorites(_ entityIDs: [String], of memberID: String, in location: HouseholdLocation) async throws
+    /// The scanned plan of the home, shared by every member.
+    func floorPlan(in location: HouseholdLocation) async throws -> FloorPlan?
+    func saveFloorPlan(_ plan: FloorPlan, in location: HouseholdLocation) async throws
     /// The share's participants, or an empty list when nobody was ever invited.
     func members(in location: HouseholdLocation) async throws -> [HouseholdMember]
     /// Adds the person to the household's share with `role` and returns the link to send them.
     func invite(_ contact: String, as role: HouseholdRole, to household: Household, in location: HouseholdLocation) async throws -> URL
     func remove(_ member: HouseholdMember, from location: HouseholdLocation) async throws
+    func setRole(_ role: HouseholdRole, of member: HouseholdMember, in location: HouseholdLocation) async throws
     func accept(_ metadata: CKShare.Metadata) async throws -> HouseholdLocation
     /// Stops participating in a household someone else shared.
     func leave(_ location: HouseholdLocation) async throws
@@ -66,6 +70,17 @@ struct CloudKitHousehold: HouseholdCloud {
     }()
     private var container: CKContainer { Self.container }
 
+    /// Reads an invitation link (scanned or pasted) as iOS does when the link is tapped.
+    static func shareMetadata(for url: URL) async throws -> CKShare.Metadata {
+        try await container.shareMetadata(for: url)
+    }
+
+    /// Whether this iPhone is signed in to iCloud, which household sharing needs.
+    static func isAccountAvailable() async -> Bool {
+        guard isEntitled else { return false }
+        return (try? await container.accountStatus()) == .available
+    }
+
     func currentUserID() async throws -> String? {
         guard try await container.accountStatus() == .available else { return nil }
         return try await container.userRecordID().recordName
@@ -104,6 +119,14 @@ struct CloudKitHousehold: HouseholdCloud {
 
     func saveFavorites(_ entityIDs: [String], of memberID: String, in location: HouseholdLocation) async throws {
         try await save(MemberFavorites.record(entityIDs, for: memberID, in: location.zoneID), in: location)
+    }
+
+    func floorPlan(in location: HouseholdLocation) async throws -> FloorPlan? {
+        try await record(FloorPlanRecord.recordID(in: location.zoneID), in: location).flatMap(FloorPlanRecord.plan(from:))
+    }
+
+    func saveFloorPlan(_ plan: FloorPlan, in location: HouseholdLocation) async throws {
+        try await save(FloorPlanRecord.record(plan, in: location.zoneID), in: location)
     }
 
     func members(in location: HouseholdLocation) async throws -> [HouseholdMember] {
@@ -146,6 +169,14 @@ struct CloudKitHousehold: HouseholdCloud {
               let participant = share.participants.first(where: { $0.participantID == member.id })
         else { return }
         share.removeParticipant(participant)
+        try await save(share, in: location, policy: .ifServerRecordUnchanged)
+    }
+
+    func setRole(_ role: HouseholdRole, of member: HouseholdMember, in location: HouseholdLocation) async throws {
+        guard let share = try await share(in: location),
+              let participant = share.participants.first(where: { $0.participantID == member.id })
+        else { return }
+        participant.role = role.participantRole
         try await save(share, in: location, policy: .ifServerRecordUnchanged)
     }
 
