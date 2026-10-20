@@ -47,7 +47,7 @@ git tag v0.1.0 && git push origin v0.1.0
 
 ### Secrets requis pour TestFlight
 
-Le plus simple : `./ci/setup-testflight.sh ~/Downloads/AuthKey_XXXX.p8 <issuer-id> <team-id>`, qui les enregistre via `gh`. Sinon, à ajouter dans *Settings → Secrets and variables → Actions* :
+Le plus simple : `./ci/setup-testflight.sh ~/Downloads/AuthKey_XXXX.p8 <issuer-id>`, qui les enregistre via `gh`. Sinon, à ajouter dans *Settings → Secrets and variables → Actions* :
 
 | Secret | Contenu |
 | --- | --- |

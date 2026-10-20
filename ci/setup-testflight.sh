@@ -1,18 +1,19 @@
 #!/usr/bin/env bash
 # Enregistre les secrets GitHub nécessaires au workflow TestFlight.
 #
-#   ./ci/setup-testflight.sh ~/Downloads/AuthKey_XXXXXXXXXX.p8 <issuer-id> <team-id>
+#   ./ci/setup-testflight.sh ~/Downloads/AuthKey_XXXXXXXXXX.p8 <issuer-id> [team-id]
 #
-# Le Key ID est lu dans le nom du fichier. Les valeurs vont directement dans
+# Le Key ID est lu dans le nom du fichier, le Team ID dans project.yml par défaut. Les valeurs vont directement dans
 # GitHub via gh, sans être affichées. Supprime le .p8 local ensuite si tu veux.
 set -euo pipefail
 
-if [ $# -ne 3 ]; then
+if [ $# -lt 2 ] || [ $# -gt 3 ]; then
   sed -n '4p' "$0" | sed 's/^#   //'
   exit 64
 fi
 
-key_path=$1 issuer_id=$2 team_id=$3
+key_path=$1 issuer_id=$2
+team_id=${3:-$(sed -nE 's/^ *DEVELOPMENT_TEAM: *([A-Z0-9]{10}).*/\1/p' project.yml | head -1)}
 key_id=$(basename "$key_path" .p8)
 key_id=${key_id#AuthKey_}
 
