@@ -127,6 +127,26 @@ actor HomeAssistantConnection {
         try await send(command)
     }
 
+    /// Measures the round trip to the server.
+    func ping() async throws -> Duration {
+        let clock = ContinuousClock()
+        let start = clock.now
+        try await send(["type": "ping"])
+        return clock.now - start
+    }
+
+    func currentUser() async throws -> HomeAssistantUser {
+        try await send(["type": "auth/current_user"]).decode(HomeAssistantUser.self)
+    }
+
+    func serverConfig() async throws -> ServerConfig {
+        try await send(["type": "get_config"]).decode(ServerConfig.self)
+    }
+
+    func integrations() async throws -> [Integration] {
+        try await send(["type": "config_entries/get"]).decode([Integration].self)
+    }
+
     /// Streams the new state of every entity that changes. Removed entities are skipped.
     func stateChanges() async throws -> AsyncStream<EntityState> {
         let events = try await subscribe(["type": "subscribe_events", "event_type": "state_changed"])
@@ -204,6 +224,8 @@ actor HomeAssistantConnection {
     private func handle(_ message: JSONValue) {
         guard let id = message["id"]?.intValue else { return }
         switch message["type"]?.stringValue {
+        case "pong":
+            pending.removeValue(forKey: id)?.resume(returning: .null)
         case "result":
             guard let continuation = pending.removeValue(forKey: id) else { return }
             if message["success"]?.boolValue == true {

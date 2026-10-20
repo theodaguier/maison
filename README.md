@@ -6,7 +6,7 @@ A native iOS app (SwiftUI, Liquid Glass) for controlling a [Home Assistant](http
 - **Automations run on the server**, not on the iPhone.
 - **Household sharing through iCloud** (CloudKit) for app-specific data.
 
-> Personal project, work in progress. Nothing is wired to Home Assistant yet: the navigation structure and the device model are in place.
+> Personal project, work in progress.
 
 ## Getting started
 
@@ -18,16 +18,20 @@ xcodegen generate
 open Maison.xcodeproj
 ```
 
-Requires Xcode 26 or later and targets iOS 26. The base language is English, with a French localization in the string catalogs under `Maison/Resources`.
+Requires Xcode 26 or later and targets iOS 26.
+
+To try the app without a server, launch it with the `-demo` argument (Scheme → Run → Arguments): it fills every screen with the sample home from the design mock-ups. The base language is English, with a French localization in the string catalogs under `Maison/Resources`.
 
 ## Layout
 
 ```
 Maison/
-  App/            entry point, tab navigation
-  Features/       Home, Rooms, Automations, Settings
-  Core/Devices/   Home Assistant device kinds and their inline controls
-  Resources/      asset catalog, string catalogs
+  App/                 entry point, tab navigation
+  DesignSystem/        colour tokens, typography, cards, rings, gauges
+  Features/            Home, Rooms, Automations, Settings, device sheets
+  Core/HomeAssistant/  discovery, OAuth, WebSocket client, registries
+  Core/Devices/        device kinds, inline controls, presentation
+  Resources/           illustrations, colours, string catalogs
 MaisonTests/      tests (Swift Testing)
 ci/               export options and helper scripts for GitHub Actions
 ```

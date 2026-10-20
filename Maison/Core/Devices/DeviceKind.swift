@@ -19,6 +19,7 @@ enum DeviceKind: String, CaseIterable, Sendable {
     case scene
     case script
     case button
+    case automation
     case other
 
     init(entityID: String) {
@@ -34,7 +35,7 @@ enum DeviceKind: String, CaseIterable, Sendable {
     var quickAction: QuickAction {
         switch self {
         case .light, .cover, .fan: .gauge
-        case .switch, .valve: .toggle
+        case .switch, .valve, .automation: .toggle
         case .climate, .humidifier: .setpoint
         case .mediaPlayer: .playback
         case .scene, .script, .button, .vacuum: .run
@@ -73,6 +74,7 @@ extension DeviceKind {
         case .scene: "Scenes"
         case .script: "Scripts"
         case .button: "Buttons"
+        case .automation: "Automations"
         case .other: "Other"
         }
     }
@@ -96,6 +98,7 @@ extension DeviceKind {
         case .scene: "sparkles"
         case .script: "scroll.fill"
         case .button: "button.programmable"
+        case .automation: "clock.fill"
         case .other: "square.dashed"
         }
     }

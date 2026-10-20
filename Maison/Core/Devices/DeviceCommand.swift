@@ -12,7 +12,7 @@ struct DeviceCommand: Sendable, Equatable {
     /// (read-only sensors, or devices that need their own sheet such as climate).
     init?(primaryActionFor entity: EntityState) {
         switch entity.kind {
-        case .light, .switch, .fan, .humidifier, .cover, .valve:
+        case .light, .switch, .fan, .humidifier, .cover, .valve, .automation:
             self.init(domain: entity.domain, service: "toggle")
         case .lock:
             self.init(domain: "lock", service: entity.state == "locked" ? "unlock" : "lock")
