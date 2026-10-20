@@ -56,6 +56,11 @@ struct CredentialStore: Sendable {
     }
 }
 
-struct KeychainError: Error, Equatable {
+struct KeychainError: LocalizedError, Equatable {
     let status: OSStatus
+
+    var errorDescription: String? {
+        let message = SecCopyErrorMessageString(status, nil) as String? ?? "OSStatus \(status)"
+        return String(localized: "Couldn’t save the sign-in to the keychain: \(message)")
+    }
 }
