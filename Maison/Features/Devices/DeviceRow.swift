@@ -41,6 +41,7 @@ struct DeviceRow: View {
         .cardStyle(radius: Theme.rowRadius)
         .contentShape(.rect(cornerRadius: Theme.rowRadius))
         .onTapGesture(perform: onOpen)
+        .sensoryFeedback(.impact(weight: .light), trigger: store.isFavorite(entity))
         .contextMenu {
             Button(store.isFavorite(entity) ? "Remove from Favorites" : "Add to Favorites",
                    systemImage: store.isFavorite(entity) ? "star.slash" : "star") {
@@ -104,6 +105,7 @@ struct DeviceRow: View {
                         .contentTransition(.symbolEffect(.replace))
                 }
                 .buttonStyle(.plain)
+                .tapFeedback(.impact(weight: .light))
             case .playback:
                 StateLabel(text: entity.stateLabel, color: Color(.tertiaryLabel))
             case .run:
@@ -117,6 +119,7 @@ struct DeviceRow: View {
                         .background(Theme.pill, in: .circle)
                 }
                 .buttonStyle(.plain)
+                .tapFeedback(.impact(weight: .light))
             case .state:
                 StateLabel(
                     text: entity.stateLabel,

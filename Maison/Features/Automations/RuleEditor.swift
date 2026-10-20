@@ -7,6 +7,9 @@ struct RuleEditor: View {
     @Environment(\.dismiss) private var dismiss
     @State var rule: AutomationRule
     let isNew: Bool
+    /// Set when the rule was suggested from a request: shows the request and what to check before saving.
+    var proposal: RuleProposal?
+    var onRephrase: () -> Void = {}
 
     @State private var editing: EditedStep?
     @State private var isSaving = false
@@ -18,6 +21,9 @@ struct RuleEditor: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 14) {
+                    if let proposal {
+                        RequestCard(request: proposal.request, onRephrase: onRephrase)
+                    }
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Name").font(.roundedFootnote).foregroundStyle(.tertiary)
                         TextField("Evening Lights", text: $rule.name)
@@ -41,7 +47,17 @@ struct RuleEditor: View {
                     .padding(16)
                     .cardStyle()
 
-                    Label("Saved on your server and shared with the household", systemImage: "server.rack")
+                    if let proposal {
+                        ForEach(proposal.notes, id: \.self) { CheckNote(text: $0) }
+                        let leftOut = proposal.unsupported + proposal.unmatched
+                        if !leftOut.isEmpty {
+                            CheckNote(text: String(localized: "Left out: \(leftOut.map { "“\($0)”" }.formatted(.list(type: .and)))."))
+                        }
+                    }
+
+                    Label(proposal == nil ? LocalizedStringKey("Saved on your server and shared with the household")
+                                           : LocalizedStringKey("Nothing is saved until you confirm. Then the rule runs on your server, like the others."),
+                          systemImage: "server.rack")
                         .labelStyle(.compact)
                         .font(.roundedFootnote)
                         .foregroundStyle(.tertiary)
@@ -62,7 +78,7 @@ struct RuleEditor: View {
                 .padding(.bottom, 24)
             }
             .background(Theme.background)
-            .navigationTitle(isNew ? "New Rule" : "Edit Rule")
+            .navigationTitle(proposal != nil ? "Suggested Rule" : isNew ? "New Rule" : "Edit Rule")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -81,8 +97,9 @@ struct RuleEditor: View {
             .confirmationDialog("Delete this rule?", isPresented: $confirmsDelete, titleVisibility: .visible) {
                 Button("Delete Rule", role: .destructive) { Task { await delete() } }
             }
-            .onAppear { if isNew { nameFocused = true } }
+            .onAppear { if isNew, proposal == nil { nameFocused = true } }
         }
+        .errorFeedback(error)
     }
 
     private var canSave: Bool {

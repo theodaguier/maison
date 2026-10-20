@@ -16,6 +16,8 @@ final class HomeStore {
     }
 
     private(set) var phase: Phase
+    /// Counts service calls the server rejected or couldn't take, so the interface can signal them.
+    private(set) var failedCommands = 0
     private(set) var states: [String: EntityState] = [:]
     private(set) var layout = HomeLayout()
     private(set) var serverURL: URL?
@@ -395,9 +397,11 @@ final class HomeStore {
         do {
             try await connection.callService(domain: domain, service: service, entityID: entity.entityID, data: data)
         } catch HomeAssistantError.connectionClosed {
+            failedCommands += 1
             connectionLost()
         } catch {
             // Rejected calls leave the state unchanged; the live update stream shows the truth.
+            failedCommands += 1
         }
     }
 

@@ -269,6 +269,7 @@ struct ScanScreen: View {
             }, onSave: { dismiss() })
             .interactiveDismissDisabled()
         }
+        .errorFeedback(scan.error)
     }
 }
 
@@ -501,6 +502,7 @@ struct PlanReview: View {
                 }
             }
         }
+        .errorFeedback(error)
     }
 
     private func save() async {

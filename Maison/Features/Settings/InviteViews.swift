@@ -113,6 +113,7 @@ struct InviteSheet: View {
         .sheet(isPresented: $showsCode) {
             if let link { InviteCodeSheet(link: link, role: role) }
         }
+        .errorFeedback(errorMessage)
     }
 
     private var householdName: String {

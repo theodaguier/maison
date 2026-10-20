@@ -152,7 +152,7 @@ private struct BigRoundButton: View {
         }
         .buttonStyle(.plain)
         .frame(maxWidth: .infinity)
-        .sensoryFeedback(.impact, trigger: title)
+        .sensoryFeedback(.impact, trigger: [symbol, title])
     }
 }
 
@@ -269,6 +269,7 @@ private struct AutoOffPills: View {
                 Text(error).font(.roundedFootnote).foregroundStyle(.orange)
             }
         }
+        .errorFeedback(error)
     }
 
     /// The choice closest to the time left, or Never.
@@ -414,6 +415,7 @@ struct LockControls: View {
                 .filter { ["locked", "unlocked", "jammed", "open"].contains($0.state ?? "") }
                 .reversed()
         }
+        .errorFeedback(error)
     }
 
     private func toggle(isLocked: Bool) async {
@@ -511,6 +513,7 @@ struct MediaControls: View {
                                     .background(isGrouped ? Theme.pillActive : Theme.pill, in: .capsule)
                                 }
                                 .buttonStyle(.plain)
+                                .tapFeedback(.selection)
                             }
                         }
                     }
@@ -562,6 +565,7 @@ struct MediaControls: View {
                 .frame(width: 64, height: 56)
         }
         .buttonStyle(.plain)
+        .tapFeedback(.impact(weight: .light))
     }
 
     private var groupMembers: [String] {

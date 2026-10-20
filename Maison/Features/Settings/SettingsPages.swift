@@ -327,6 +327,7 @@ struct MemberPage: View {
         } message: {
             Text("They’ll lose access to the household’s favorites and settings. Their Home Assistant account isn’t affected.")
         }
+        .errorFeedback(error)
     }
 
     private func run(_ action: () async throws -> Void) async {

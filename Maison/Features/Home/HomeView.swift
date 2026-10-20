@@ -56,9 +56,14 @@ private struct HomeDashboard: View {
     @State private var energyTrend: Trend?
     @State private var temperatureChange: Double?
     @State private var confirmsTurnOff = false
+    @State private var turnedOff = 0
     /// The day summary written on the iPhone; `nil` when Apple Intelligence isn't available.
     @State private var digest: DayDigest? = DayDigest.isAvailable && DaySummarySetting.isEnabled ? DayDigest() : nil
     @State private var readsDigest = false
+    #if DEBUG
+    /// `-sheet describe` opens "Describe a Rule" at launch, to check its design without switching tabs.
+    @State private var describesRule = false
+    #endif
     /// Height of the navigation bar area above the scroll content; the hero extends under it.
     @State private var topInset: CGFloat = 0
     /// The bar gets its opaque edge only once the illustration has scrolled away.
@@ -93,6 +98,12 @@ private struct HomeDashboard: View {
         .navigationTitle(store.serverConfig?.locationName ?? String(localized: "Home"))
         .navigationSubtitle(subtitle)
         .toolbar {
+            if digest != nil {
+                ToolbarItem(placement: .topBarTrailing) {
+                    IntelligenceButton("Your Day in Brief") { readsDigest = true }
+                }
+                ToolbarSpacer(.fixed, placement: .topBarTrailing)
+            }
             ToolbarItemGroup(placement: .topBarTrailing) {
                 if let serverURL = store.serverURL {
                     Button("Add in Home Assistant", systemImage: "plus") {
@@ -126,10 +137,15 @@ private struct HomeDashboard: View {
             if let digest { DaySummarySheet(digest: digest, current: summary.sentences + summary.more) }
         }
         #if DEBUG
+        .sheet(isPresented: $describesRule) { DescribeRuleView() }
         // `-sheet light.lampadaire` opens a device sheet at launch, to check its design; `-sheet day` the day summary.
         .onAppear {
             guard let id = UserDefaults.standard.string(forKey: "sheet") else { return }
-            if id == "day" { readsDigest = digest != nil } else { opened = OpenedDevice(id: id) }
+            switch id {
+            case "day": readsDigest = digest != nil
+            case "describe": describesRule = true
+            default: opened = OpenedDevice(id: id)
+            }
         }
         #endif
         .overlay(alignment: .bottom) {
@@ -150,9 +166,14 @@ private struct HomeDashboard: View {
         }
         // The name is set by the iCloud share callback, outside any transaction.
         .animation(.smooth, value: store.household.joinedHouseholdName)
+        .sensoryFeedback(.success, trigger: store.household.joinedHouseholdName) { _, new in new != nil }
+        .sensoryFeedback(.success, trigger: turnedOff)
         .confirmationDialog("Turn Everything Off?", isPresented: $confirmsTurnOff, titleVisibility: .visible) {
             Button("Turn Off \(store.devicesToTurnOff.count) Devices", role: .destructive) {
-                Task { await store.turnEverythingOff() }
+                Task {
+                    await store.turnEverythingOff()
+                    turnedOff += 1
+                }
             }
         } message: {
             Text("Lights, plugs, fans and speakers. Devices set to “Never Turn Off” stay on.")

@@ -93,6 +93,9 @@ struct OnboardingView: View {
         } message: {
             Text(error ?? "")
         }
+        .errorFeedback(error)
+        // The server found and the home ready are the two moments worth celebrating.
+        .sensoryFeedback(trigger: step) { _, new in new == .found || new == .ready ? .success : nil }
     }
 
     /// The household's server first (when this iPhone joined one through iCloud), then those found on the Wi-Fi.
@@ -333,6 +336,7 @@ private struct JoinStep: View {
             }
             .ignoresSafeArea()
         }
+        .errorFeedback(error)
     }
 
     private func open(_ url: URL) async {
@@ -837,6 +841,7 @@ private struct PresenceStep: View {
                 .font(.roundedFootnote)
                 .foregroundStyle(.tertiary)
         }
+        .errorFeedback(error)
     }
 
     private func toggle(_ on: Bool) async {

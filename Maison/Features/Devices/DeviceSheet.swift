@@ -5,6 +5,7 @@ struct DeviceSheet: View {
     @Environment(HomeStore.self) private var store
     @Environment(\.dismiss) private var dismiss
     let entityID: String
+    @State private var powerTaps = 0
 
     var body: some View {
         NavigationStack {
@@ -26,6 +27,7 @@ struct DeviceSheet: View {
         }
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
+        .sensoryFeedback(.impact(weight: .medium), trigger: powerTaps)
     }
 
     @ViewBuilder
@@ -52,6 +54,7 @@ struct DeviceSheet: View {
         if [.light, .switch, .climate, .fan, .mediaPlayer, .humidifier].contains(entity.kind) {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Power", systemImage: "power") {
+                    powerTaps += 1
                     Task { await store.call(entity.domain, entity.state == "off" ? "turn_on" : "turn_off", on: entity) }
                 }
                 .tint(entity.state == "off" ? .gray : .blue)
@@ -203,6 +206,7 @@ private struct Swatches: View {
                 .frame(width: 42, height: 42)
         }
         .buttonStyle(.plain)
+        .tapFeedback(.selection)
         .frame(maxWidth: .infinity)
     }
 }
@@ -429,7 +433,7 @@ private struct ClimateControls: View {
         }
         .buttonStyle(.glass)
         .buttonBorderShape(.circle)
-        .sensoryFeedback(.increase, trigger: entity.targetTemperature)
+        .tapFeedback(delta > 0 ? .increase : .decrease)
     }
 
     private var headline: String {
@@ -606,6 +610,7 @@ private struct CoverControls: View {
             }
             .buttonStyle(.glass)
             .buttonBorderShape(.circle)
+            .tapFeedback(.impact(weight: .light))
             Text(title)
                 .font(.roundedFootnote)
                 .foregroundStyle(.secondary)
@@ -624,6 +629,7 @@ private struct CoverControls: View {
                 .background(Theme.pill, in: .capsule)
         }
         .buttonStyle(.plain)
+        .tapFeedback(.selection)
     }
 }
 
@@ -714,6 +720,7 @@ private struct GenericControls: View {
                 }
                 .buttonStyle(.glassProminent)
                 .tint(entity.accent)
+                .tapFeedback(.impact(weight: .medium))
             }
         }
         .frame(maxWidth: .infinity)

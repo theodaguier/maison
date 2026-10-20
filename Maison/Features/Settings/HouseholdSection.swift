@@ -128,6 +128,8 @@ struct HouseholdSection: View {
         } message: {
             Text(errorMessage ?? "")
         }
+        .errorFeedback(errorMessage)
+        .sensoryFeedback(.success, trigger: sentConfirmation) { _, new in new != nil }
     }
 
     private func run(_ action: () async throws -> Void) async {

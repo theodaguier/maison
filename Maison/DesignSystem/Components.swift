@@ -345,6 +345,7 @@ struct TemperatureStepper: View {
             } label: {
                 Image(systemName: "minus").padding(.horizontal, 11).padding(.vertical, 7)
             }
+            .tapFeedback(.decrease)
             Text(value.map(EntityState.degrees) ?? "–")
                 .font(.roundedHeadline)
                 .monospacedDigit()
@@ -356,12 +357,12 @@ struct TemperatureStepper: View {
             } label: {
                 Image(systemName: "plus").padding(.horizontal, 11).padding(.vertical, 7)
             }
+            .tapFeedback(.increase)
         }
         .font(.system(size: 15, weight: .semibold))
         .foregroundStyle(.primary)
         .buttonStyle(.plain)
         .background(Theme.pill, in: .capsule)
-        .sensoryFeedback(.increase, trigger: value)
     }
 }
 
@@ -378,7 +379,9 @@ struct PillPicker<Value: Hashable>: View {
                 ForEach(options, id: \.value) { option in
                     let isSelected = option.value == selection
                     Button {
-                        withAnimation(.smooth) { selection = option.value }
+                        // No transaction here: the content under the pills switches instantly,
+                        // only the active capsule below moves.
+                        selection = option.value
                     } label: {
                         HStack(spacing: 5) {
                             if let symbol = option.symbol {
@@ -405,7 +408,9 @@ struct PillPicker<Value: Hashable>: View {
                     .buttonStyle(.pressable)
                 }
             }
+            .animation(.snappy(duration: 0.25), value: selection)
         }
+        .sensoryFeedback(.selection, trigger: selection)
         .scrollIndicators(.hidden)
     }
 }
@@ -421,6 +426,31 @@ struct CompactLabelStyle: LabelStyle {
             configuration.icon
             configuration.title
         }
+    }
+}
+
+// MARK: - Haptics
+
+extension View {
+    /// The error haptic when a failure message appears, so a failed action is felt as well as read.
+    func errorFeedback(_ message: String?) -> some View {
+        sensoryFeedback(.error, trigger: message) { _, new in new != nil }
+    }
+
+    /// Plays `feedback` on each tap of this button, and not when the value it controls changes from elsewhere.
+    func tapFeedback(_ feedback: SensoryFeedback) -> some View {
+        modifier(TapFeedback(feedback: feedback))
+    }
+}
+
+private struct TapFeedback: ViewModifier {
+    let feedback: SensoryFeedback
+    @State private var taps = 0
+
+    func body(content: Content) -> some View {
+        content
+            .simultaneousGesture(TapGesture().onEnded { taps += 1 })
+            .sensoryFeedback(feedback, trigger: taps)
     }
 }
 
@@ -496,6 +526,27 @@ struct WideButton: View {
             } else {
                 content.buttonStyle(.glass)
             }
+        }
+    }
+}
+
+/// The sparkles button of the top bars: what Apple Intelligence can do on this screen.
+struct IntelligenceButton: View {
+    let title: LocalizedStringKey
+    let action: () -> Void
+
+    init(_ title: LocalizedStringKey, action: @escaping () -> Void) {
+        self.title = title
+        self.action = action
+    }
+
+    var body: some View {
+        Button(action: action) {
+            // Toolbars draw symbols in one colour: a gradient shaped by the symbol keeps the colours of the design.
+            Theme.generated
+                .frame(width: 22, height: 22)
+                .mask { Image(systemName: "sparkles").font(.system(size: 17, weight: .medium)) }
+                .accessibilityLabel(Text(title))
         }
     }
 }

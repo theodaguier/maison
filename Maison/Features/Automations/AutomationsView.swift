@@ -6,6 +6,7 @@ struct AutomationsView: View {
     @State private var rules: [String: AutomationRule] = [:]
     @State private var runs: [AutomationRun] = []
     @State private var editor: EditorTarget?
+    @State private var describes = false
 
     enum Filter: Hashable { case all, enabled, disabled }
 
@@ -62,6 +63,10 @@ struct AutomationsView: View {
             .navigationTitle("Automations")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
+                    IntelligenceButton("Describe a Rule") { describes = true }
+                }
+                ToolbarSpacer(.fixed, placement: .topBarTrailing)
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("New Rule", systemImage: "plus") {
                         editor = EditorTarget(rule: .new(), isNew: true)
                     }
@@ -69,6 +74,9 @@ struct AutomationsView: View {
             }
             .sheet(item: $editor, onDismiss: { Task { await load() } }) { target in
                 RuleEditor(rule: target.rule, isNew: target.isNew)
+            }
+            .sheet(isPresented: $describes, onDismiss: { Task { await load() } }) {
+                DescribeRuleView()
             }
             .task(id: store.automations.map(\.entityID)) { await load() }
             .refreshable { await load() }

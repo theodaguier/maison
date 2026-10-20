@@ -21,6 +21,8 @@ struct RootView: View {
             // `-onboarding` replays the setup with the demo home.
             isOnboarding = store.phase == .signedOut || ProcessInfo.processInfo.arguments.contains("-onboarding")
         }
+        // A device command that didn't go through is felt even though the state simply stays as it was.
+        .sensoryFeedback(.error, trigger: store.failedCommands)
         .onChange(of: store.phase) { _, phase in
             if phase == .signedOut { isOnboarding = true }
         }
