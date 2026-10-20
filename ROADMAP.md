@@ -35,3 +35,25 @@ Three problems, in the order they should be tackled.
 - **Data volume:** everything depends on the number of devices and how much history the server keeps. The recorder keeps detailed history for only a few days by default; long-term statistics last longer. Raise `purge_keep_days` early so data accumulates.
 - **Gaps:** periods when the server is down must be treated as missing values, not as “nothing happened”.
 - **First step:** a script that exports the logbook, to count manual actions and see whether patterns already stand out.
+
+## Agents (MCP)
+
+Let assistants such as Claude or Hermes use the home through the Model Context Protocol.
+
+### 1. Start with Home Assistant's own MCP server
+
+- **Observation:** Home Assistant ships a "Model Context Protocol Server" integration: an MCP client can control the devices exposed to Assist and read their state, with a Home Assistant token.
+- **Step:** enable it on the server and try it from Claude and Hermes before writing anything.
+- **Limits to check:** what it can't do well — creating rules, reading history, knowing who did what.
+
+### 2. A Maison MCP server for what Home Assistant's doesn't cover
+
+- **Problem:** give agents the things Maison already knows how to do, with the same safeguards.
+- **Tools:**
+  - create and edit rules through the WHEN / IF / THEN model (`AutomationRule`), keeping unknown steps intact, and saving through the configuration API (administrator account);
+  - history and logbook: how long a device was on, who unlocked a door and when, energy use, a sensor's usual range;
+  - turn-off timers and "open too long" alerts, as Home Assistant scripts and automations (`TurnOffTimer`, `OpenTooLongAlert`);
+  - rooms and devices as Maison shows them, technical entities hidden.
+- **Where:** a small server (TypeScript or Python) in Docker on the Beelink, next to Hermes, talking to Home Assistant through the same APIs as the app (WebSocket, history, logbook, automation config).
+- **Access:** local network or Tailscale only, with a token from a dedicated Home Assistant account; anything that writes (rules, unlocking) asks for confirmation.
+- **Not feasible:** hosting it in the iOS app (no long-running server on iOS); exposing the floor plan and favourites means reading iCloud through CloudKit Web Services, a project of its own.
