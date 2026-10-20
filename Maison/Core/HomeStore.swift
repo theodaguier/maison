@@ -175,6 +175,36 @@ final class HomeStore {
         integrations = (try? await connection.integrations()) ?? []
     }
 
+    /// How long the device was on today and yesterday.
+    func usage(of entity: EntityState) async -> (today: DayUsage, yesterday: DayUsage)? {
+        let calendar = Calendar.current
+        let todayStart = calendar.startOfDay(for: .now)
+        guard let yesterdayStart = calendar.date(byAdding: .day, value: -1, to: todayStart) else { return nil }
+        let today = DateInterval(start: todayStart, duration: 86_400)
+        let yesterday = DateInterval(start: yesterdayStart, end: todayStart)
+
+        if isDemo {
+            func period(_ from: Double, _ to: Double, in day: DateInterval) -> DateInterval {
+                DateInterval(start: day.start.addingTimeInterval(from * 3600), end: day.start.addingTimeInterval(to * 3600))
+            }
+            return (
+                DayUsage(periods: [period(6.5, 7.2, in: today), period(15.8, 17.2, in: today)], day: today),
+                DayUsage(periods: [period(6.6, 7.4, in: yesterday), period(18, 21.5, in: yesterday)], day: yesterday)
+            )
+        }
+        guard let connection, let changes = try? await connection.history(of: entity.entityID, since: yesterdayStart) else {
+            return nil
+        }
+        let todayChanges = Self.changes(changes, startingAt: todayStart)
+        return (DayUsage(changes: todayChanges, day: today), DayUsage(changes: changes, day: yesterday))
+    }
+
+    /// Keeps the changes from `start`, prefixed with the state that was current at `start`.
+    private static func changes(_ changes: [StateChange], startingAt start: Date) -> [StateChange] {
+        let before = changes.last { $0.date <= start }
+        return (before.map { [StateChange(state: $0.state, date: start)] } ?? []) + changes.filter { $0.date > start }
+    }
+
     func measureLatency() async {
         guard let connection, let duration = try? await connection.ping() else { return }
         latencies = Array((latencies + [duration]).suffix(20))

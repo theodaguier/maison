@@ -94,6 +94,46 @@ struct ServerConfig: Sendable, Hashable, Decodable {
     }
 }
 
+struct StateChange: Sendable, Hashable {
+    let state: String
+    let date: Date
+}
+
+/// When a device was on during one day.
+struct DayUsage: Sendable, Equatable {
+    /// On periods, clipped to the day.
+    let periods: [DateInterval]
+    let day: DateInterval
+
+    var total: TimeInterval { periods.reduce(0) { $0 + $1.duration } }
+
+    /// Builds the on periods within `day` from a history whose first entry is the state at its start.
+    init(changes: [StateChange], day: DateInterval, now: Date = .now, isOn: (String) -> Bool = { $0 == "on" }) {
+        self.day = day
+        let end = min(day.end, now)
+        var periods: [DateInterval] = []
+        var onSince: Date?
+        for change in changes.sorted(by: { $0.date < $1.date }) {
+            let date = max(change.date, day.start)
+            if isOn(change.state) {
+                if onSince == nil { onSince = date }
+            } else if let start = onSince {
+                if date > start { periods.append(DateInterval(start: start, end: min(date, end))) }
+                onSince = nil
+            }
+        }
+        if let start = onSince, end > start {
+            periods.append(DateInterval(start: start, end: end))
+        }
+        self.periods = periods.filter { $0.end > day.start && $0.start < end }
+    }
+
+    init(periods: [DateInterval], day: DateInterval) {
+        self.periods = periods
+        self.day = day
+    }
+}
+
 /// A configured integration (config entry).
 struct Integration: Sendable, Hashable, Decodable {
     let domain: String

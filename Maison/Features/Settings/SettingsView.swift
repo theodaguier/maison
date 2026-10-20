@@ -42,8 +42,7 @@ struct SettingsView: View {
                         if !store.integrations.isEmpty {
                             group("Integrations") {
                                 ForEach(integrationSummaries, id: \.domain) { item in
-                                    SettingsRow(symbol: "puzzlepiece.extension.fill", color: .indigo, title: LocalizedStringKey(item.title),
-                                                value: item.count > 1 ? String(localized: "\(item.count) entries") : nil)
+                                    IntegrationRow(domain: item.domain, title: item.title, count: item.count)
                                 }
                             }
                         }
@@ -51,10 +50,13 @@ struct SettingsView: View {
                     group("Appearance") {
                         HStack(spacing: 12) {
                             SettingsIcon(symbol: "sun.max.fill", color: .orange)
+                            Text("Theme")
+                                .font(.roundedBody)
+                            Spacer()
                             Picker("Theme", selection: $appearance) {
                                 ForEach(Appearance.allCases, id: \.self) { Text($0.title).tag($0) }
                             }
-                            .font(.roundedBody)
+                            .labelsHidden()
                             .tint(.secondary)
                         }
                         .padding(.vertical, 6)
@@ -102,6 +104,7 @@ struct SettingsView: View {
             VStack(spacing: 0) {
                 content()
             }
+            .frame(maxWidth: .infinity)
             .padding(.horizontal, 16)
             .padding(.vertical, 4)
             .cardStyle()
@@ -235,6 +238,37 @@ private struct SettingsRow: View {
                     .font(.roundedSubheadline)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
+            }
+        }
+        .padding(.vertical, 10)
+    }
+}
+
+/// An integration with its official logo from the Home Assistant brands CDN.
+private struct IntegrationRow: View {
+    let domain: String
+    let title: String
+    let count: Int
+
+    var body: some View {
+        HStack(spacing: 12) {
+            AsyncImage(url: URL(string: "https://brands.home-assistant.io/_/\(domain)/icon.png")) { image in
+                image.resizable().scaledToFit()
+            } placeholder: {
+                Image(systemName: "puzzlepiece.extension.fill")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .frame(width: 30, height: 30)
+            .accessibilityHidden(true)
+            Text(verbatim: title)
+                .font(.roundedBody)
+                .lineLimit(1)
+            Spacer()
+            if count > 1 {
+                Text("\(count) entries")
+                    .font(.roundedSubheadline)
+                    .foregroundStyle(.secondary)
             }
         }
         .padding(.vertical, 10)

@@ -147,6 +147,22 @@ actor HomeAssistantConnection {
         try await send(["type": "config_entries/get"]).decode([Integration].self)
     }
 
+    /// State changes of one entity since `start`, oldest first. The first entry is the state at `start`.
+    func history(of entityID: String, since start: Date) async throws -> [StateChange] {
+        let result = try await send([
+            "type": "history/history_during_period",
+            "start_time": .string(start.ISO8601Format()),
+            "entity_ids": [.string(entityID)],
+            "minimal_response": true,
+            "no_attributes": true,
+            "significant_changes_only": false,
+        ])
+        return (result[entityID]?.arrayValue ?? []).compactMap { entry in
+            guard let state = entry["s"]?.stringValue, let time = (entry["lc"] ?? entry["lu"])?.doubleValue else { return nil }
+            return StateChange(state: state, date: Date(timeIntervalSince1970: time))
+        }
+    }
+
     /// Streams the new state of every entity that changes. Removed entities are skipped.
     func stateChanges() async throws -> AsyncStream<EntityState> {
         let events = try await subscribe(["type": "subscribe_events", "event_type": "state_changed"])

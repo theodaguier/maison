@@ -41,12 +41,32 @@
         }
       }
     },
+    "%@ less than yesterday": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ de moins qu’hier"
+          }
+        }
+      }
+    },
     "%@ measured": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "%@ mesurés"
+          }
+        }
+      }
+    },
+    "%@ more than yesterday": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ de plus qu’hier"
           }
         }
       }
@@ -284,6 +304,46 @@
                 "stringUnit": {
                   "state": "translated",
                   "value": "%lld lumières allumées."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld lit": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld on"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld on"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld allumée"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld allumées"
                 }
               }
             }
@@ -1171,16 +1231,6 @@
         }
       }
     },
-    "Last seen": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dernier passage"
-          }
-        }
-      }
-    },
     "Light": {
       "localizations": {
         "fr": {
@@ -1407,6 +1457,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Allumé"
+          }
+        }
+      }
+    },
+    "On Today": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allumée aujourd’hui"
           }
         }
       }
@@ -2037,6 +2097,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "actifs"
+          }
+        }
+      }
+    },
+    "h": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "h"
           }
         }
       }

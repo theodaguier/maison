@@ -74,7 +74,9 @@ private struct LightControls: View {
                         size: .xLarge
                     )
                     if let since = entity.lastChanged {
-                        Text(entity.state == "on" ? "On for \(since, format: .relative(presentation: .numeric, unitsStyle: .abbreviated))" : "Off for \(since, format: .relative(presentation: .numeric, unitsStyle: .abbreviated))")
+                        let elapsed = Duration.seconds(max(60, Date.now.timeIntervalSince(since)))
+                            .formatted(.units(allowed: [.days, .hours, .minutes], width: .abbreviated, maximumUnitCount: 2))
+                        Text(entity.state == "on" ? "On for \(elapsed)" : "Off for \(elapsed)")
                             .font(.roundedFootnote)
                             .foregroundStyle(.secondary)
                     }
@@ -85,10 +87,12 @@ private struct LightControls: View {
                         Text(Self.whiteName(kelvin))
                             .font(.roundedHeadline)
                             .foregroundStyle(.orange)
-                        Label("\(Int(kelvin)) K", systemImage: "circle.fill")
-                            .labelStyle(.compact)
-                            .font(.roundedSubheadlineEmphasized)
-                            .foregroundStyle(.secondary)
+                        HStack(spacing: 6) {
+                            Circle().fill(Color.yellow.opacity(0.6)).frame(width: 9, height: 9)
+                            Text("\(Int(kelvin)) K")
+                        }
+                        .font(.roundedSubheadlineEmphasized)
+                        .foregroundStyle(.secondary)
                     }
                     .padding(.top, 6)
                 }
@@ -115,6 +119,8 @@ private struct LightControls: View {
             if showsWhites || showsColors {
                 Swatches(entity: entity, showsWhites: showsWhites, showsColors: showsColors)
             }
+
+            UsageCard(entity: entity)
         }
         .padding(.top, 8)
     }
@@ -190,6 +196,99 @@ private struct Swatches: View {
         }
         .buttonStyle(.plain)
         .frame(maxWidth: .infinity)
+    }
+}
+
+/// "On today": total time on, a 24-hour timeline and the comparison with yesterday.
+private struct UsageCard: View {
+    @Environment(HomeStore.self) private var store
+    let entity: EntityState
+    @State private var usage: (today: DayUsage, yesterday: DayUsage)?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Label("On Today", systemImage: "clock.fill")
+                .labelStyle(.compact)
+                .font(.roundedSubheadlineEmphasized)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 16)
+                .padding(.top, 13)
+                .padding(.bottom, 12)
+            Theme.separator.frame(height: 1)
+            VStack(alignment: .leading, spacing: 12) {
+                if let usage {
+                    HStack(alignment: .firstTextBaseline) {
+                        duration(usage.today.total)
+                        Spacer()
+                        comparison(today: usage.today.total, yesterday: usage.yesterday.total)
+                    }
+                    Timeline(usage: usage.today)
+                    HStack {
+                        Text("0 h"); Spacer(); Text("6 h"); Spacer(); Text("12 h"); Spacer(); Text("18 h"); Spacer(); Text("24 h")
+                    }
+                    .font(.roundedFootnote)
+                    .foregroundStyle(.tertiary)
+                } else {
+                    ProgressView().frame(maxWidth: .infinity, minHeight: 80)
+                }
+            }
+            .padding(16)
+        }
+        .cardStyle()
+        .task(id: entity.state) { usage = await store.usage(of: entity) }
+    }
+
+    private func duration(_ seconds: TimeInterval) -> some View {
+        let minutes = Int(seconds / 60)
+        return HStack(alignment: .firstTextBaseline, spacing: 4) {
+            if minutes >= 60 {
+                NumberLabel(value: "\(minutes / 60)", unit: String(localized: "h"))
+            }
+            NumberLabel(value: "\(minutes % 60)", unit: String(localized: "min"))
+        }
+    }
+
+    @ViewBuilder
+    private func comparison(today: TimeInterval, yesterday: TimeInterval) -> some View {
+        if yesterday > 60 {
+            let change = (today - yesterday) / yesterday
+            let percent = abs(change).formatted(.percent.precision(.fractionLength(0)))
+            let trend: Trend = change < 0 ? .down : .up
+            HStack(spacing: 8) {
+                Text(change < 0 ? "\(percent) less than yesterday" : "\(percent) more than yesterday")
+                    .font(.roundedFootnoteEmphasized)
+                    .foregroundStyle(.secondary)
+                Image(systemName: trend.symbol)
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(trend.color)
+                    .frame(width: 26, height: 26)
+                    .background(trend.background, in: .rect(cornerRadius: 7))
+            }
+        }
+    }
+}
+
+private struct Timeline: View {
+    let usage: DayUsage
+
+    var body: some View {
+        GeometryReader { proxy in
+            let width = proxy.size.width
+            ZStack(alignment: .leading) {
+                Capsule().fill(Theme.gaugeTrack)
+                ForEach(usage.periods, id: \.start) { period in
+                    let x = width * period.start.timeIntervalSince(usage.day.start) / usage.day.duration
+                    let w = max(3, width * period.duration / usage.day.duration)
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(Color.yellow.opacity(0.75))
+                        .frame(width: w)
+                        .offset(x: x)
+                }
+            }
+        }
+        .frame(height: 26)
+        .clipShape(.rect(cornerRadius: 8))
+        .accessibilityHidden(true)
     }
 }
 

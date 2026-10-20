@@ -44,11 +44,19 @@ struct RoomView: View {
             .padding(.horizontal, Theme.screenPadding)
             .padding(.bottom, 24)
             .background(alignment: .top) {
-                Image("IllustrationRoom")
-                    .resizable()
-                    .scaledToFill()
+                // Same crop as the mock-up: the painting is zoomed ~1.5× and its ceiling cut off.
+                Color.clear
                     .frame(height: heroHeight)
                     .frame(maxWidth: .infinity)
+                    .overlay(alignment: .topLeading) {
+                        GeometryReader { proxy in
+                            Image("IllustrationRoom")
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: proxy.size.width * 1.515, height: heroHeight * 1.316)
+                                .offset(x: -proxy.size.width * 0.182, y: -heroHeight * 0.29)
+                        }
+                    }
                     .clipped()
                     .overlay(alignment: .bottom) {
                         LinearGradient(colors: [Theme.background.opacity(0), Theme.background], startPoint: .top, endPoint: .bottom)
@@ -98,7 +106,7 @@ struct RoomView: View {
             let on = lights.filter { $0.state == "on" }.count
             cards.append(RingMetricCard(
                 title: "Lights", value: "\(on)", unit: "/ \(lights.count)",
-                caption: on == 0 ? String(localized: "All off") : String(localized: "\(on) on"),
+                caption: on == 0 ? String(localized: "All off") : String(localized: "\(on) lit"),
                 symbol: "lightbulb.fill", color: .yellow, progress: Double(on) / Double(lights.count)
             ))
         }
@@ -122,7 +130,7 @@ struct RoomView: View {
             cards.append(RingMetricCard(
                 title: "Motion", value: "\(min(minutes, 99))",
                 unit: String(localized: "min"),
-                caption: minutes == 0 ? String(localized: "Detected") : String(localized: "Last seen"),
+                caption: minutes == 0 ? String(localized: "Detected") : motion.formatted(date: .omitted, time: .shortened),
                 symbol: "figure.walk.motion", color: .indigo, progress: max(0.05, 1 - Double(minutes) / 60)
             ))
         }
