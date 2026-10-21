@@ -6,6 +6,8 @@
 
 Home Assistant collects; Maison understands and acts. Going further than Home Assistant doesn't mean collecting more data than it does — it already reads thousands of brands — but doing more with that data: explaining, estimating, learning, and turning what it finds into actions.
 
+V1 is that core, and that core only: three scores — Comfort, Energy and Network — and the connectors that feed them, whatever the brand.
+
 ## Principles
 
 1. **The intelligence layer is the core.** Every source goes through it; no screen reads Home Assistant directly.
@@ -21,7 +23,9 @@ Home Assistant collects; Maison understands and acts. Going further than Home As
 
 - **Home Assistant is the home's memory.** It is the always-on device that measures and keeps history, which neither the iPhone (no background work) nor HomeKit (no history) can do. Home Assistant is the only source of history for now; HomeKit and Matter will be discussed if Maison opens up to people without Home Assistant.
 - **The iPhone adds what Home Assistant doesn't have:** location and presence, sleep from Health, the weather forecast, the calendar, and Focus modes. iOS only says whether a Focus is on, not which one: Maison learns "Sleep" or "Work" through a Focus filter the person adds to that Focus once (assisted). The iPhone can't list the devices on the Wi-Fi nor read what other apps play (Apple Music aside); Home Assistant brings those through the router's and the speakers' integrations.
-- **The inventory adds what isn't connected** (see below).
+- **Each source is a connector, and Maison stays brand-agnostic.** Home Assistant is the first connector, not the product: the same picture of the home can take a box, a meter or another cloud. What V1 shows does not depend on the brand behind the source.
+- **Documents feed the scores, and only those.** An energy bill, an internet-box bill, an energy contract or a box contract is analysed on the device and linked to Energy or Network. A warranty, a manual, insurance or a lease waits with the inventory (see Parking).
+- **What isn't connected waits.** An inventory of objects is paused, not dropped (see Parking). V1 does not ask the household to list what it owns.
 - **Maison sets Home Assistant up itself:** an internet check (Ping), devices Home Assistant discovered, the energy dashboard, through the same APIs as Home Assistant's own settings. These need an administrator account; for a resident, Maison asks the administrator in one tap instead. History retention has no API (it is only set in `configuration.yaml`): the add-on sets it.
 - **A Maison add-on runs the intelligence layer around the clock** on the household's Home Assistant, installed from the app in one tap (Home Assistant OS and Supervised). Home Assistant Container and Core have no add-ons: the same package ships as a Docker container to run beside it (assisted), and without either the iPhone computes the findings when the app opens and in background refreshes (manual), with fewer of them and later.
 - **The only thing on our side is a push relay that stores nothing**, because the app's APNs key can't be shipped to every home. It plugs into Home Assistant the way its own app does: Maison registers a `push_url` and a push token as a mobile app, and Home Assistant's `notify.mobile_app_*` service posts to the relay, so any automation can notify through Maison. Payloads can be end-to-end encrypted.
@@ -35,10 +39,10 @@ What it does:
 
 1. **Unify:** one picture of the home, whatever the source, each value keeping its origin.
 2. **Understand the context:** who is home, the weather, the season, the household's habits.
-3. **Estimate what is missing:** from the inventory, the context, and how long devices ran.
+3. **Estimate what is missing:** from the context, how long devices ran, and the next real bill. The object inventory is paused (see Parking).
 4. **Learn:** the home's usual ranges and habits; a dismissed finding or a corrected estimate counts.
 5. **Explain:** always why, never a bare number.
-6. **Act:** every finding ends in one tap — create a rule, launch a scene, check a device or an object.
+6. **Act:** every finding ends in one tap — create a rule, launch a scene, check a device.
 
 Its rule: **it computes, the language model only words it.** It therefore works without Apple Intelligence: when the model doesn't support the language, the findings show in a short written form instead of disappearing.
 
@@ -50,13 +54,13 @@ Maison follows what happens in the home, not only its devices. Each moment has t
 |---|---|---|---|
 | Sleeping | Bedroom temperature, CO₂, noise | Health, Sleep Focus, usual bedtime | "Slept well?" in the morning |
 | Waking up | First motion, first light | Wake-up time in Health | — |
-| Showering | Bathroom humidity, water heater | Shower in the inventory and usual times | One tap, a shortcut, Siri |
-| Cooking | Oven or hob power, particles | Inventory, mealtimes, presence | "I'm cooking", a timer |
-| Laundry | The machine's power curve | Machine and energy label in the inventory | "Machine started": end reminder, cost |
+| Showering | Bathroom humidity, water heater | Usual times, presence | One tap, a shortcut, Siri |
+| Cooking | Oven or hob power, particles | Mealtimes, presence | "I'm cooking", a timer |
+| Laundry | The machine's power curve | Usual times, presence | "Machine started": end reminder, cost |
 | Working from home | CO₂ in the office | Weekday presence, Work Focus, calendar | "Working from home today" |
 | Relaxing | TV and music in Home Assistant | Apple Music playing on the iPhone | An "Evening" scene |
-| Cleaning | Robot vacuum | Inventory, when people are usually home, pollen | Tasks per room, recurring reminders |
-| Airing | Window sensors, CO₂ | Outdoor weather and air quality, season, windows in the inventory: the best time to air today | "I aired": daily reminder |
+| Cleaning | Robot vacuum | When people are usually home, pollen | Tasks per room, recurring reminders |
+| Airing | Window sensors, CO₂ | Outdoor weather and air quality, season: the best time to air today | "I aired": daily reminder |
 | Guests | More devices on the router (its Home Assistant integration) | Calendar | "I have guests" |
 | Leaving and coming back | Locks, windows | The iPhone's location, calendar | A "Before leaving" checklist |
 | Working out | — | A Health workout while at home | — |
@@ -67,43 +71,36 @@ Maison follows what happens in the home, not only its devices. Each moment has t
 
 **Privacy inside the household.** Everyone sees their own activity (sleep, showers); the household sees only totals ("9 showers this week"), never who did what and when. Home Assistant can't enforce this: every account reads the whole history and logbook. So what is personal stays out of it: Health data stays on the person's iPhone, and the add-on keeps per-person moments in its own store, answering each member only about themselves. A sensor's raw history stays visible to anyone with a Home Assistant account.
 
-## Inventory
-
-Everything in the home, connected or not: fridge, oven, shower, windows, a plain vacuum cleaner, plants, the mattress, the smoke detector, filters.
-
-- **Automatic:** devices Home Assistant already knows.
-- **Assisted:** a photo of the object, its barcode, the QR code of the European energy label (official consumption), a photo of the room that suggests what is in it.
-- **Manual:** a form, with typical lists per room.
-
-It feeds estimates without a meter, moments without a sensor, upkeep (filters, descaling, smoke detector batteries), and each object's sheet, with its warranty and manual as options.
-
 ## Findings
 
-What the user receives. The first catalogue:
+What the user receives. In V1, three scores:
 
-- **Energy:** standby use, the month's projected cost, the costliest devices, use at equal weather, cheaper hours.
 - **Comfort:** a room out of its range, heating or cooling running in an empty home, a window open while it runs.
-- **Devices:** offline, battery low, a frozen sensor, a device behaving unusually.
-- **Safety:** a door left open, unlocked after everyone left, water leak, smoke.
-- **Habits:** a manual action repeated in the same context, offered as a rule.
-- **Upkeep:** from the inventory.
+- **Energy:** standby use, the month's projected cost, the costliest devices, use at equal weather, cheaper hours. An energy bill or the energy contract, analysed on the device, is linked to this score and recalibrates it.
+- **Network:** whether the connection is up, the devices the router sees, and outages. An internet-box bill or the box contract, analysed on the device, is linked to this score.
 
-Comfort ranges are never hard-coded: they are learned from the home's history or set by the user. Energy is in the currency set in Home Assistant.
+After V1, still in this product: devices (offline, battery low, a frozen sensor, a device behaving unusually), safety (a door left open, unlocked after everyone left, water leak, smoke), and habits (a manual action repeated in the same context, offered as a rule). Upkeep returns with the inventory (see Parking).
 
-## MVP
+Comfort ranges are never hard-coded: they are learned from the home's history or set by the user. Energy is in the currency set in Home Assistant, corrected by the next bill.
 
-1. **The intelligence layer as a module**, with the origin of every value.
-2. **Today:** the day summary and the first findings (energy, comfort, devices, safety), each with its origin, its reason and a one-tap action.
-3. **A useful first launch:** import Home Assistant's existing history (detailed history and long-term statistics), so Maison has something to say within minutes.
-4. **Tidy the setup:** suggest rooms, hide duplicates, clear names.
-5. **Energy:** read Home Assistant's energy dashboard, suggest the right meter when it isn't set, or a manual entry (bill, price per kWh).
-6. **Minimal manual entry:** comfort range, usual hours, a first inventory.
-7. **Widgets:** Home Screen, StandBy, Lock Screen. They need an App Group and a keychain access group shared with the app, so the extension can read the sign-in and refresh it.
+## V1
+
+The core: the three scores, and the connectors that feed them. Brand-agnostic.
+
+1. **Comfort, Energy, Network.** Each score keeps the origin of every value (measured, estimated or entered), says why, and ends in one tap.
+2. **The source boundary.** The intelligence layer is one module behind it, with the origin of every value. Home Assistant is the first connector; another brand plugs in the same way. No screen reads a source directly.
+3. **Documents, only when they feed a score.** Energy bills, internet-box bills, energy contracts, box contracts. Analysed on the device, linked to Energy or to Network.
+4. **Today:** the three scores and the day summary. Each finding has its origin, its reason and a one-tap action.
+5. **A useful first launch:** import Home Assistant's existing history (detailed history and long-term statistics), so Maison has something to say within minutes.
+6. **Tidy the setup:** suggest rooms, hide duplicates, clear names.
+7. **No dead end on a score.** Energy reads Home Assistant's energy dashboard, suggests the right meter when it isn't set, or takes a bill and a price per kWh. Comfort ranges and usual hours are learned from the history or set by the user. Network uses the router's integration when there is one.
+8. **Widgets:** Home Screen, StandBy, Lock Screen. They need an App Group and a keychain access group shared with the app, so the extension can read the sign-in and refresh it.
+9. **Validation, before anything paused comes back.** About five testers from outside the project, for two weeks. Success: they open the app on their own, without being reminded.
 
 ## Next
 
-- Moments of life, starting with sleep (Health ↔ bedroom), laundry, showering, airing.
-- The inventory in full (photo, barcode, energy label) and upkeep.
+- Moments of life, starting with sleep (Health ↔ bedroom), laundry, showering, airing. Inference uses sensors, Health and what the person enters.
+- Device and safety findings, beyond the three scores.
 - The push relay and notifications with actions.
 - The Maison add-on and the automatic Home Assistant setup.
 - Estimates adjusted by presence and weather, recalibrated by real values.
@@ -112,6 +109,18 @@ Comfort ranges are never hard-coded: they are learned from the home's history or
 - Before leaving, away mode, getting the home ready for the return.
 - Control Center, Siri, Shortcuts and App Intents, Focus filters.
 - Week and month reviews.
+
+## Parking
+
+Paused, not abandoned. This waits outside V1. It comes back only after the validation above, and only when the testers use the dashboard on their own for two weeks without being reminded, and/or when they ask to store something like an appliance warranty.
+
+- The inventory of objects, durables and consumables.
+- Consumables and the replacement cycle: the median interval between replacements, and the reminders. Upkeep hangs off the same cycle (filters, descaling, smoke detector batteries).
+- An emoji chosen for the object on its own.
+- General documents attached to an object: warranties, manuals, insurance, leases.
+- Scan from the object, scan from the home: match the object and prefill its sheet (a photo, a barcode, the QR code of the European energy label).
+
+The Belongings code prototyped locally — models, matcher, prefill, the replacement schedule, and the tests — stays on a branch. It stays off V1.
 
 ## Later
 
@@ -123,7 +132,7 @@ Comfort ranges are never hard-coded: they are learned from the home's history or
 
 ## Not this product
 
-A Maison email, a bank connection, contracts and subscriptions, a condition report: that is a home-paperwork product, not this one.
+A Maison email, a bank connection, subscriptions that don't feed a score, a condition report: that is a home-paperwork product, not this one. Energy bills, internet-box bills, and the energy and box contracts are in V1, because they feed a score. Warranties, manuals, insurance and leases wait in Parking, attached to objects.
 
 ## Gaps in the current code
 
