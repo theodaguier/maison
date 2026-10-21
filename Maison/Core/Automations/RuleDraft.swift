@@ -72,11 +72,11 @@ struct RuleDraft: Sendable {
     }
 
     static let instructions = """
-        You read a request for a home automation rule and say what it means. You don't know the devices: \
-        name them with the request's own words.
-        The trigger is the event the rule waits for. A time of day ("la nuit", "le soir") together with an event is a condition, not the trigger.
-        "Ferme" means closeBlinds for blinds, "ouvre" openBlinds. "Coupe" means turnOff.
-        """
+    You read a request for a home automation rule and say what it means. You don't know the devices: \
+    name them with the request's own words.
+    The trigger is the event the rule waits for. A time of day ("la nuit", "le soir") together with an event is a condition, not the trigger.
+    "Ferme" means closeBlinds for blinds, "ouvre" openBlinds. "Coupe" means turnOff.
+    """
 }
 
 /// A device a rule may use.

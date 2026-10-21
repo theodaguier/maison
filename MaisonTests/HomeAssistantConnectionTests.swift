@@ -1,6 +1,6 @@
 import Foundation
-import Testing
 @testable import Maison
+import Testing
 
 struct HomeAssistantConnectionTests {
     @Test func authenticatesWithTheAccessToken() async throws {
@@ -30,9 +30,9 @@ struct HomeAssistantConnectionTests {
             switch message["type"]?.stringValue {
             case "auth": [["type": "auth_ok"]]
             case "get_states": [result(for: message, [
-                ["entity_id": "light.living_room", "state": "on", "attributes": ["friendly_name": "Living Room", "brightness": 180]],
-                ["entity_id": "sensor.bedroom_temperature", "state": "21.5", "attributes": ["unit_of_measurement": "°C"]],
-            ])]
+                    ["entity_id": "light.living_room", "state": "on", "attributes": ["friendly_name": "Living Room", "brightness": 180]],
+                    ["entity_id": "sensor.bedroom_temperature", "state": "21.5", "attributes": ["unit_of_measurement": "°C"]],
+                ])]
             default: []
             }
         }
@@ -99,16 +99,16 @@ struct HomeAssistantConnectionTests {
             switch message["type"]?.stringValue {
             case "auth": [["type": "auth_ok"]]
             case "subscribe_events": [
-                result(for: message),
-                ["id": message["id"] ?? .null, "type": "event", "event": [
-                    "event_type": "state_changed",
-                    "data": ["entity_id": "light.gone", "new_state": nil],
-                ]],
-                ["id": message["id"] ?? .null, "type": "event", "event": [
-                    "event_type": "state_changed",
-                    "data": ["entity_id": "light.desk", "new_state": ["entity_id": "light.desk", "state": "off", "attributes": [:]]],
-                ]],
-            ]
+                    result(for: message),
+                    ["id": message["id"] ?? .null, "type": "event", "event": [
+                        "event_type": "state_changed",
+                        "data": ["entity_id": "light.gone", "new_state": nil],
+                    ]],
+                    ["id": message["id"] ?? .null, "type": "event", "event": [
+                        "event_type": "state_changed",
+                        "data": ["entity_id": "light.desk", "new_state": ["entity_id": "light.desk", "state": "off", "attributes": [:]]],
+                    ]],
+                ]
             default: []
             }
         }

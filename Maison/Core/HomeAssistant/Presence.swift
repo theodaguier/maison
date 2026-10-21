@@ -157,8 +157,8 @@ struct Webhook: Codable, Sendable, Equatable {
 
     /// Where to post, local first. `addresses` are the server's current ones, which may have changed since registration.
     func endpoints(addresses: [URL]?) -> [URL] {
-        let servers = addresses ?? [localURL, remoteURL].compactMap { $0 }
-        let all = servers.map { $0.appending(path: "api/webhook/\(id)") } + [cloudhookURL].compactMap { $0 }
+        let servers = addresses ?? [localURL, remoteURL].compactMap(\.self)
+        let all = servers.map { $0.appending(path: "api/webhook/\(id)") } + [cloudhookURL].compactMap(\.self)
         return all.reduce(into: []) { endpoints, url in
             if !endpoints.contains(url) { endpoints.append(url) }
         }

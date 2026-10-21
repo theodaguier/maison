@@ -1,6 +1,6 @@
 import Foundation
-import Testing
 @testable import Maison
+import Testing
 
 struct DiscoveredServerTests {
     @Test func readsHomeAssistantTXTRecord() throws {

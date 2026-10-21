@@ -145,7 +145,7 @@ extension AutomationRule {
                 if raw["below"]?.doubleValue == 1, raw["above"] == nil { return .nobodyHome }
             }
         case "time":
-            let weekdays = raw["weekday"].map { $0.arrayValue?.compactMap(\.stringValue) ?? [$0.stringValue].compactMap { $0 } }
+            let weekdays = raw["weekday"].map { $0.arrayValue?.compactMap(\.stringValue) ?? [$0.stringValue].compactMap(\.self) }
             let after = raw["after"]?.stringValue, before = raw["before"]?.stringValue
             if let weekdays, after == nil, before == nil { return .weekdays(weekdays) }
             if let after, let before, weekdays == nil, after.contains(":"), before.contains(":") { return .between(after: after, before: before) }
@@ -165,7 +165,7 @@ extension AutomationRule {
         }
         guard let service = raw["action"]?.stringValue ?? raw["service"]?.stringValue else { return .other(raw) }
         let target = raw["target"]?["entity_id"] ?? raw["entity_id"] ?? raw["data"]?["entity_id"]
-        let targetIDs = target.map { $0.arrayValue?.compactMap(\.stringValue) ?? [$0.stringValue].compactMap { $0 } } ?? []
+        let targetIDs = target.map { $0.arrayValue?.compactMap(\.stringValue) ?? [$0.stringValue].compactMap(\.self) } ?? []
         var data = raw["data"]?.objectValue ?? [:]
         data["entity_id"] = nil
         let hasOtherTargets = raw["target"]?["area_id"] != nil || raw["target"]?["device_id"] != nil || raw["target"]?["label_id"] != nil

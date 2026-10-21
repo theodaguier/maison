@@ -16,7 +16,7 @@ struct Credentials: Sendable, Hashable, Codable {
 
     /// Where to reach the server, local first. The same tokens work through every address.
     var addresses: [URL] {
-        [serverURL, remoteURL].compactMap { $0 }.reduce(into: []) { addresses, url in
+        [serverURL, remoteURL].compactMap(\.self).reduce(into: []) { addresses, url in
             if !addresses.contains(url) { addresses.append(url) }
         }
     }

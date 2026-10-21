@@ -30,9 +30,8 @@ extension HomeStore {
                                    detail: area(of: states[id])?.name ?? String(localized: "Device"))
         case .threshold(let id, let above, let below):
             let unit = states[id]?.unit ?? ""
-            let title: String
-            if let above { title = String(localized: "\(entityName(id)) above \(Self.number(above))\(unit)") }
-            else { title = String(localized: "\(entityName(id)) below \(Self.number(below ?? 0))\(unit)") }
+            let title = if let above { String(localized: "\(entityName(id)) above \(Self.number(above))\(unit)") }
+            else { String(localized: "\(entityName(id)) below \(Self.number(below ?? 0))\(unit)") }
             return StepDescription(symbol: "thermometer.medium", color: .orange, title: title,
                                    detail: area(of: states[id])?.name ?? String(localized: "Measurement"))
         case .everyoneLeaves:
@@ -154,9 +153,9 @@ extension HomeStore {
         if !lightsOff.isEmpty {
             let allLights = devices.isEmpty ? 0 : self.devices.filter { $0.kind == .light }.count
             phrases.append(lightsOff.count >= allLights && allLights > 1
-                           ? String(localized: "turns off all the lights")
-                           : lightsOff.count == 1 ? String(localized: "turns off \(Phrasing.object(entityName(lightsOff[0].id)))")
-                           : String(localized: "turns off \(lightsOff.count) lights"))
+                ? String(localized: "turns off all the lights")
+                : lightsOff.count == 1 ? String(localized: "turns off \(Phrasing.object(entityName(lightsOff[0].id)))")
+                : String(localized: "turns off \(lightsOff.count) lights"))
         }
         for device in devices where !device.service.hasPrefix("light.") {
             let name = Phrasing.object(entityName(device.id))

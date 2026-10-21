@@ -1,6 +1,6 @@
 import Foundation
-import Testing
 @testable import Maison
+import Testing
 
 struct AutomationRuleTests {
     @Test func readsTheCommonShapes() {

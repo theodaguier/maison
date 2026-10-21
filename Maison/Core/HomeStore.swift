@@ -319,7 +319,7 @@ final class HomeStore {
 
     /// Automations that act on or watch the entity.
     func automations(using entity: EntityState) async -> [EntityState] {
-        if isDemo { return entity.kind == .cover ? [states["automation.trop_chaud"]].compactMap { $0 } : [] }
+        if isDemo { return entity.kind == .cover ? [states["automation.trop_chaud"]].compactMap(\.self) : [] }
         guard let connection, let ids = try? await connection.automations(using: entity.entityID) else { return [] }
         return ids.compactMap { states[$0] }
     }
@@ -740,7 +740,7 @@ struct HomeSummary: Equatable {
     var text: String { sentences.joined(separator: " ") }
 }
 
-extension Sequence where Element == EntityState {
+extension Sequence<EntityState> {
     func sortedByName() -> [EntityState] {
         sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }

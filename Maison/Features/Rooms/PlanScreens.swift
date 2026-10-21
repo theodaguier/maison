@@ -136,8 +136,8 @@ struct ScanIntro: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(isSupported ? "LiDAR Sensor Found" : "No LiDAR Sensor").font(.roundedHeadline)
                     Text(isSupported
-                         ? "The scan is computed on the iPhone; nothing is sent online."
-                         : "Scanning needs an iPhone Pro. Another member of the household can scan, and the plan is shared.")
+                        ? "The scan is computed on the iPhone; nothing is sent online."
+                        : "Scanning needs an iPhone Pro. Another member of the household can scan, and the plan is shared.")
                         .font(.roundedFootnote)
                         .foregroundStyle(.secondary)
                 }
@@ -267,7 +267,7 @@ struct ScanScreen: View {
                 result = nil
                 scan.restart()
             }, onSave: { dismiss() })
-            .interactiveDismissDisabled()
+                .interactiveDismissDisabled()
         }
         .errorFeedback(scan.error)
     }
@@ -296,9 +296,11 @@ final class ScanController: NSObject, RoomCaptureSessionDelegate {
         view.delegate = viewDelegate
         return view
     }()
+
     @ObservationIgnored private lazy var viewDelegate = CaptureViewDelegate { [weak self] data in
         Task { await self?.roomEnded(data) }
     }
+
     @ObservationIgnored private var rooms: [CapturedRoom] = []
     @ObservationIgnored private var finishing: CheckedContinuation<Void, Never>?
     @ObservationIgnored private var isFinishing = false
@@ -371,7 +373,7 @@ final class ScanController: NSObject, RoomCaptureSessionDelegate {
         Task { @MainActor in self.instruction = text }
     }
 
-    nonisolated private static func text(for instruction: RoomCaptureSession.Instruction) -> String {
+    private nonisolated static func text(for instruction: RoomCaptureSession.Instruction) -> String {
         switch instruction {
         case .moveCloseToWall: String(localized: "Move closer to the wall")
         case .moveAwayFromWall: String(localized: "Step back from the wall")
