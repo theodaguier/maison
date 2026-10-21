@@ -48,15 +48,16 @@ Local first. CloudKit (`iCloud.com.theodaguier.maison`, zone `Household`) is onl
 
 ## Changes
 
-Every change comes with unit tests in `MaisonTests` (Swift Testing). CI must pass. The check is **Build & tests**, from [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+Every change comes with unit tests in `MaisonTests` (Swift Testing). CI must pass. The check is **Tests unitaires**, the `unit` job in [`.github/workflows/tests.yml`](.github/workflows/tests.yml).
 
 Work on a branch and open a pull request. Never push to `main`.
 
 ## Build and test
 
-CI runs on `macos-26`. From the workflow:
+The test workflow runs on `macos-26`. It selects Xcode 26 with `./ci/select-xcode.sh`, generates the project, then runs the unit tests:
 
 ```sh
+export HOMEBREW_NO_AUTO_UPDATE=1
 brew install xcodegen xcbeautify
 xcodegen generate
 UDID="$(./ci/simulator-udid.sh)"
@@ -66,7 +67,9 @@ xcodebuild test \
   -project Maison.xcodeproj \
   -scheme Maison \
   -destination "id=$UDID" \
+  -derivedDataPath DerivedData \
   -resultBundlePath build/Tests.xcresult \
+  -only-testing:MaisonTests \
   CODE_SIGNING_ALLOWED=NO \
   2>&1 | tee build/xcodebuild.log | xcbeautify --renderer github-actions
 ```
