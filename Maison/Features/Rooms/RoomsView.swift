@@ -57,6 +57,7 @@ struct RoomsView: View {
                 if UserDefaults.standard.bool(forKey: "plan") { mode = .plan }
             }
         }
+        .trackScreen(.rooms)
     }
 }
 

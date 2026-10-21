@@ -155,7 +155,12 @@ final class HomeStore {
             self.layout = loadedLayout
             serverVersion = await connection.serverVersion
             lastUpdate = .now
+            // Pull to refresh while already connected is not a new source. The address is not recorded.
+            let alreadyConnected = phase == .connected
             phase = .connected
+            if !alreadyConnected {
+                Analytics.shared.track(.sourceConnected(.homeAssistant))
+            }
             Task { await loadServerDetails(from: connection) }
 
             updatesTask?.cancel()

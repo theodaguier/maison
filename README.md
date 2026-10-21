@@ -31,11 +31,21 @@ Maison/
   DesignSystem/        colour tokens, typography, cards, rings, gauges
   Features/            Home, Rooms, Automations, Settings, device sheets
   Core/HomeAssistant/  discovery, OAuth, WebSocket client, registries
+  Core/Analytics/      usage events; off unless a PostHog project token is set
   Core/Devices/        device kinds, inline controls, presentation
   Resources/           illustrations, colours, string catalogs
 MaisonTests/      tests (Swift Testing)
 ci/               export options and helper scripts for GitHub Actions
 ```
+
+## Product analytics
+
+Usage events go to PostHog in the EU (`https://eu.i.posthog.com`). The project token is not in the repo. With none set, the app records nothing, so CI and a fresh checkout keep working.
+
+- **On your Mac:** copy [`Config/Secrets.xcconfig.example`](Config/Secrets.xcconfig.example) to `Config/Secrets.xcconfig` and set `POSTHOG_API_KEY`. That file is gitignored. Use the project token (`phc_…`) from the EU project's settings, never a personal key (`phx_…`).
+- **TestFlight:** repository secret `POSTHOG_API_KEY`. The release workflow passes it to `xcodebuild`. If the secret is missing, the upload still runs and analytics stays off.
+
+Xcode writes that setting into Info.plist as `PostHogAPIKey`. Settings → Share Usage Data is on by default and turns capture off.
 
 ## Household sharing
 
@@ -72,6 +82,7 @@ git tag v0.1.0 && git push origin v0.1.0
 | `ASC_KEY_P8` | full content of the `AuthKey_XXXX.p8` file |
 | `DIST_CERT_P12` | Apple Distribution certificate, base64-encoded `.p12` |
 | `DIST_CERT_PASSWORD` | password of that `.p12` |
+| `POSTHOG_API_KEY` | optional PostHog project token (`phc_…`) for the EU project. Without it the archive still uploads and analytics stays off. |
 
 Two scripts store them through `gh` without printing them:
 

@@ -9,6 +9,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         bar.largeTitleTextAttributes = [.font: UIFont.rounded(size: 34, weight: .bold)]
         bar.titleTextAttributes = [.font: UIFont.rounded(size: 17, weight: .semibold)]
         PresenceReporter.shared.resume()
+        Analytics.shared.track(.appOpened)
         return true
     }
 

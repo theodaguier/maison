@@ -1,0 +1,9 @@
+// PostHog project token (phc_…). Empty unless a local file or the xcodebuild
+// setting POSTHOG_API_KEY supplies one. Analytics stays off when it is empty.
+//
+// The include comes second: Xcode keeps the last assignment, so a key in
+// Secrets.xcconfig replaces the empty default and this line does not wipe it.
+
+POSTHOG_API_KEY =
+
+#include? "Secrets.xcconfig"

@@ -21,3 +21,5 @@ xcuserdata/
 *.p12
 *.mobileprovision
 .env
+# Local PostHog project token. See Config/Secrets.xcconfig.example.
+Config/Secrets.xcconfig

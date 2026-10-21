@@ -25,6 +25,7 @@ struct SettingsView: View {
     @Environment(\.setDemoMode) private var setDemoMode
     @AppStorage("appearance") private var appearance: Appearance = .system
     @AppStorage(DaySummarySetting.key) private var daySummary = true
+    @AppStorage(Analytics.enabledKey) private var analyticsEnabled = true
 
     var body: some View {
         NavigationStack {
@@ -125,6 +126,28 @@ struct SettingsView: View {
                         .buttonStyle(.plain)
                     }
                     SettingsGroup("App") {
+                        HStack(spacing: 12) {
+                            SettingsIcon(symbol: "chart.bar.fill", color: .purple)
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text("Share Usage Data")
+                                    .font(.roundedBody)
+                                Text("How you use Maison. Never your home.")
+                                    .font(.roundedFootnote)
+                                    .foregroundStyle(.tertiary)
+                            }
+                            Spacer(minLength: 8)
+                            Toggle("Share Usage Data", isOn: Binding(
+                                get: { analyticsEnabled },
+                                set: { enabled in
+                                    analyticsEnabled = enabled
+                                    Analytics.shared.setEnabled(enabled)
+                                }
+                            ))
+                            .labelsHidden()
+                            .tint(.green)
+                        }
+                        .padding(.vertical, 6)
+                        SettingsDivider()
                         SettingsRow(symbol: "info.circle.fill", color: .gray, title: "Version", value: Bundle.main.versionString)
                     }
                     if store.serverURL != nil, !store.isDemoHome {
@@ -139,6 +162,7 @@ struct SettingsView: View {
             .scrollEdgeEffectStyle(.hard, for: .top)
             .navigationTitle("Settings")
         }
+        .trackScreen(.settings)
     }
 }
 
