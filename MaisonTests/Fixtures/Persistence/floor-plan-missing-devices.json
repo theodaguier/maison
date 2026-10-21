@@ -1,0 +1,15 @@
+{
+  "rooms": [
+    {
+      "id": "4F2A6B1C-7D3E-4A90-8B21-6C5D4E3F2A10",
+      "name": "Salon",
+      "areaID": "salon",
+      "outline": [{"x": 0, "y": 0}, {"x": 4, "y": 0}, {"x": 4, "y": 3}, {"x": 0, "y": 3}]
+    }
+  ],
+  "walls": [],
+  "doors": [],
+  "windows": [],
+  "objects": [],
+  "scannedAt": 781692800
+}

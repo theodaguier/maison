@@ -72,6 +72,12 @@ targets:
     platform: iOS
     sources:
       - path: MaisonTests
+        excludes:
+          - "Fixtures/**"
+      # Folder reference so recorded JSON keeps its directory in the test bundle.
+      - path: MaisonTests/Fixtures
+        type: folder
+        buildPhase: resources
     dependencies:
       - target: Maison
     settings:

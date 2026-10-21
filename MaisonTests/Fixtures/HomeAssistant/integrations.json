@@ -1,0 +1,4 @@
+[
+  {"entry_id": "hue-1", "domain": "hue", "title": "Philips Hue", "source": "user", "state": "loaded", "supports_options": true},
+  {"entry_id": "sonos-1", "domain": "sonos", "title": "Sonos", "source": "zeroconf", "state": "setup_error", "supports_options": false}
+]

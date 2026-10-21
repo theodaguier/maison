@@ -1,0 +1,4 @@
+[
+  {"area_id": "salon", "name": "Salon", "aliases": [], "picture": null},
+  {"area_id": "entree", "name": "Entrée", "aliases": ["entrée"]}
+]
