@@ -1,4 +1,5 @@
 import Foundation
+@testable import Maison
 
 /// One HTTP response served without opening a socket.
 struct FixtureHTTPResponse: Sendable {
@@ -17,15 +18,15 @@ struct FixtureHTTPResponse: Sendable {
 final class FixtureURLProtocol: URLProtocol, @unchecked Sendable {
     typealias Handler = @Sendable (URLRequest) throws -> FixtureHTTPResponse
 
-    private static let lock = NSLock()
-    private static var handler: Handler?
+    /// A `let` so the static itself is not shared mutable state. The lock guards `handler`.
+    private static let state = State()
 
     static func install(_ handler: @escaping Handler) {
-        lock.withLock { self.handler = handler }
+        state.set(handler)
     }
 
     static func reset() {
-        lock.withLock { handler = nil }
+        state.set(nil)
     }
 
     /// Ephemeral session whose only protocol is this stub.
@@ -45,7 +46,7 @@ final class FixtureURLProtocol: URLProtocol, @unchecked Sendable {
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
 
     override func startLoading() {
-        let handler = Self.lock.withLock { Self.handler }
+        let handler = Self.state.get()
         guard let client else { return }
         guard let handler else {
             client.urlProtocol(self, didFailWithError: URLError(.notConnectedToInternet))
@@ -73,6 +74,19 @@ final class FixtureURLProtocol: URLProtocol, @unchecked Sendable {
     }
 
     override func stopLoading() {}
+
+    private final class State: @unchecked Sendable {
+        private let lock = NSLock()
+        private var handler: Handler?
+
+        func set(_ handler: Handler?) {
+            lock.withLock { self.handler = handler }
+        }
+
+        func get() -> Handler? {
+            lock.withLock { handler }
+        }
+    }
 }
 
 extension URLRequest {

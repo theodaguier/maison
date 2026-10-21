@@ -1,4 +1,5 @@
 import Foundation
+@testable import Maison
 
 /// A recorded payload copied into the test bundle (`MaisonTests/Fixtures`).
 enum RecordedFixture {
