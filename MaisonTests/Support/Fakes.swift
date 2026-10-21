@@ -87,3 +87,13 @@ final class Captured<Value: Sendable>: @unchecked Sendable {
         lock.withLock { storage = value }
     }
 }
+
+/// The keychain's stand-in: unsigned test builds can't use the keychain.
+final class MemoryCredentialStorage: CredentialStorage, @unchecked Sendable {
+    private let lock = NSLock()
+    private var credentials: Credentials?
+
+    func load() throws -> Credentials? { lock.withLock { credentials } }
+    func save(_ credentials: Credentials) throws { lock.withLock { self.credentials = credentials } }
+    func delete() throws { lock.withLock { credentials = nil } }
+}

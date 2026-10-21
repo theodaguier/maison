@@ -2,7 +2,8 @@
 
 A native iOS app (SwiftUI, Liquid Glass) that understands your home and acts for you, on top of [Home Assistant](https://www.home-assistant.io): Home Assistant collects, Maison understands and acts. The direction is in [`ROADMAP.md`](ROADMAP.md).
 
-- **Local first**: the app talks directly to the household's Home Assistant server; away from home it uses the external URL set in Home Assistant (Tailscale, a domain, Nabu Casa).
+- **Local first**: the app talks directly to the household's Home Assistant server. When the local address doesn't answer within a few seconds, it switches on its own to the remote one: the external URL set in Home Assistant (Tailscale, a domain), otherwise Home Assistant Cloud's remote access. The same sign-in works through both.
+- **Presence**: once allowed, the iPhone registers with Home Assistant as a mobile app and reports significant location changes, so rules like "When everyone leaves" work. It can be turned off in Settings, and signing out stops it.
 - **Automations run on the server**, not on the iPhone.
 - **Household sharing through iCloud** (CloudKit) for app-specific data.
 

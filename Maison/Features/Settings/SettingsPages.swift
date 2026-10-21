@@ -115,9 +115,9 @@ struct RemoteAccessPage: View {
                 SettingsRow(symbol: "network", color: .black, title: "Service",
                             value: store.remoteAccessName ?? String(localized: "Not Set Up"),
                             dot: store.remoteAccessName == nil ? .orange : .green)
-                if let external = store.serverConfig?.externalURL, !external.isEmpty {
+                if let remote = store.remoteURL {
                     SettingsDivider()
-                    SettingsRow(symbol: "link", color: .gray, title: "Address", value: URL(string: external)?.host() ?? external)
+                    SettingsRow(symbol: "link", color: .gray, title: "Address", value: remote.host() ?? remote.absoluteString)
                 }
             }
             if store.remoteAccessName == "Tailscale" {
@@ -125,7 +125,7 @@ struct RemoteAccessPage: View {
             } else if store.remoteAccessName == nil {
                 Explanation(text: "Your server has no external address, so Maison only works at home. Set one up in Home Assistant (Settings › System › Network), for instance with Tailscale or Home Assistant Cloud.")
             } else {
-                Explanation(text: "Away from home, Maison uses the external address set in Home Assistant.")
+                Explanation(text: "At home, Maison talks to the server directly. Away, it switches to this address on its own.")
             }
             if let url = store.serverURL {
                 Button {

@@ -21,6 +21,8 @@ final class HomeStore {
     private(set) var states: [String: EntityState] = [:]
     private(set) var layout = HomeLayout()
     private(set) var serverURL: URL?
+    /// The address that works away from home, `nil` when the server has none.
+    private(set) var remoteURL: URL?
     private(set) var serverVersion: String?
     private(set) var lastUpdate: Date?
     private(set) var currentUser: HomeAssistantUser?
@@ -31,23 +33,37 @@ final class HomeStore {
     let discovery = ServerDiscovery()
     /// The household shared through iCloud, which also keeps the favourites.
     let household: HouseholdStore
+    /// Tells Home Assistant when this iPhone leaves or comes home.
+    let presence: PresenceReporter
 
-    @ObservationIgnored private let credentialStore: CredentialStore
+    @ObservationIgnored private let credentialStore: any CredentialStorage
     @ObservationIgnored private var credentials: Credentials?
     @ObservationIgnored private var connection: HomeAssistantConnection?
+    @ObservationIgnored private let connector: ServerConnector
+    /// The address the current connection goes through; REST calls use it too.
+    @ObservationIgnored private var activeURL: URL?
     @ObservationIgnored private var updatesTask: Task<Void, Never>?
     @ObservationIgnored private var retryTask: Task<Void, Never>?
     @ObservationIgnored private let isDemo: Bool
     /// The sample home, opened from onboarding or with `-demo`.
     var isDemoHome: Bool { isDemo }
 
-    init(credentialStore: CredentialStore = CredentialStore(), defaults: UserDefaults = .standard, household: HouseholdStore? = nil) {
+    init(
+        credentialStore: any CredentialStorage = CredentialStore(),
+        defaults: UserDefaults = .standard,
+        household: HouseholdStore? = nil,
+        presence: PresenceReporter? = nil,
+        connector: ServerConnector = ServerConnector()
+    ) {
         self.credentialStore = credentialStore
         self.household = household ?? HouseholdStore(cloud: CloudKitHousehold.isEntitled ? CloudKitHousehold() : nil, defaults: defaults)
+        self.presence = presence ?? .shared
+        self.connector = connector
         isDemo = false
         let credentials = try? credentialStore.load()
         self.credentials = credentials
         serverURL = credentials?.serverURL
+        remoteURL = credentials?.remoteURL
         phase = credentials == nil ? .signedOut : .connecting
     }
 
@@ -55,6 +71,9 @@ final class HomeStore {
     init(demo states: [EntityState], layout: HomeLayout, household: HouseholdStore, phase: Phase = .connected) {
         credentialStore = CredentialStore(service: "com.theodaguier.maison.demo")
         self.household = household
+        // The demo never asks for the location nor registers with a server.
+        presence = PresenceReporter(webhooks: MemoryWebhookStorage(), credentialStore: credentialStore, isDemo: true)
+        connector = ServerConnector()
         isDemo = true
         self.states = Dictionary(states.map { ($0.entityID, $0) }, uniquingKeysWith: { _, last in last })
         self.layout = layout
@@ -85,16 +104,19 @@ final class HomeStore {
 
     /// Runs Home Assistant's sign-in page through `authenticate`, which presents the URL and
     /// returns the callback URL (typically `WebAuthenticationSession.authenticate`).
-    func signIn(to server: URL, authenticate: (URL) async throws -> URL) async {
+    /// `remoteURL`, when the server announced one, works away from home until the server's own settings load.
+    func signIn(to server: URL, remoteURL: URL? = nil, authenticate: (URL) async throws -> URL) async {
         let auth = HomeAssistantAuth(serverURL: server)
         let state = UUID().uuidString
         do {
             let callbackURL = try await authenticate(auth.authorizationURL(state: state))
             let code = try HomeAssistantAuth.authorizationCode(from: callbackURL, expectedState: state)
-            let credentials = try await auth.exchange(code: code)
+            var credentials = try await auth.exchange(code: code)
+            credentials.remoteURL = remoteURL
             try credentialStore.save(credentials)
             self.credentials = credentials
             serverURL = server
+            self.remoteURL = remoteURL
             discovery.stop()
             await connect()
         } catch let error as ASWebAuthenticationSessionError where error.code == .canceledLogin {
@@ -106,7 +128,7 @@ final class HomeStore {
 
     func connect() async {
         guard !isDemo else { return }
-        guard var credentials else {
+        guard let credentials else {
             phase = .signedOut
             return
         }
@@ -115,13 +137,12 @@ final class HomeStore {
             phase = .connecting
         }
         do {
-            if credentials.isExpired() {
-                credentials = try await HomeAssistantAuth(serverURL: credentials.serverURL).refresh(credentials)
-                try credentialStore.save(credentials)
-                self.credentials = credentials
+            // The local address at home, the remote one away.
+            let opened = try await connector.connect(credentials)
+            if opened.credentials != credentials {
+                try keep(opened.credentials)
             }
-            let connection = HomeAssistantConnection(serverURL: credentials.serverURL, accessToken: credentials.accessToken)
-            try await connection.connect()
+            let connection = opened.connection
             async let states = connection.states()
             async let layout = connection.layout()
             let changes = try await connection.stateChanges()
@@ -129,6 +150,7 @@ final class HomeStore {
 
             await self.connection?.disconnect()
             self.connection = connection
+            activeURL = opened.address
             self.states = Dictionary(loadedStates.map { ($0.entityID, $0) }, uniquingKeysWith: { _, last in last })
             self.layout = loadedLayout
             serverVersion = await connection.serverVersion
@@ -173,13 +195,38 @@ final class HomeStore {
         currentUser = try? await connection.currentUser()
         serverConfig = try? await connection.serverConfig()
         integrations = (try? await connection.integrations()) ?? []
+        if let serverConfig, var credentials {
+            // Remembered for the next time the app starts away from home. `cloud/status` fails without Home Assistant Cloud.
+            let cloudStatus = try? await connection.send(["type": "cloud/status"])
+            credentials.remoteURL = serverConfig.remoteURL(cloudStatus: cloudStatus)
+            if credentials != self.credentials {
+                try? keep(credentials)
+            }
+        }
         if let serverURL {
             await household.serverConnected(Household(
                 name: serverConfig?.locationName ?? String(localized: "Home"),
                 serverURL: serverURL,
-                remoteURL: serverConfig?.externalURL.flatMap { $0.isEmpty ? nil : URL(string: $0) }
+                remoteURL: remoteURL
             ))
         }
+    }
+
+    /// Saves the sign-in and shows the addresses it holds.
+    private func keep(_ credentials: Credentials) throws {
+        try credentialStore.save(credentials)
+        self.credentials = credentials
+        remoteURL = credentials.remoteURL
+    }
+
+    /// The sign-in, refreshed once its access token has expired (Home Assistant's last 30 minutes).
+    /// The connection keeps working with an old token; REST calls don't.
+    func freshCredentials() async throws -> Credentials {
+        guard !isDemo, let credentials else { throw HomeAssistantError.connectionClosed }
+        guard credentials.isExpired() else { return credentials }
+        let refreshed = try await connector.refresh(credentials, activeURL ?? credentials.serverURL)
+        try keep(refreshed)
+        return refreshed
     }
 
     /// How long the device was on today and yesterday.
@@ -236,9 +283,13 @@ final class HomeStore {
         updatesTask = nil
         await connection?.disconnect()
         connection = nil
+        activeURL = nil
         try? credentialStore.delete()
         credentials = nil
         serverURL = nil
+        remoteURL = nil
+        // The webhook belongs to this server: positions must stop reaching it.
+        presence.forget()
         states = [:]
         layout = HomeLayout()
         phase = .signedOut
@@ -273,10 +324,11 @@ final class HomeStore {
         return ids.compactMap { states[$0] }
     }
 
-    /// Saves automations and scripts on the server; `nil` when signed out or in the demo.
-    var configEditor: ConfigEditor? {
-        guard !isDemo, let credentials else { return nil }
-        return ConfigEditor(serverURL: credentials.serverURL, accessToken: credentials.accessToken)
+    /// Saves automations and scripts on the server, with a token that is still valid; `nil` when signed out or in the demo.
+    func configEditor() async throws -> ConfigEditor? {
+        guard !isDemo, credentials != nil else { return nil }
+        let credentials = try await freshCredentials()
+        return ConfigEditor(serverURL: activeURL ?? credentials.serverURL, accessToken: credentials.accessToken)
     }
 
     /// Notify services available on the server (`mobile_app_iphone_de_theo`, `notify`).
@@ -302,9 +354,8 @@ final class HomeStore {
 
     /// Registers Maison as a mobile app device for the signed-in user (`/api/mobile_app/registrations`).
     func registerMobileApp(deviceName: String) async throws -> Webhook {
-        if isDemo { return Webhook(id: "demo", localURL: nil, remoteURL: nil) }
-        guard let credentials else { throw HomeAssistantError.connectionClosed }
-        var request = URLRequest(url: credentials.serverURL.appending(path: "api/mobile_app/registrations"))
+        var credentials = try await freshCredentials()
+        var request = URLRequest(url: (activeURL ?? credentials.serverURL).appending(path: "api/mobile_app/registrations"))
         request.httpMethod = "POST"
         request.setValue("Bearer \(credentials.accessToken)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -323,12 +374,20 @@ final class HomeStore {
         ]))
         let (data, response) = try await URLSession.shared.data(for: request)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
-        guard (200..<300).contains(status),
-              let id = try JSONDecoder().decode(JSONValue.self, from: data)["webhook_id"]?.stringValue else {
-            throw HomeAssistantError.invalidResponse(statusCode: status)
+        guard (200..<300).contains(status) else { throw HomeAssistantError.invalidResponse(statusCode: status) }
+        let registration = try JSONDecoder().decode(JSONValue.self, from: data)
+        guard let id = registration["webhook_id"]?.stringValue else { throw HomeAssistantError.invalidResponse(statusCode: status) }
+        // With Home Assistant Cloud, the reply carries the remote address even when no external URL is set.
+        if credentials.remoteURL == nil, let remote = registration["remote_ui_url"]?.stringValue.flatMap(URL.init(string:)) {
+            credentials.remoteURL = remote
+            try? keep(credentials)
         }
-        let remote = serverConfig?.externalURL.flatMap { $0.isEmpty ? nil : URL(string: $0) }
-        return Webhook(id: id, localURL: credentials.serverURL, remoteURL: remote)
+        return Webhook(
+            id: id,
+            localURL: credentials.serverURL,
+            remoteURL: credentials.remoteURL,
+            cloudhookURL: registration["cloudhook_url"]?.stringValue.flatMap(URL.init(string:))
+        )
     }
 
     /// Adds the iPhone's tracker to the person linked to the signed-in user, so they count as home or away.
@@ -373,7 +432,7 @@ final class HomeStore {
     func rule(for automation: EntityState) async throws -> AutomationRule? {
         guard let id = automation.attributes["id"]?.stringValue else { return nil }
         if isDemo { return DemoHome.rules[id].map { AutomationRule(id: id, config: $0) } }
-        guard let editor = configEditor else { throw HomeAssistantError.connectionClosed }
+        guard let editor = try await configEditor() else { throw HomeAssistantError.connectionClosed }
         return try await editor.load(.automation, id: id).map { AutomationRule(id: id, config: $0) }
     }
 
@@ -382,13 +441,13 @@ final class HomeStore {
             DemoHome.rules[rule.id] = rule.config
             return
         }
-        guard let editor = configEditor else { throw HomeAssistantError.connectionClosed }
+        guard let editor = try await configEditor() else { throw HomeAssistantError.connectionClosed }
         try await editor.save(.automation, id: rule.id, config: rule.config)
     }
 
     func delete(_ rule: AutomationRule) async throws {
         if isDemo { return }
-        guard let editor = configEditor else { throw HomeAssistantError.connectionClosed }
+        guard let editor = try await configEditor() else { throw HomeAssistantError.connectionClosed }
         try await editor.delete(.automation, id: rule.id)
     }
 

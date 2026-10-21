@@ -36,7 +36,7 @@ struct OnboardingView: View {
                         ServerFoundStep(
                             server: server,
                             joinedHousehold: store.household.location?.isShared == true ? store.household.household?.name : nil,
-                            onSignIn: { signIn(to: server.url) },
+                            onSignIn: { signIn(to: server) },
                             onPickAnother: { showsServerPicker = true }
                         )
                     }
@@ -128,9 +128,9 @@ struct OnboardingView: View {
         step = candidates.isEmpty ? .searching : .found
     }
 
-    private func signIn(to server: URL) {
+    private func signIn(to server: ServerChoice) {
         Task {
-            await store.signIn(to: server) { url in
+            await store.signIn(to: server.url, remoteURL: server.remoteURL) { url in
                 try await webAuthenticationSession.authenticate(
                     using: url,
                     callbackURLScheme: HomeAssistantAuth.callbackScheme,
@@ -800,8 +800,6 @@ private struct ReadyStep: View {
 private struct PresenceStep: View {
     @Environment(HomeStore.self) private var store
     let onFinish: () -> Void
-    @State private var presence = PresenceReporter.shared
-    @State private var isWorking = false
     @State private var error: String?
 
     var body: some View {
@@ -828,13 +826,7 @@ private struct PresenceStep: View {
                 }
                 Spacer(minLength: 8)
                 if !store.isTrackedByHomeAssistant {
-                    if isWorking {
-                        ProgressView()
-                    } else {
-                        Toggle("Location", isOn: Binding(get: { presence.isEnabled }, set: { on in Task { await toggle(on) } }))
-                            .labelsHidden()
-                            .tint(.green)
-                    }
+                    PresenceToggle(error: $error)
                 }
             }
             .padding(16)
@@ -851,13 +843,30 @@ private struct PresenceStep: View {
         }
         .errorFeedback(error)
     }
+}
+
+/// Turns location reporting on or off; asking for the permission and registering take a moment.
+struct PresenceToggle: View {
+    @Environment(HomeStore.self) private var store
+    @Binding var error: String?
+    @State private var isWorking = false
+
+    var body: some View {
+        if isWorking {
+            ProgressView()
+        } else {
+            Toggle("Location", isOn: Binding(get: { store.presence.isEnabled }, set: { on in Task { await toggle(on) } }))
+                .labelsHidden()
+                .tint(.green)
+        }
+    }
 
     private func toggle(_ on: Bool) async {
         error = nil
-        guard on else { presence.disable(); return }
+        guard on else { store.presence.disable(); return }
         isWorking = true
         do {
-            try await presence.enable(with: store)
+            try await store.presence.enable(with: store)
         } catch {
             self.error = error.localizedDescription
         }

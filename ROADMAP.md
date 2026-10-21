@@ -12,7 +12,7 @@ Home Assistant collects; Maison understands and acts. Going further than Home As
 2. **Nothing to set up, and never a dead end.** Every feature has a path for every user: automatic when it can be, assisted otherwise (Maison suggests, one tap confirms), manual as a last resort (a form, a tap, a drawing). No "not supported", no empty screen.
 3. **Manual stays smart.** What the user enters is a starting point: Maison adjusts it with what it already knows (time spent at home from the iPhone's location, weather, season, household) and recalibrates it with every real value, such as the next bill. A sensor replaces it on its own when one appears.
 4. **Every number says where it comes from:** measured, estimated or entered.
-5. **Local first.** The household's data stays in the home.
+5. **Local first.** The household's data stays in the home. Only what the household shares goes through iCloud: its name, the server's addresses, favourites and the plan, never a device's state or history.
 6. **The best of the iPhone:** a native, polished app, and the data only the iPhone has (location, Health, weather, Focus).
 
 ## How it works
@@ -20,16 +20,16 @@ Home Assistant collects; Maison understands and acts. Going further than Home As
 **Sources → intelligence layer → what the user sees.**
 
 - **Home Assistant is the home's memory.** It is the always-on device that measures and keeps history, which neither the iPhone (no background work) nor HomeKit (no history) can do. Home Assistant is the only source of history for now; HomeKit and Matter will be discussed if Maison opens up to people without Home Assistant.
-- **The iPhone adds what Home Assistant doesn't have:** location and presence, sleep from Health, the weather forecast, Focus modes, and the network as the iPhone sees it.
+- **The iPhone adds what Home Assistant doesn't have:** location and presence, sleep from Health, the weather forecast, the calendar, and Focus modes. iOS only says whether a Focus is on, not which one: Maison learns "Sleep" or "Work" through a Focus filter the person adds to that Focus once (assisted). The iPhone can't list the devices on the Wi-Fi nor read what other apps play (Apple Music aside); Home Assistant brings those through the router's and the speakers' integrations.
 - **The inventory adds what isn't connected** (see below).
-- **Maison sets Home Assistant up itself:** history retention, an internet check (Ping), devices Home Assistant discovered, the energy dashboard.
-- **A Maison add-on runs the intelligence layer around the clock** on the household's Home Assistant, installed from the app in one tap (Home Assistant OS and Supervised).
-- **The only thing on our side is a push relay that stores nothing**, because the app's APNs key can't be shipped to every home. Payloads can be end-to-end encrypted.
-- **Where it can, the intelligence layer is one Swift package** built for iOS and for Linux, so the add-on runs the same logic as the app. Wording by the on-device model stays on the iPhone.
+- **Maison sets Home Assistant up itself:** an internet check (Ping), devices Home Assistant discovered, the energy dashboard, through the same APIs as Home Assistant's own settings. These need an administrator account; for a resident, Maison asks the administrator in one tap instead. History retention has no API (it is only set in `configuration.yaml`): the add-on sets it.
+- **A Maison add-on runs the intelligence layer around the clock** on the household's Home Assistant, installed from the app in one tap (Home Assistant OS and Supervised). Home Assistant Container and Core have no add-ons: the same package ships as a Docker container to run beside it (assisted), and without either the iPhone computes the findings when the app opens and in background refreshes (manual), with fewer of them and later.
+- **The only thing on our side is a push relay that stores nothing**, because the app's APNs key can't be shipped to every home. It plugs into Home Assistant the way its own app does: Maison registers a `push_url` and a push token as a mobile app, and Home Assistant's `notify.mobile_app_*` service posts to the relay, so any automation can notify through Maison. Payloads can be end-to-end encrypted.
+- **Where it can, the intelligence layer is one Swift package** built for iOS and for Linux, so the add-on runs the same logic as the app. It therefore produces structured facts (a kind, values, units, the entities involved), never sentences: wording and translation happen on the iPhone, by the on-device model or the written form.
 
 ## The intelligence layer
 
-It already exists in pieces: `DayFacts` computes the facts, `DayDigest` has them written, `GroundedNumbers` rejects a text with a number that isn't in the facts, `RuleDraft` turns a sentence into a rule. They are spread out and wired to Home Assistant; they become one module behind the source boundary.
+It already exists in pieces: `DayFacts` computes the facts, `DayDigest` has them written, `GroundedNumbers` rejects a text with a number that isn't in the facts, `RuleDraft` turns a sentence into a rule. They are spread out and wired to Home Assistant: every screen reads `HomeStore.states` directly, and `DayFacts` returns translated sentences from an extension of the store. They become one module behind the source boundary, free of SwiftUI, the main actor and string catalogs, so it builds on Linux.
 
 What it does:
 
@@ -54,10 +54,10 @@ Maison follows what happens in the home, not only its devices. Each moment has t
 | Cooking | Oven or hob power, particles | Inventory, mealtimes, presence | "I'm cooking", a timer |
 | Laundry | The machine's power curve | Machine and energy label in the inventory | "Machine started": end reminder, cost |
 | Working from home | CO₂ in the office | Weekday presence, Work Focus, calendar | "Working from home today" |
-| Relaxing | TV and music in Home Assistant | Music playing on the iPhone | An "Evening" scene |
+| Relaxing | TV and music in Home Assistant | Apple Music playing on the iPhone | An "Evening" scene |
 | Cleaning | Robot vacuum | Inventory, when people are usually home, pollen | Tasks per room, recurring reminders |
 | Airing | Window sensors, CO₂ | Outdoor weather and air quality, season, windows in the inventory: the best time to air today | "I aired": daily reminder |
-| Guests | More devices on the Wi-Fi | Calendar | "I have guests" |
+| Guests | More devices on the router (its Home Assistant integration) | Calendar | "I have guests" |
 | Leaving and coming back | Locks, windows | The iPhone's location, calendar | A "Before leaving" checklist |
 | Working out | — | A Health workout while at home | — |
 
@@ -65,7 +65,7 @@ Maison follows what happens in the home, not only its devices. Each moment has t
 
 **The sensor that unlocks a moment.** When a moment can't be detected, Maison can say which single sensor would do it.
 
-**Privacy inside the household.** Everyone sees their own activity (sleep, showers); the household sees only totals ("9 showers this week"), never who did what and when.
+**Privacy inside the household.** Everyone sees their own activity (sleep, showers); the household sees only totals ("9 showers this week"), never who did what and when. Home Assistant can't enforce this: every account reads the whole history and logbook. So what is personal stays out of it: Health data stays on the person's iPhone, and the add-on keeps per-person moments in its own store, answering each member only about themselves. A sensor's raw history stays visible to anyone with a Home Assistant account.
 
 ## Inventory
 
@@ -98,7 +98,7 @@ Comfort ranges are never hard-coded: they are learned from the home's history or
 4. **Tidy the setup:** suggest rooms, hide duplicates, clear names.
 5. **Energy:** read Home Assistant's energy dashboard, suggest the right meter when it isn't set, or a manual entry (bill, price per kWh).
 6. **Minimal manual entry:** comfort range, usual hours, a first inventory.
-7. **Widgets:** Home Screen, StandBy, Lock Screen.
+7. **Widgets:** Home Screen, StandBy, Lock Screen. They need an App Group and a keychain access group shared with the app, so the extension can read the sign-in and refresh it.
 
 ## Next
 
@@ -129,16 +129,21 @@ A Maison email, a bank connection, contracts and subscriptions, a condition repo
 
 Dead ends that contradict the principles above:
 
-- The energy sensor is picked by its name (English or French words), so a sensor named in another language, or "Linky consumption", is never found (`HomeStore.energyToday`).
+- The energy sensor is picked by its name (English or French words), so a sensor named in another language, or "Linky consumption", is never found (`HomeStore.energyToday`). Indoor temperature sensors are told from outdoor ones the same way, by "ext" or "out" in the name (`HomeStore.indoorTemperatureSensors`).
 - The temperature ring is fixed at 10–30 °C, saturated in a hot climate and wrong in °F (`Components.swift`).
-- Remote access reads `external_url` only, not Nabu Casa's `remote_ui_url`, so a Nabu Casa user without an external URL has no access away from home.
 - The day summary and rule writing disappear when Apple Intelligence doesn't support the language.
 - The app is in English and French only.
+- A resident (not a Home Assistant administrator) gets errors where an administrator gets the rule editor, timers and door alerts, and attaching the iPhone to their person fails silently. These need a path of their own: read-only rules, and a request to the administrator.
+- Nothing is cached on the iPhone: starting away from any network shows an error instead of the last known home.
+- The connection isn't checked: no periodic ping, no reconnection when the app comes back to the foreground or the network changes, so a dead connection can take a long time to notice.
+- Every `state_changed` event of the server reaches the app and redraws the screens; a home with power sensors updating every second will stutter. `subscribe_entities`, batched updates and precomputed lists per room are the way out.
+- Commands get their id before a separate task sends them, while Home Assistant requires increasing ids: two commands sent at once could arrive out of order and be refused.
+- Signing out stops the location reports, but the Maison device and its tracker stay in Home Assistant until removed there.
 
 ## Open questions
 
 - Is sleep the heart of the product, or one moment among others?
 - Wording in languages Apple Intelligence doesn't support: a simple written form only, or an optional cloud model?
-- How stable are the Home Assistant APIs Maison relies on to set it up (onboarding, add-on install, energy preferences)?
+- How stable are the Home Assistant APIs Maison relies on to set it up? The config entry flows, `energy/save_prefs`, the mobile app registration and its push are what Home Assistant's own frontend and apps use; onboarding (`/api/onboarding`) and installing an add-on through the Supervisor are internal and change without notice.
 - What does the floor plan bring to the intelligence layer?
 - Pricing: one-off purchase or subscription, given that the push relay has a running cost.
