@@ -4,7 +4,40 @@
 
 **Maison understands your home and acts for you, with nothing to set up.**
 
-Home Assistant collects; Maison understands and acts. Going further than Home Assistant doesn't mean collecting more data than it does — it already reads thousands of brands — but doing more with that data: explaining, estimating, learning, and turning what it finds into actions.
+Running a home is much more than home automation: it is comfort and sleep, energy, chores and upkeep, the things you own, the paperwork, the people who live there, the network. Maison covers the whole home, domain by domain (see below), connected or not.
+
+Home Assistant is the memory of everything that is measured; Maison understands and acts. Going further than Home Assistant doesn't mean collecting more data than it does — it already reads thousands of brands — but doing more with that data, and with what no sensor sees: explaining, estimating, learning, and turning what it finds into actions.
+
+## The domains of the home
+
+What the user sees is organised by domain, never by source or by technology. Every domain follows the same pattern: what Maison knows, what it tells you, what it does — automatic, assisted or manual.
+
+1. **Living in the home**
+   - **Comfort and air:** temperature, humidity, air quality, when to air, noise, light.
+   - **Sleep:** the bedroom, evenings, waking up.
+   - **Moods:** everyday scenes and routines (morning, evening, cinema).
+2. **Running the home**
+   - **Control:** commanding devices and automating them (home automation).
+   - **Energy and water:** electricity, gas, water, heating, solar production, the month's cost.
+   - **Network:** internet, Wi-Fi, devices on the network, outages, speed.
+3. **Looking after the home**
+   - **Cleaning and chores:** cleaning per room, laundry, dishes, bin days, shopping.
+   - **Upkeep and repairs:** boiler, filters, detectors, descaling, breakdowns, tradespeople, chimney sweeping.
+   - **Outdoors and garden:** watering, mowing, pool, frost.
+   - **Plants and pets:** watering, feeding, the vet.
+4. **Owning and managing**
+   - **Belongings:** appliances and furniture — the inventory, warranties, manuals, value for insurance.
+   - **Paperwork:** contracts (energy, internet, insurance), bills, lease or mortgage, deadlines, cancellations.
+   - **Household budget:** running costs, subscriptions, what the home costs each month.
+   - **The dwelling:** rooms, floor plan, surface, works, energy performance certificate, renovation.
+5. **Protecting**
+   - **Safety:** doors, locks, alarm, cameras, leaks, smoke, carbon monoxide.
+   - **Away:** before leaving, away mode, parcels, getting ready for the return.
+6. **Living together**
+   - **People:** the household, roles, presence, children, guests.
+   - **Sharing the chores:** who does what, without surveillance — everyone sees their own activity, the household sees totals.
+
+Half of these domains need no sensor at all (paperwork, chores, belongings, budget, plants): they rely on the iPhone, photos, documents and what the household enters. Maison stays useful with nothing connected.
 
 ## Principles
 
@@ -123,7 +156,7 @@ Comfort ranges are never hard-coded: they are learned from the home's history or
 
 ## Not this product
 
-A Maison email, a bank connection, contracts and subscriptions, a condition report: that is a home-paperwork product, not this one.
+A Maison email address. Contracts, bills and subscriptions are now part of the Paperwork domain; whether Maison connects to a bank is an open question.
 
 ## Gaps in the current code
 
@@ -131,6 +164,8 @@ Dead ends that contradict the principles above:
 
 - The energy sensor is picked by its name (English or French words), so a sensor named in another language, or "Linky consumption", is never found (`HomeStore.energyToday`). Indoor temperature sensors are told from outdoor ones the same way, by "ext" or "out" in the name (`HomeStore.indoorTemperatureSensors`).
 - The temperature ring is fixed at 10–30 °C, saturated in a hot climate and wrong in °F (`Components.swift`).
+- Screens read Home Assistant's `EntityState` directly (12 files under `Features/`), so the source boundary of the intelligence layer is still to build; `HomeStore` carries connection, commands, history, presence and favourites in one type.
+- Nothing runs while the app is closed, apart from presence: no finding, no notification until the add-on and the push relay exist.
 - The day summary and rule writing disappear when Apple Intelligence doesn't support the language.
 - The app is in English and French only.
 - A resident (not a Home Assistant administrator) gets errors where an administrator gets the rule editor, timers and door alerts, and attaching the iPhone to their person fails silently. These need a path of their own: read-only rules, and a request to the administrator.
@@ -142,7 +177,10 @@ Dead ends that contradict the principles above:
 
 ## Open questions
 
-- Is sleep the heart of the product, or one moment among others?
+- Which domains ship first? The MVP above was written around the intelligence layer, before the domains.
+- Household budget: a bank connection, or costs read from bills and entered by hand?
+- Does Maison work without Home Assistant? Half the domains don't need it, but it remains the only source of measured history.
+- Is sleep the heart of the product, or one domain among others?
 - Wording in languages Apple Intelligence doesn't support: a simple written form only, or an optional cloud model?
 - How stable are the Home Assistant APIs Maison relies on to set it up? The config entry flows, `energy/save_prefs`, the mobile app registration and its push are what Home Assistant's own frontend and apps use; onboarding (`/api/onboarding`) and installing an add-on through the Supervisor are internal and change without notice.
 - What does the floor plan bring to the intelligence layer?
