@@ -1,159 +1,144 @@
 # Roadmap
 
-## Vision: the Bevel of the home
+## Vision
 
-Bevel turns a watch's sensors into a few readable scores, trends and advice, so nobody has to read charts. Maison should do the same for the home: understand how the place lives, and how it affects the people in it.
+**Maison understands your home and acts for you, with nothing to set up.**
 
-### 1. Three daily scores, as rings
+Home Assistant collects; Maison understands and acts. Going further than Home Assistant doesn't mean collecting more data than it does — it already reads thousands of brands — but doing more with that data: explaining, estimating, learning, and turning what it finds into actions.
 
-- **Comfort** (0–100): time spent in the right temperature and humidity range, room by room, while someone is home.
-- **Energy**: today's use against the usual days and a goal, like Bevel's strain — in euros when the tariff is known.
-- **Air**: CO₂, humidity and particles, from sensors or from outdoor air-quality data when there are none.
-- Each score has its own sheet: curve, usual range, and what made it go up or down (the temperature sheet in the Figma file is the model).
+## Principles
 
-### 2. Sleep and the bedroom — the heart of the product
+1. **The intelligence layer is the core.** Every source goes through it; no screen reads Home Assistant directly.
+2. **Nothing to set up, and never a dead end.** Every feature has a path for every user: automatic when it can be, assisted otherwise (Maison suggests, one tap confirms), manual as a last resort (a form, a tap, a drawing). No "not supported", no empty screen.
+3. **Manual stays smart.** What the user enters is a starting point: Maison adjusts it with what it already knows (time spent at home from the iPhone's location, weather, season, household) and recalibrates it with every real value, such as the next bill. A sensor replaces it on its own when one appears.
+4. **Every number says where it comes from:** measured, estimated or entered.
+5. **Local first.** The household's data stays in the home.
+6. **The best of the iPhone:** a native, polished app, and the data only the iPhone has (location, Health, weather, Focus).
 
-- Read nights from Health (with consent) and match them with the bedroom: temperature, humidity, light, noise.
-- Findings such as "You sleep 25 min longer when the bedroom is below 19°" or "Restless nights above 60 % humidity".
-- Each finding ends with a suggestion that becomes a rule in one tap ("Lower the setpoint to 18.5° at 10 pm?").
+## How it works
 
-### 3. A journal
+**Sources → intelligence layer → what the user sees.**
 
-- Two or three quick questions in the evening (window open? extra heater? guests?).
-- After a few weeks, measure the effect of each habit on the scores.
+- **Home Assistant is the home's memory.** It is the always-on device that measures and keeps history, which neither the iPhone (no background work) nor HomeKit (no history) can do. Home Assistant is the only source of history for now; HomeKit and Matter will be discussed if Maison opens up to people without Home Assistant.
+- **The iPhone adds what Home Assistant doesn't have:** location and presence, sleep from Health, the weather forecast, Focus modes, and the network as the iPhone sees it.
+- **The inventory adds what isn't connected** (see below).
+- **Maison sets Home Assistant up itself:** history retention, an internet check (Ping), devices Home Assistant discovered, the energy dashboard.
+- **A Maison add-on runs the intelligence layer around the clock** on the household's Home Assistant, installed from the app in one tap (Home Assistant OS and Supervised).
+- **The only thing on our side is a push relay that stores nothing**, because the app's APNs key can't be shipped to every home. Payloads can be end-to-end encrypted.
+- **Where it can, the intelligence layer is one Swift package** built for iOS and for Linux, so the add-on runs the same logic as the app. Wording by the on-device model stays on the iPhone.
 
-### 4. Trends and reviews
+## The intelligence layer
 
-- Week and month: average comfort, energy in euros, best and worst nights, what changed.
-- A Sunday review written by the on-device model, like the day summary but for the week.
+It already exists in pieces: `DayFacts` computes the facts, `DayDigest` has them written, `GroundedNumbers` rejects a text with a number that isn't in the facts, `RuleDraft` turns a sentence into a rule. They are spread out and wired to Home Assistant; they become one module behind the source boundary.
 
-### 5. A coach
+What it does:
 
-- Questions about the home ("Why did my bill go up?", "Which room is the least comfortable?") answered from its history, ending with rules to create.
+1. **Unify:** one picture of the home, whatever the source, each value keeping its origin.
+2. **Understand the context:** who is home, the weather, the season, the household's habits.
+3. **Estimate what is missing:** from the inventory, the context, and how long devices ran.
+4. **Learn:** the home's usual ranges and habits; a dismissed finding or a corrected estimate counts.
+5. **Explain:** always why, never a bare number.
+6. **Act:** every finding ends in one tap — create a rule, launch a scene, check a device or an object.
 
-### What it needs
+Its rule: **it computes, the language model only words it.** It therefore works without Apple Intelligence: when the model doesn't support the language, the findings show in a short written form instead of disappearing.
 
-- Good sensors help (temperature and humidity per room, CO₂ in the bedroom, power), but each score must work with less: see the sources below.
+## Moments of life
 
-## Sources
+Maison follows what happens in the home, not only its devices. Each moment has three levels; without any equipment, Maison's action becomes advice and reminders instead of commands. A manual entry improves the inference, and a sensor replaces the inference when it arrives.
 
-Maison should read and act on as many sources as possible, Home Assistant being one of them. Every score degrades gracefully: energy works from the Linky meter alone, sleep from the watch alone, air from outdoor data alone; each sensor added makes them more precise.
+| Moment | With a sensor | Without one (inferred) | By hand |
+|---|---|---|---|
+| Sleeping | Bedroom temperature, CO₂, noise | Health, Sleep Focus, usual bedtime | "Slept well?" in the morning |
+| Waking up | First motion, first light | Wake-up time in Health | — |
+| Showering | Bathroom humidity, water heater | Shower in the inventory and usual times | One tap, a shortcut, Siri |
+| Cooking | Oven or hob power, particles | Inventory, mealtimes, presence | "I'm cooking", a timer |
+| Laundry | The machine's power curve | Machine and energy label in the inventory | "Machine started": end reminder, cost |
+| Working from home | CO₂ in the office | Weekday presence, Work Focus, calendar | "Working from home today" |
+| Relaxing | TV and music in Home Assistant | Music playing on the iPhone | An "Evening" scene |
+| Cleaning | Robot vacuum | Inventory, when people are usually home, pollen | Tasks per room, recurring reminders |
+| Airing | Window sensors, CO₂ | Outdoor weather and air quality, season, windows in the inventory: the best time to air today | "I aired": daily reminder |
+| Guests | More devices on the Wi-Fi | Calendar | "I have guests" |
+| Leaving and coming back | Locks, windows | The iPhone's location, calendar | A "Before leaving" checklist |
+| Working out | — | A Health workout while at home | — |
 
-### Data
+**Inferring, then asking.** When Maison guesses ("Was that a shower?") and the user confirms, it learns; detection improves and the user has less and less to say.
 
-On the iPhone, no third party:
+**The sensor that unlocks a moment.** When a moment can't be detected, Maison can say which single sensor would do it.
 
-- **Health (HealthKit)**: sleep stages and wake-ups, heart rate and variability, steps, wrist temperature. The key to the home ↔ sleep link.
-- **Apple Home (HomeKit)**: accessories that aren't in Home Assistant, read and controlled directly.
-- **Calendar (EventKit)**: trips, absences, guests — to anticipate (heating off during a trip, guest room warmed up).
-- **Location**: arrivals and departures (already in place for Home Assistant presence).
-- **Apple Weather (WeatherKit)**: outdoor temperature, forecast, sunshine — to compare and anticipate ("30° tomorrow: close the shutters at 11 am").
-- **Music (MusicKit)**: what's playing, for moods tied to listening.
+**Privacy inside the household.** Everyone sees their own activity (sleep, showers); the household sees only totals ("9 showers this week"), never who did what and when.
 
-French online services, mostly free:
+## Inventory
 
-- **Linky meter (Enedis Data Connect)**: real consumption every half hour, with no sensor at home.
-- **Tempo and EJP tariffs (EDF)**: blue, white and red days, so energy in euros is exact.
-- **Ecowatt and the electricity mix (RTE éCO2mix)**: grid stress and carbon intensity in real time, to shift the washing machine to green hours.
-- **Air quality and pollen (Atmo France)**: whether to air the rooms or keep the windows closed.
+Everything in the home, connected or not: fridge, oven, shower, windows, a plain vacuum cleaner, plants, the mattress, the smoke detector, filters.
 
-### Actions
+- **Automatic:** devices Home Assistant already knows.
+- **Assisted:** a photo of the object, its barcode, the QR code of the European energy label (official consumption), a photo of the room that suggests what is in it.
+- **Manual:** a form, with typical lists per room.
 
-- **Home Assistant**: already in place.
-- **Apple Home**: control HomeKit accessories directly.
-- **Shortcuts**: Maison runs the user's shortcuts, and shortcuts run Maison's actions (App Intents).
-- **Agents**: Grok Bot and Hermes for complex requests ("get the home ready for my return") — see Agents below.
-- **Reminders**: "Buy AA batteries" added on its own when a sensor runs low.
-- **Siri, widgets, Control Center**: see below.
+It feeds estimates without a meter, moments without a sensor, upkeep (filters, descaling, smoke detector batteries), and each object's sheet, with its warranty and manual as options.
 
-## Beyond the app
+## Findings
 
-### Without opening the app
+What the user receives. The first catalogue:
 
-- **Control Center and Lock Screen controls** (ControlWidget): floor lamp, shutters, front door in one gesture, calling Home Assistant without launching the app.
-- **Interactive widgets**: temperature, lights on and scenes on the Home Screen and in StandBy.
-- **Siri and Shortcuts**: "Hey Siri, run Cinema in Maison"; Maison actions in the Shortcuts app, triggerable by an NFC tag or a time of day.
-- **Apple Watch app**: favourites, scenes and the front door on the wrist.
+- **Energy:** standby use, the month's projected cost, the costliest devices, use at equal weather, cheaper hours.
+- **Comfort:** a room out of its range, heating or cooling running in an empty home, a window open while it runs.
+- **Devices:** offline, battery low, a frozen sensor, a device behaving unusually.
+- **Safety:** a door left open, unlocked after everyone left, water leak, smoke.
+- **Habits:** a manual action repeated in the same context, offered as a rule.
+- **Upkeep:** from the inventory.
 
-### At home
+Comfort ranges are never hard-coded: they are learned from the home's history or set by the user. Energy is in the currency set in Home Assistant.
 
-- **Before leaving**: when the last person leaves, list what is still on or open and turn it all off in one tap.
-- **Battery report**: every sensor and lock running low, in one place.
-- **Living plan**: each room's temperature as a colour on the floor plan, lights that are on drawn on it.
-- **Energy in euros**: per day and month with the tariff, and the devices that cost the most.
+## MVP
 
-### Household
+1. **The intelligence layer as a module**, with the origin of every value.
+2. **Today:** the day summary and the first findings (energy, comfort, devices, safety), each with its origin, its reason and a one-tap action.
+3. **A useful first launch:** import Home Assistant's existing history (detailed history and long-term statistics), so Maison has something to say within minutes.
+4. **Tidy the setup:** suggest rooms, hide duplicates, clear names.
+5. **Energy:** read Home Assistant's energy dashboard, suggest the right meter when it isn't set, or a manual entry (bill, price per kWh).
+6. **Minimal manual entry:** comfort range, usual hours, a first inventory.
+7. **Widgets:** Home Screen, StandBy, Lock Screen.
 
-- **Temporary guest access**: for a babysitter or friends, limited to some devices, expiring on its own.
-- **Who did what**: a household feed ("Camille unlocked the door at 6:40 pm"), from the logbook.
+## Next
 
-### Prerequisite: notifications
+- Moments of life, starting with sleep (Health ↔ bedroom), laundry, showering, airing.
+- The inventory in full (photo, barcode, energy label) and upkeep.
+- The push relay and notifications with actions.
+- The Maison add-on and the automatic Home Assistant setup.
+- Estimates adjusted by presence and weather, recalibrated by real values.
+- Learning from feedback; habits turned into rules.
+- A floor plan without LiDAR: rooms drawn by hand, a photo of the plan to trace, or a plain list of rooms.
+- Before leaving, away mode, getting the home ready for the return.
+- Control Center, Siri, Shortcuts and App Intents, Focus filters.
+- Week and month reviews.
 
-Alerts (door left open, device not responding, before leaving) need push notifications, which need a small push server with the app's own APNs key: Home Assistant can only push to its own companion app. Plan it before the features that depend on it.
+## Later
 
-## Machine learning
+- "Plug in the box": a ready-made Home Assistant box that Maison sets up on its own, Home Assistant invisible to the user.
+- HomeKit and Matter as sources, for people without Home Assistant.
+- Questions in plain language, simulations ("what if I lower it by one degree"), a year in review.
+- Temporary guest access, a household feed, comfort and sleep per person.
+- Live Activities, Apple Watch, iPad and Apple TV as wall dashboards, a Mac app.
 
-The app already reads two sources that lend themselves to learning from the household's own data (`Maison/Core/HomeAssistant/Insights.swift`):
+## Not this product
 
-- **the logbook**: every state change, when it happened, and whether a person or an automation made it;
-- **long-term statistics**: hourly or daily mean, min and max for sensors.
+A Maison email, a bank connection, contracts and subscriptions, a condition report: that is a home-paperwork product, not this one.
 
-Three problems, in the order they should be tackled.
+## Gaps in the current code
 
-### 1. Suggest automations from habits
+Dead ends that contradict the principles above:
 
-- **Observation:** a manual action repeated in the same context (turning on the living room light around 7 pm when coming home, turning off the speaker when the TV goes off) is an automation nobody wrote.
-- **Problem:** find the logbook actions *made by a person* that recur in a similar context (time, weekday, presence, state of other devices), and turn them into a proposed rule.
-- **In the app:** a card such as “You often turn on the living room around 7 pm when you get home. Create an automation?”, opening the WHEN / IF / THEN editor pre-filled.
-- **Baseline:** count manual actions per entity, hour slot and weekday. The model has to beat it, for instance by taking presence or other devices into account.
-- **Approach:** frequent pattern mining, then a classifier to score candidates.
+- The energy sensor is picked by its name (English or French words), so a sensor named in another language, or "Linky consumption", is never found (`HomeStore.energyToday`).
+- The temperature ring is fixed at 10–30 °C, saturated in a hot climate and wrong in °F (`Components.swift`).
+- Remote access reads `external_url` only, not Nabu Casa's `remote_ui_url`, so a Nabu Casa user without an external URL has no access away from home.
+- The day summary and rule writing disappear when Apple Intelligence doesn't support the language.
+- The app is in English and French only.
 
-### 2. Predict which device will be used next
+## Open questions
 
-- Onboarding already plans “favourites suggested from usage”, which is a hand-written rule for now.
-- **Problem:** rank devices by the probability of being used *right now* (time, weekday, room, recent actions), like Siri Suggestions for the home.
-- **Baseline:** the most used devices at this hour.
-- **Approach:** a small model trained in Python, converted to Core ML and run on the iPhone.
-
-### 3. Detect unusual sensor behaviour
-
-- The charts already show a “usual range”.
-- **Problem:** learn that range per hour and weekday instead of hard-coding it, then flag deviations: unusual consumption, a temperature dropping (window left open?), a frozen sensor or a dead battery.
-- The simplest of the three, a good warm-up.
-
-### Before starting
-
-- **Data volume:** everything depends on the number of devices and how much history the server keeps. The recorder keeps detailed history for only a few days by default; long-term statistics last longer. Raise `purge_keep_days` early so data accumulates.
-- **Gaps:** periods when the server is down must be treated as missing values, not as “nothing happened”.
-- **First step:** a script that exports the logbook, to count manual actions and see whether patterns already stand out.
-
-## Agents (MCP)
-
-Let assistants such as Claude or Hermes use the home through the Model Context Protocol.
-
-### 1. Start with Home Assistant's own MCP server
-
-- **Observation:** Home Assistant ships a "Model Context Protocol Server" integration: an MCP client can control the devices exposed to Assist and read their state, with a Home Assistant token.
-- **Step:** enable it on the server and try it from Claude and Hermes before writing anything.
-- **Limits to check:** what it can't do well — creating rules, reading history, knowing who did what.
-
-### 2. A Maison MCP server for what Home Assistant's doesn't cover
-
-- **Problem:** give agents the things Maison already knows how to do, with the same safeguards.
-- **Tools:**
-  - create and edit rules through the WHEN / IF / THEN model (`AutomationRule`), keeping unknown steps intact, and saving through the configuration API (administrator account);
-  - history and logbook: how long a device was on, who unlocked a door and when, energy use, a sensor's usual range;
-  - turn-off timers and "open too long" alerts, as Home Assistant scripts and automations (`TurnOffTimer`, `OpenTooLongAlert`);
-  - rooms and devices as Maison shows them, technical entities hidden.
-- **Where:** a small server (TypeScript or Python) in Docker on the Beelink, next to Hermes, talking to Home Assistant through the same APIs as the app (WebSocket, history, logbook, automation config).
-- **Access:** local network or Tailscale only, with a token from a dedicated Home Assistant account; anything that writes (rules, unlocking) asks for confirmation.
-- **Not feasible:** hosting it in the iOS app (no long-running server on iOS); exposing the floor plan and favourites means reading iCloud through CloudKit Web Services, a project of its own.
-
-### 3. Grok Bot from the app
-
-- **Goal:** in rule creation (the sparkles button), "Ask Grok Bot" instead of Apple Intelligence, without leaving Maison.
-- **How:** a Grok Bot routine triggered by a webhook (URL and key, `Authorization: Bearer`). Maison posts the description and the device list to it.
-- **Reply channel:** a webhook doesn't answer the caller, so Grok Bot writes the rule into Home Assistant as a disabled automation, through the Maison MCP server's "create a rule" tool. Maison, connected live, sees it appear and opens it pre-filled in the WHEN / IF / THEN editor for review.
-- **Settings:** webhook URL and key entered on the user's own iPhone, never shipped in the app; a choice "Rule writing: Apple Intelligence / Grok Bot".
-- **To check:** whether Grok Bot routines run on xAI's servers or in the Mac app (the Mac would have to stay on).
-- **Privacy:** the description and device names leave the iPhone for xAI; say so before the first use and in the privacy policy.
+- Is sleep the heart of the product, or one moment among others?
+- Wording in languages Apple Intelligence doesn't support: a simple written form only, or an optional cloud model?
+- How stable are the Home Assistant APIs Maison relies on to set it up (onboarding, add-on install, energy preferences)?
+- What does the floor plan bring to the intelligence layer?
+- Pricing: one-off purchase or subscription, given that the push relay has a running cost.
