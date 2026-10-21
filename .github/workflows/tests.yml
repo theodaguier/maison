@@ -1,0 +1,89 @@
+name: Tests
+
+# Unit tests. The job name is the status check to require in branch protection.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  unit:
+    name: Tests unitaires
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        id: xcode
+        run: |
+          app="$(./ci/select-xcode.sh)"
+          sudo xcode-select -s "$app"
+          version="$(xcodebuild -version | awk 'NR==1 { print $2 }')"
+          echo "path=$app" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          xcodebuild -version
+          xcode-select -p
+          xcrun simctl list runtimes
+
+      - name: Cache DerivedData and Swift packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            DerivedData
+            ~/Library/Caches/org.swift.swiftpm
+            ~/Library/org.swift.swiftpm
+          key: macos-xcode-${{ steps.xcode.outputs.version }}-${{ hashFiles('project.yml', '**/*.swift', '**/*.plist', '**/*.entitlements') }}
+          restore-keys: |
+            macos-xcode-${{ steps.xcode.outputs.version }}-
+
+      - name: XcodeGen
+        run: |
+          export HOMEBREW_NO_AUTO_UPDATE=1
+          brew install xcodegen xcbeautify
+          xcodegen generate
+          scheme="Maison.xcodeproj/xcshareddata/xcschemes/Maison.xcscheme"
+          if [[ ! -f "$scheme" ]]; then
+            echo "::error::Shared scheme missing at $scheme. xcodebuild on CI only sees schemes in xcshareddata."
+            find Maison.xcodeproj -name '*.xcscheme' -print || true
+            exit 1
+          fi
+
+      - name: Tests
+        run: |
+          UDID="$(./ci/simulator-udid.sh)"
+          echo "Simulator: $UDID"
+          xcrun simctl list devices | grep "$UDID" || true
+          mkdir -p build
+          set -o pipefail
+          xcodebuild test \
+            -project Maison.xcodeproj \
+            -scheme Maison \
+            -destination "id=$UDID" \
+            -derivedDataPath DerivedData \
+            -resultBundlePath build/Tests.xcresult \
+            -only-testing:MaisonTests \
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee build/xcodebuild.log | xcbeautify --renderer github-actions
+
+      - name: Trim DerivedData before caching
+        if: always()
+        run: rm -rf DerivedData/Index.noindex DerivedData/ModuleCache.noindex DerivedData/SymbolCache.noindex
+
+      - name: Test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tests-xcresult
+          path: build/Tests.xcresult
+          if-no-files-found: ignore
+          retention-days: 14

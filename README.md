@@ -53,8 +53,10 @@ The record types are created in the Development environment the first time a deb
 
 | Workflow | Trigger | What it does |
 | --- | --- | --- |
-| [`CI`](.github/workflows/ci.yml) | push to `main`, pull requests | generates the project, builds, runs the tests on a simulator |
+| [`Tests`](.github/workflows/tests.yml) | push to `main`, pull requests | generates the project and runs the unit tests on an available iPhone simulator |
 | [`TestFlight`](.github/workflows/release.yml) | `v*` tag or manual run | archives a Release build and uploads it to TestFlight |
+
+The check to require in branch protection is **Tests unitaires**. A failed run uploads the `.xcresult` bundle. Outdated runs on the same pull request are cancelled.
 
 The marketing version comes from the tag (`v0.2.0` → `0.2.0`) and the build number from the GitHub run counter.
 
