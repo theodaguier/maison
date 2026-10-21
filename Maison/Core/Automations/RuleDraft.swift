@@ -327,7 +327,10 @@ struct RuleWords {
         return found.isEmpty ? nil : found
     }
 
-    var kindWords: Set<String> { self.set.filter { Self.kindsByWord[$0] != nil } }
+    var kindWords: Set<String> {
+        let words = set
+        return words.filter { Self.kindsByWord[$0] != nil }
+    }
 
     /// "Lumière chaude" in kelvins.
     var colorTemperature: Double? {

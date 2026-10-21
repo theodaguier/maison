@@ -47,7 +47,8 @@ actor FakeTransport: WebSocketTransport {
     }
 
     private static func encode(_ message: JSONValue) -> String {
-        String(decoding: try! JSONEncoder().encode(message), as: UTF8.self)
+        let data = (try? JSONEncoder().encode(message)) ?? Data()
+        return String(decoding: data, as: UTF8.self)
     }
 }
 

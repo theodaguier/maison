@@ -1,0 +1,30 @@
+# Pragmatic defaults for an existing SwiftUI app. Metrics and line length are off so
+# large views and localized sentences are not a wall of warnings. --strict in CI.
+disabled_rules:
+  - line_length
+  - identifier_name
+  - type_name
+  - file_length
+  - type_body_length
+  - function_body_length
+  - cyclomatic_complexity
+  - large_tuple
+  - multiple_closures_with_trailing_closure
+  # String(decoding: data, as: UTF8.self) is the non-failable UTF-8 conversion.
+  - optional_data_string_conversion
+  # Trailing commas are already the house style. Forcing them where the closing
+  # bracket stays on the last element's line fights SwiftFormat.
+  - trailing_comma
+
+function_parameter_count:
+  warning: 8
+  error: 10
+
+opt_in_rules: []
+
+excluded:
+  - .build
+  - build
+  - DerivedData
+
+reporter: "xcode"

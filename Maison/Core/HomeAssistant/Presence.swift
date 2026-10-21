@@ -150,7 +150,7 @@ struct Webhook: Codable, Sendable, Equatable {
     let localURL: URL?
     let remoteURL: URL?
     /// Home Assistant Cloud's address for this webhook, which works from anywhere.
-    var cloudhookURL: URL? = nil
+    var cloudhookURL: URL?
 
     /// What earlier builds saved when presence was turned on in the demo.
     var isDemo: Bool { id == "demo" && localURL == nil && remoteURL == nil }
