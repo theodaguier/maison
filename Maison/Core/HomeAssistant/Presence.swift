@@ -13,27 +13,52 @@ final class PresenceReporter: NSObject, CLLocationManagerDelegate {
     static let shared = PresenceReporter()
 
     private(set) var authorization: CLAuthorizationStatus
-    private(set) var isEnabled = UserDefaults.standard.bool(forKey: enabledKey)
+    private(set) var isEnabled: Bool
+    /// The sample home's reporter: the switch works, nothing is asked or sent.
+    let isDemo: Bool
 
     @ObservationIgnored private let manager = CLLocationManager()
+    @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private var authorizationWaiters: [CheckedContinuation<Void, Never>] = []
+    private nonisolated let webhooks: any WebhookStorage
+    /// Read on every position, so it goes to the server's current addresses.
+    private nonisolated let credentialStore: any CredentialStorage
 
     private static let enabledKey = "presenceEnabled"
 
-    override init() {
+    init(
+        webhooks: any WebhookStorage = KeychainWebhookStorage(),
+        credentialStore: any CredentialStorage = CredentialStore(),
+        defaults: UserDefaults = .standard,
+        isDemo: Bool = false
+    ) {
+        self.webhooks = webhooks
+        self.credentialStore = credentialStore
+        self.defaults = defaults
+        self.isDemo = isDemo
+        isEnabled = !isDemo && defaults.bool(forKey: Self.enabledKey)
         authorization = manager.authorizationStatus
         super.init()
         manager.delegate = self
+        // Earlier builds saved the demo's fake webhook, which then kept the real registration from ever happening.
+        if !isDemo, webhooks.load()?.isDemo == true {
+            webhooks.delete()
+            setEnabled(false)
+        }
     }
 
     /// Called at launch: iOS relaunches the app in the background for location changes.
     func resume() {
-        guard isEnabled, Webhook.load() != nil else { return }
+        guard isEnabled, webhooks.load() != nil else { return }
         manager.startMonitoringSignificantLocationChanges()
     }
 
     /// Asks for the location permission, registers with Home Assistant and attaches the iPhone to the person.
     func enable(with store: HomeStore) async throws {
+        guard !isDemo else {
+            isEnabled = true
+            return
+        }
         if authorization == .notDetermined {
             await withCheckedContinuation { continuation in
                 authorizationWaiters.append(continuation)
@@ -41,22 +66,31 @@ final class PresenceReporter: NSObject, CLLocationManagerDelegate {
             }
         }
         guard [.authorizedAlways, .authorizedWhenInUse].contains(authorization) else { throw PresenceError.denied }
-        if Webhook.load() == nil {
-            Webhook.save(try await store.registerMobileApp(deviceName: UIDevice.current.name))
+        if webhooks.load() == nil {
+            webhooks.save(try await store.registerMobileApp(deviceName: UIDevice.current.name))
         }
-        isEnabled = true
-        UserDefaults.standard.set(true, forKey: Self.enabledKey)
+        setEnabled(true)
         manager.startMonitoringSignificantLocationChanges()
         manager.requestLocation()
         // The tracker appears once the first position arrives.
         try? await Task.sleep(for: .seconds(3))
-        if let webhook = Webhook.load() { try? await store.attachTracker(webhookID: webhook.id) }
+        if let webhook = webhooks.load() { try? await store.attachTracker(webhookID: webhook.id) }
     }
 
     func disable() {
-        isEnabled = false
-        UserDefaults.standard.set(false, forKey: Self.enabledKey)
-        manager.stopMonitoringSignificantLocationChanges()
+        setEnabled(false)
+        if !isDemo { manager.stopMonitoringSignificantLocationChanges() }
+    }
+
+    /// Stops reporting and drops the webhook, on signing out: it belongs to the server left.
+    func forget() {
+        disable()
+        webhooks.delete()
+    }
+
+    private func setEnabled(_ isOn: Bool) {
+        isEnabled = isOn
+        if !isDemo { defaults.set(isOn, forKey: Self.enabledKey) }
     }
 
     // MARK: CLLocationManagerDelegate
@@ -72,7 +106,8 @@ final class PresenceReporter: NSObject, CLLocationManagerDelegate {
     }
 
     nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let location = locations.last, let webhook = Webhook.load() else { return }
+        guard let location = locations.last, let webhook = webhooks.load() else { return }
+        let endpoints = webhook.endpoints(addresses: (try? credentialStore.load())?.addresses)
         let body: [String: Any] = [
             "type": "update_location",
             "data": [
@@ -82,13 +117,13 @@ final class PresenceReporter: NSObject, CLLocationManagerDelegate {
             ],
         ]
         Task.detached {
-            // At home the local address answers; away, the remote one.
-            for server in [webhook.remoteURL, webhook.localURL].compactMap({ $0 }) {
-                var request = URLRequest(url: server.appending(path: "api/webhook/\(webhook.id)"))
+            // At home the local address answers at once; away, it gives up quickly for the remote one.
+            for (index, endpoint) in endpoints.enumerated() {
+                var request = URLRequest(url: endpoint)
                 request.httpMethod = "POST"
                 request.setValue("application/json", forHTTPHeaderField: "Content-Type")
                 request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-                request.timeoutInterval = 15
+                request.timeoutInterval = index == 0 && endpoints.count > 1 ? 5 : 15
                 if let (_, response) = try? await URLSession.shared.data(for: request),
                    (response as? HTTPURLResponse).map({ (200..<300).contains($0.statusCode) }) == true {
                     return
@@ -109,14 +144,39 @@ final class PresenceReporter: NSObject, CLLocationManagerDelegate {
 }
 
 /// The webhook Home Assistant gave Maison, kept in the keychain: whoever has it can post positions.
-struct Webhook: Codable, Sendable {
+struct Webhook: Codable, Sendable, Equatable {
     let id: String
+    /// The server's addresses at registration, used when the sign-in is gone.
     let localURL: URL?
     let remoteURL: URL?
+    /// Home Assistant Cloud's address for this webhook, which works from anywhere.
+    var cloudhookURL: URL? = nil
 
-    private static let service = "com.theodaguier.maison.webhook"
+    /// What earlier builds saved when presence was turned on in the demo.
+    var isDemo: Bool { id == "demo" && localURL == nil && remoteURL == nil }
 
-    static func load() -> Webhook? {
+    /// Where to post, local first. `addresses` are the server's current ones, which may have changed since registration.
+    func endpoints(addresses: [URL]?) -> [URL] {
+        let servers = addresses ?? [localURL, remoteURL].compactMap { $0 }
+        let all = servers.map { $0.appending(path: "api/webhook/\(id)") } + [cloudhookURL].compactMap { $0 }
+        return all.reduce(into: []) { endpoints, url in
+            if !endpoints.contains(url) { endpoints.append(url) }
+        }
+    }
+}
+
+/// Where the webhook is kept.
+protocol WebhookStorage: Sendable {
+    func load() -> Webhook?
+    func save(_ webhook: Webhook)
+    func delete()
+}
+
+/// The keychain, readable after the first unlock so background location updates can post.
+struct KeychainWebhookStorage: WebhookStorage {
+    private let service = "com.theodaguier.maison.webhook"
+
+    func load() -> Webhook? {
         let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service,
                                     kSecReturnData as String: true, kSecMatchLimit as String: kSecMatchLimitOne]
         var item: CFTypeRef?
@@ -124,7 +184,7 @@ struct Webhook: Codable, Sendable {
         return try? JSONDecoder().decode(Webhook.self, from: data)
     }
 
-    static func save(_ webhook: Webhook) {
+    func save(_ webhook: Webhook) {
         delete()
         guard let data = try? JSONEncoder().encode(webhook) else { return }
         let attributes: [String: Any] = [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service,
@@ -133,7 +193,21 @@ struct Webhook: Codable, Sendable {
         SecItemAdd(attributes as CFDictionary, nil)
     }
 
-    static func delete() {
+    func delete() {
         SecItemDelete([kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service] as CFDictionary)
     }
+}
+
+/// Memory only: for the demo, which never registers, and for tests.
+final class MemoryWebhookStorage: WebhookStorage, @unchecked Sendable {
+    private let lock = NSLock()
+    private var webhook: Webhook?
+
+    init(_ webhook: Webhook? = nil) {
+        self.webhook = webhook
+    }
+
+    func load() -> Webhook? { lock.withLock { webhook } }
+    func save(_ webhook: Webhook) { lock.withLock { self.webhook = webhook } }
+    func delete() { lock.withLock { webhook = nil } }
 }

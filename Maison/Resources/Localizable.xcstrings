@@ -1737,12 +1737,12 @@
         }
       }
     },
-    "Away from home, Maison uses the external address set in Home Assistant.": {
+    "At home, Maison talks to the server directly. Away, it switches to this address on its own.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Hors de chez vous, Maison utilise l’adresse externe réglée dans Home Assistant."
+            "value": "À la maison, Maison parle directement au serveur. Ailleurs, elle passe d’elle-même par cette adresse."
           }
         }
       }

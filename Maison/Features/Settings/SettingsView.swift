@@ -65,6 +65,8 @@ struct SettingsView: View {
                                             value: store.serverURL?.host() ?? "", showsChevron: true)
                             }
                             SettingsDivider()
+                            PresenceRow()
+                            SettingsDivider()
                             NavigationLink { PermissionsPage() } label: {
                                 SettingsRow(title: "Home Assistant Permissions",
                                             value: store.currentUser?.isAdmin == true ? String(localized: "Full") : String(localized: "Standard"),
@@ -183,6 +185,35 @@ struct SettingsGroup<Content: View>: View {
 struct SettingsDivider: View {
     var body: some View {
         Theme.separator.frame(height: 1).padding(.leading, 42)
+    }
+}
+
+/// Whether Maison tells Home Assistant when you leave or come home; switched off here as well as turned on.
+private struct PresenceRow: View {
+    @Environment(HomeStore.self) private var store
+    @State private var error: String?
+
+    var body: some View {
+        HStack(spacing: 12) {
+            SettingsIcon(symbol: "location.fill", color: .blue)
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Location")
+                    .font(.roundedBody)
+                if let error {
+                    Text(error)
+                        .font(.roundedFootnote)
+                        .foregroundStyle(.orange)
+                } else if store.isTrackedByHomeAssistant, !store.presence.isEnabled {
+                    Text("Home Assistant already knows when you’re home, through its own app.")
+                        .font(.roundedFootnote)
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            Spacer(minLength: 8)
+            PresenceToggle(error: $error)
+        }
+        .padding(.vertical, 6)
+        .errorFeedback(error)
     }
 }
 
@@ -416,9 +447,9 @@ extension HomeStore {
         return household.status == .ready ? String(localized: "\(rights) · Apple Account") : rights
     }
 
-    /// "Tailscale", "Nabu Casa" or the remote host; `nil` when the server has no external address.
+    /// "Tailscale", "Nabu Casa" or the remote host; `nil` when the server has no address away from home.
     var remoteAccessName: String? {
-        guard let host = serverConfig?.externalURL.flatMap({ URL(string: $0)?.host() }), !host.isEmpty else { return nil }
+        guard let host = remoteURL?.host(), !host.isEmpty else { return nil }
         if host.hasSuffix(".ts.net") { return "Tailscale" }
         if host.hasSuffix(".ui.nabu.casa") { return "Nabu Casa" }
         return host

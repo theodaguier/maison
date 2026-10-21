@@ -1,9 +1,16 @@
 import Foundation
 import Security
 
+/// Where the sign-in is kept: the keychain in the app, memory in tests (unsigned builds have no keychain).
+protocol CredentialStorage: Sendable {
+    func load() throws -> Credentials?
+    func save(_ credentials: Credentials) throws
+    func delete() throws
+}
+
 /// Persists Home Assistant credentials in the keychain, readable after the first unlock
 /// so background refreshes keep working. Never synced to iCloud.
-struct CredentialStore: Sendable {
+struct CredentialStore: CredentialStorage {
     var service = "com.theodaguier.maison.credentials"
     var account = "home-assistant"
 

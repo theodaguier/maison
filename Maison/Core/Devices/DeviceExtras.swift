@@ -46,7 +46,7 @@ enum TurnOffTimer {
 
     @MainActor
     static func start(_ minutes: Int, for entity: EntityState, in store: HomeStore) async throws {
-        if let editor = store.configEditor {
+        if let editor = try await store.configEditor() {
             try await editor.save(.script, id: scriptID(for: entity), config: [
                 "alias": .string(String(localized: "Maison · Turn off \(entity.name)")),
                 "description": .string(String(localized: "Created by the Maison app.")),
@@ -123,7 +123,7 @@ enum OpenTooLongAlert {
     /// The delay currently set, in minutes, or `nil` when there is no alert.
     @MainActor
     static func minutes(for entity: EntityState, in store: HomeStore) async -> Int? {
-        guard let editor = store.configEditor else { return nil }
+        guard let editor = try? await store.configEditor() else { return nil }
         guard let config = try? await editor.load(.automation, id: automationID(for: entity)) else { return nil }
         let trigger = (config["triggers"] ?? config["trigger"])?.arrayValue?.first
         return trigger?["for"]?["minutes"]?.intValue
@@ -131,7 +131,7 @@ enum OpenTooLongAlert {
 
     @MainActor
     static func set(_ minutes: Int?, for entity: EntityState, in store: HomeStore) async throws {
-        guard let editor = store.configEditor else { return }
+        guard let editor = try await store.configEditor() else { return }
         let id = automationID(for: entity)
         guard let minutes else {
             try await editor.delete(.automation, id: id)
