@@ -14,4 +14,4 @@
 # The app already uses compact single-line branches, properties, and argument lists.
 # hoistTry/hoistAwait mis-place try/await on the outer call. numberFormatting would strip
 # separators such as 86_400. noForceUnwrapInTests rewrites Swift Testing helpers.
---disable wrapIfStatementBodies,wrapPropertyBodies,wrapFunctionBodies,wrapMultilineStatementBraces,wrapIfExpressionBodies,wrapLoopBodies,wrapArguments,noForceUnwrapInTests,hoistTry,hoistAwait,numberFormatting
+--disable wrapIfStatementBodies,wrapPropertyBodies,wrapFunctionBodies,wrapMultilineStatementBraces,wrapIfExpressionBodies,wrapLoopBodies,wrapArguments,noForceUnwrapInTests,hoistTry,hoistAwait,numberFormatting,conditionalAssignment

@@ -15,6 +15,8 @@ disabled_rules:
   # Trailing commas are already the house style. Forcing them where the closing
   # bracket stays on the last element's line fights SwiftFormat.
   - trailing_comma
+  # Switch expressions that return a string look like discarded ternaries to this rule.
+  - void_function_in_ternary
 
 function_parameter_count:
   warning: 8

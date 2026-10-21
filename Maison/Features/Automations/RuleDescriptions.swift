@@ -30,8 +30,11 @@ extension HomeStore {
                                    detail: area(of: states[id])?.name ?? String(localized: "Device"))
         case .threshold(let id, let above, let below):
             let unit = states[id]?.unit ?? ""
-            let title = if let above { String(localized: "\(entityName(id)) above \(Self.number(above))\(unit)") }
-            else { String(localized: "\(entityName(id)) below \(Self.number(below ?? 0))\(unit)") }
+            let title = if let above {
+                String(localized: "\(entityName(id)) above \(Self.number(above))\(unit)")
+            } else {
+                String(localized: "\(entityName(id)) below \(Self.number(below ?? 0))\(unit)")
+            }
             return StepDescription(symbol: "thermometer.medium", color: .orange, title: title,
                                    detail: area(of: states[id])?.name ?? String(localized: "Measurement"))
         case .everyoneLeaves:
