@@ -345,9 +345,10 @@ final class HomeStore {
         var changed = await adoptDiscoveredDevices(flows: flows, connection: connection)
         changed = await repairIntegrations(flows: flows, now: now) || changed
         changed = await turnOnCloudRemoteAccess(connection: connection) || changed
-        if await ensureInternetCheck(flows: flows, connection: connection, now: now) {
+        if await ensureInternetCheck(flows: flows, now: now) {
             changed = true
         }
+        changed = await ensureInternetResponseTime(connection: connection) || changed
         await syncGridConsumption(now: now)
         // New integrations bring entities and registry entries: reconnecting reads them.
         if changed { await connect() }
@@ -420,16 +421,24 @@ final class HomeStore {
 
     /// Switches on Home Assistant's internet check (the Ping integration) when nothing measures the
     /// connection, so the Network score fills in. Tried at most once a day.
-    private func ensureInternetCheck(flows: ConfigFlowClient, connection: HomeAssistantConnection, now: Date) async -> Bool {
+    private func ensureInternetCheck(flows: ConfigFlowClient, now: Date) async -> Bool {
         let defaults = UserDefaults.standard
         guard internetSources == nil else { return false }
         if let attempted = defaults.object(forKey: InternetCheckSetting.attemptedKey) as? Date, now.timeIntervalSince(attempted) < 86_400 { return false }
         defaults.set(now, forKey: InternetCheckSetting.attemptedKey)
-        guard case .created(let entryID)? = try? await flows.create("ping", answers: ["host": .string(InternetCheckSetting.host)]) else { return false }
-        // Response times ship disabled; the average is the one the score reads.
-        try? await connection.enableEntities(ofEntry: entryID, translationKeys: ["round_trip_time_avg"])
+        guard case .created? = try? await flows.create("ping", answers: ["host": .string(InternetCheckSetting.host)]) else { return false }
         defaults.set(now, forKey: InternetCheckSetting.addedKey)
         return true
+    }
+
+    /// Ping ships its response times disabled, and registers them a few seconds after it is added, so
+    /// turning them on right away finds nothing. Checked on every refresh until the score reads the
+    /// average: turned on, Home Assistant reloads Ping within half a minute; on but not read yet, the
+    /// registry changed since Maison connected. Either way, reconnecting reads it.
+    private func ensureInternetResponseTime(connection: HomeAssistantConnection) async -> Bool {
+        guard let source = internetSources, source.latency == nil,
+              let found = try? await connection.enableEntities(platform: "ping", translationKeys: ["round_trip_time_avg"]) else { return false }
+        return found.turnedOn > 0 || found.alreadyOn > 0
     }
 
     /// The electricity meters to count. Those of Home Assistant's Energy dashboard add up (peak and

@@ -94,13 +94,7 @@ struct ConfigFlowTests {
         #expect(flows.map(\.handler) == ["cast", "homekit_controller"])
     }
 
-    @Test func turnsOnOnlyTheAverageResponseTime() async throws {
-        let registry: JSONValue = [
-            ["entity_id": "binary_sensor.1_1_1_1", "config_entry_id": "entry-ping", "disabled_by": .null, "translation_key": .null],
-            ["entity_id": "sensor.1_1_1_1_round_trip_time_average", "config_entry_id": "entry-ping", "disabled_by": "integration", "translation_key": "round_trip_time_avg"],
-            ["entity_id": "sensor.1_1_1_1_round_trip_time_maximum", "config_entry_id": "entry-ping", "disabled_by": "integration", "translation_key": "round_trip_time_max"],
-            ["entity_id": "sensor.other_average", "config_entry_id": "other", "disabled_by": "integration", "translation_key": "round_trip_time_avg"],
-        ]
+    private func registryConnection(_ registry: JSONValue) async throws -> (HomeAssistantConnection, FakeTransport) {
         let transport = FakeTransport { message in
             switch message["type"]?.stringValue {
             case "auth": [["type": "auth_ok", "ha_version": "2026.8.1"]]
@@ -110,11 +104,46 @@ struct ConfigFlowTests {
         }
         let connection = HomeAssistantConnection(transport: transport, accessToken: "token")
         try await connection.connect()
+        return (connection, transport)
+    }
 
-        try await connection.enableEntities(ofEntry: "entry-ping", translationKeys: ["round_trip_time_avg"])
+    /// The registry of a real server a few minutes after Maison added Ping (French entity ids).
+    @Test func turnsOnOnlyTheAverageResponseTime() async throws {
+        let (connection, transport) = try await registryConnection([
+            ["entity_id": "binary_sensor.1_1_1_1", "platform": "ping", "disabled_by": .null, "translation_key": .null],
+            ["entity_id": "sensor.1_1_1_1_temps_d_aller_retour_moyen", "platform": "ping", "disabled_by": "integration", "translation_key": "round_trip_time_avg"],
+            ["entity_id": "sensor.1_1_1_1_temps_d_aller_retour_maximum", "platform": "ping", "disabled_by": "integration", "translation_key": "round_trip_time_max"],
+            ["entity_id": "sensor.1_1_1_1_gigue", "platform": "ping", "disabled_by": "integration", "translation_key": "jitter"],
+            ["entity_id": "sensor.speedtest_average", "platform": "speedtest", "disabled_by": "integration", "translation_key": "round_trip_time_avg"],
+        ])
 
+        let found = try await connection.enableEntities(platform: "ping", translationKeys: ["round_trip_time_avg"])
+
+        #expect(found.turnedOn == 1)
+        #expect(found.alreadyOn == 0)
         let updates = await transport.sentMessages(ofType: "config/entity_registry/update")
-        #expect(updates.map { $0["entity_id"]?.stringValue } == ["sensor.1_1_1_1_round_trip_time_average"])
+        #expect(updates.map { $0["entity_id"]?.stringValue } == ["sensor.1_1_1_1_temps_d_aller_retour_moyen"])
         #expect(updates.first?["disabled_by"] == .null)
+    }
+
+    /// Right after Ping is added, its sensors aren't registered yet: nothing to turn on, so try again later.
+    @Test func reportsSensorsNotRegisteredYet() async throws {
+        let (connection, transport) = try await registryConnection([
+            ["entity_id": "binary_sensor.1_1_1_1", "platform": "ping", "disabled_by": .null, "translation_key": .null],
+        ])
+        let found = try await connection.enableEntities(platform: "ping", translationKeys: ["round_trip_time_avg"])
+        #expect(found.turnedOn == 0 && found.alreadyOn == 0)
+        #expect(await transport.sentMessages(ofType: "config/entity_registry/update").isEmpty)
+    }
+
+    @Test func leavesASensorThePersonTurnedOffAndCountsOneAlreadyOn() async throws {
+        let (connection, transport) = try await registryConnection([
+            ["entity_id": "sensor.a", "platform": "ping", "disabled_by": "user", "translation_key": "round_trip_time_avg"],
+            ["entity_id": "sensor.b", "platform": "ping", "disabled_by": .null, "translation_key": "round_trip_time_avg"],
+        ])
+        let found = try await connection.enableEntities(platform: "ping", translationKeys: ["round_trip_time_avg"])
+        #expect(found.turnedOn == 0)
+        #expect(found.alreadyOn == 1)
+        #expect(await transport.sentMessages(ofType: "config/entity_registry/update").isEmpty)
     }
 }
