@@ -110,6 +110,8 @@ struct RecordedWebSocketTests {
         #expect(integrations.map(\.domain) == ["hue", "sonos"])
         #expect(integrations.map(\.title) == ["Philips Hue", "Sonos"])
         #expect(integrations.map(\.state) == ["loaded", "setup_error"])
+        #expect(integrations.map(\.entryID) == ["hue-1", "sonos-1"])
+        #expect(integrations.map(\.isFailing) == [false, true])
     }
 
     @Test func cloudIsTheRemoteAddressWhenNoExternalURLIsSet() async throws {

@@ -1564,16 +1564,6 @@
         }
       }
     },
-    "Add in Home Assistant": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ajouter dans Home Assistant"
-          }
-        }
-      }
-    },
     "Add to Favorites": {
       "localizations": {
         "fr": {
@@ -4064,6 +4054,16 @@
         }
       }
     },
+    "Maison adds what your server needs by itself: devices it found on your network, and the check behind the Network score.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maison ajoute elle-même ce dont votre serveur a besoin : les appareils trouvés sur votre réseau, et la vérification derrière le score Réseau."
+          }
+        }
+      }
+    },
     "Maison can’t use the location. Allow it in Settings › Maison › Location.": {
       "localizations": {
         "fr": {
@@ -4310,16 +4310,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Réseau"
-          }
-        }
-      }
-    },
-    "Network Settings in Home Assistant": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Réglages réseau dans Home Assistant"
           }
         }
       }
@@ -4654,16 +4644,6 @@
         }
       }
     },
-    "Not set up in Home Assistant": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Non configuré dans Home Assistant"
-          }
-        }
-      }
-    },
     "Not signed in": {
       "localizations": {
         "fr": {
@@ -4884,26 +4864,6 @@
         }
       }
     },
-    "Open Home Assistant": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ouvrir Home Assistant"
-          }
-        }
-      }
-    },
-    "Open Home Assistant’s Editor": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ouvrir l’éditeur de Home Assistant"
-          }
-        }
-      }
-    },
     "Open Settings": {
       "localizations": {
         "fr": {
@@ -4930,16 +4890,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ouverts à %@"
-          }
-        }
-      }
-    },
-    "Open in Home Assistant": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ouvrir dans Home Assistant"
           }
         }
       }
@@ -5830,6 +5780,16 @@
         }
       }
     },
+    "Set Up by Maison": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installé par Maison"
+          }
+        }
+      }
+    },
     "Set by you": {
       "localizations": {
         "fr": {
@@ -6530,12 +6490,12 @@
         }
       }
     },
-    "These need an administrator account. An administrator can change your account in Home Assistant (Settings › People).": {
+    "These need an administrator account on your server. Everything else works with yours.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ces fonctions demandent un compte administrateur. Un administrateur peut modifier votre compte dans Home Assistant (Paramètres › Personnes)."
+            "value": "Ces fonctions demandent un compte administrateur sur votre serveur. Tout le reste fonctionne avec le vôtre."
           }
         }
       }
@@ -6586,6 +6546,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cette intégration ne fournit pas d’appareils affichés dans Maison."
+          }
+        }
+      }
+    },
+    "This integration isn’t working. Maison restarts it by itself, once a day.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette intégration ne fonctionne pas. Maison la redémarre elle-même, une fois par jour."
+          }
+        }
+      }
+    },
+    "This integration isn’t working. Maison restarts it the next time an administrator opens the app.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette intégration ne fonctionne pas. Maison la redémarre la prochaine fois qu’un administrateur ouvre l’app."
           }
         }
       }
@@ -7480,12 +7460,12 @@
         }
       }
     },
-    "Your server has no external address, so Maison only works at home. Set one up in Home Assistant (Settings › System › Network), for instance with Tailscale or Home Assistant Cloud.": {
+    "Your server has no remote access yet, so Maison only reaches it at home. When Home Assistant Cloud is signed in, Maison turns its remote access on by itself.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Votre serveur n’a pas d’adresse externe : Maison ne fonctionne qu’à la maison. Réglez-en une dans Home Assistant (Paramètres › Système › Réseau), par exemple avec Tailscale ou Home Assistant Cloud."
+            "value": "Votre serveur n’a pas encore d’accès à distance : Maison ne le joint qu’à la maison. Quand Home Assistant Cloud est connecté, Maison active elle-même son accès à distance."
           }
         }
       }

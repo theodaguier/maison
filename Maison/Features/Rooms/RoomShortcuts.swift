@@ -29,7 +29,6 @@ struct FavoritesSection: View {
 /// The household's scenes, four at first.
 struct ScenesSection: View {
     @Environment(HomeStore.self) private var store
-    @Environment(\.openURL) private var openURL
     @State private var showsAll = false
 
     var body: some View {
@@ -39,10 +38,6 @@ struct ScenesSection: View {
                 if scenes.count > 4 {
                     SectionHeader(title: "Scenes", actionTitle: showsAll ? "Show Less" : "See All") {
                         withAnimation(.smooth) { showsAll.toggle() }
-                    }
-                } else if let serverURL = store.serverURL {
-                    SectionHeader(title: "Scenes", actionTitle: "Edit") {
-                        openURL(serverURL.appending(path: "config/scene/dashboard"))
                     }
                 } else {
                     SectionHeader(title: "Scenes")

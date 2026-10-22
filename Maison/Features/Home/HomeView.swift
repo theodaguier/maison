@@ -48,7 +48,6 @@ struct OpenedDevice: Identifiable {
 
 private struct HomeDashboard: View {
     @Environment(HomeStore.self) private var store
-    @Environment(\.openURL) private var openURL
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var opened: OpenedDevice?
@@ -112,12 +111,6 @@ private struct HomeDashboard: View {
                     .disabled(store.devicesToTurnOff.isEmpty)
                     Button("Refresh", systemImage: "arrow.clockwise") {
                         Task { await store.connect() }
-                    }
-                    if let serverURL = store.serverURL {
-                        Button("Add in Home Assistant", systemImage: "plus") {
-                            openURL(serverURL.appending(path: "config/integrations/dashboard"))
-                        }
-                        Button("Open Home Assistant", systemImage: "safari") { openURL(serverURL) }
                     }
                 }
             }
@@ -194,7 +187,7 @@ private struct HomeDashboard: View {
 
     private func refreshScores() async {
         guard store.phase == .connected || scores == nil, !store.states.isEmpty else { return }
-        await store.ensureInternetCheck()
+        await store.setUpServer()
         let started = ContinuousClock.now
         let loaded = await store.loadScores()
         scores = loaded

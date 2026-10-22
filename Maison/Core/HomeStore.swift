@@ -325,30 +325,71 @@ final class HomeStore {
         return (try? await connection.statistics(of: entityID, since: start, period: period)) ?? []
     }
 
-    /// Switches on Home Assistant's internet check (the Ping integration) when nothing measures the
-    /// connection, so the Network score fills in without the person doing anything. Administrators only;
-    /// tried at most once a day.
-    func ensureInternetCheck(now: Date = .now) async {
-        let defaults = UserDefaults.standard
-        guard !isDemo, phase == .connected, internetSources == nil, let connection else { return }
+    /// Everything Maison sets up on the server by itself, so the person never has to open Home Assistant:
+    /// devices it found, integrations that failed, remote access, the internet check. Administrators only.
+    func setUpServer(now: Date = .now) async {
+        guard !isDemo, phase == .connected, let connection else { return }
         // The account is read after connecting, in the background: ask for it if it isn't there yet.
         var user = currentUser
         if user == nil { user = try? await connection.currentUser() }
-        guard user?.isAdmin == true else { return }
-        if let attempted = defaults.object(forKey: InternetCheckSetting.attemptedKey) as? Date, now.timeIntervalSince(attempted) < 86_400 { return }
-        defaults.set(now, forKey: InternetCheckSetting.attemptedKey)
-        do {
-            let credentials = try await freshCredentials()
-            let flows = ConfigFlowClient(serverURL: activeURL ?? credentials.serverURL, accessToken: credentials.accessToken)
-            guard case .created(let entryID) = try await flows.create("ping", answers: ["host": .string(InternetCheckSetting.host)]) else { return }
-            // Response times ship disabled; the average is the one the score reads.
-            try? await connection.enableEntities(ofEntry: entryID, translationKeys: ["round_trip_time_avg"])
-            defaults.set(now, forKey: InternetCheckSetting.addedKey)
-            // The registry changed: reconnecting reads the new entities and where they come from.
-            await connect()
-        } catch {
-            return
+        guard user?.isAdmin == true, let credentials = try? await freshCredentials() else { return }
+        let flows = ConfigFlowClient(serverURL: activeURL ?? credentials.serverURL, accessToken: credentials.accessToken)
+        var changed = await adoptDiscoveredDevices(flows: flows, connection: connection)
+        changed = await repairIntegrations(flows: flows, now: now) || changed
+        changed = await turnOnCloudRemoteAccess(connection: connection) || changed
+        if await ensureInternetCheck(flows: flows, connection: connection, now: now) {
+            changed = true
         }
+        // New integrations bring entities and registry entries: reconnecting reads them.
+        if changed { await connect() }
+    }
+
+    /// Confirms the devices Home Assistant found on the network when it only waits for a "Submit".
+    /// Those that need a code or a password stay where they are.
+    private func adoptDiscoveredDevices(flows: ConfigFlowClient, connection: HomeAssistantConnection) async -> Bool {
+        var added = false
+        for flow in (try? await connection.discoveredFlows()) ?? [] {
+            guard case .created? = try? await flows.confirmIfNothingToAsk(flowID: flow.flowID) else { continue }
+            ServerSetupLog.recordAdded(flow.handler)
+            added = true
+        }
+        return added
+    }
+
+    /// Reloads integrations that failed to start, once a day each, as one would from their menu.
+    private func repairIntegrations(flows: ConfigFlowClient, now: Date) async -> Bool {
+        var reloaded = false
+        let repaired = ServerSetupLog.repairedAt
+        for integration in integrations where integration.isFailing {
+            guard let entryID = integration.entryID,
+                  repaired[entryID].map({ now.timeIntervalSince($0) >= 86_400 }) ?? true else { continue }
+            ServerSetupLog.recordRepair(entryID, at: now)
+            if (try? await flows.reload(entryID: entryID)) != nil { reloaded = true }
+        }
+        return reloaded
+    }
+
+    /// With Home Assistant Cloud signed in but its remote access off, turns it on: Maison then works away
+    /// from home with the same sign-in.
+    private func turnOnCloudRemoteAccess(connection: HomeAssistantConnection) async -> Bool {
+        guard remoteURL == nil, let status = try? await connection.send(["type": "cloud/status"]),
+              status["logged_in"]?.boolValue == true, status["remote_connected"]?.boolValue != true,
+              status["prefs"]?["remote_enabled"]?.boolValue != true else { return false }
+        return (try? await connection.send(["type": "cloud/remote/connect"])) != nil
+    }
+
+    /// Switches on Home Assistant's internet check (the Ping integration) when nothing measures the
+    /// connection, so the Network score fills in. Tried at most once a day.
+    private func ensureInternetCheck(flows: ConfigFlowClient, connection: HomeAssistantConnection, now: Date) async -> Bool {
+        let defaults = UserDefaults.standard
+        guard internetSources == nil else { return false }
+        if let attempted = defaults.object(forKey: InternetCheckSetting.attemptedKey) as? Date, now.timeIntervalSince(attempted) < 86_400 { return false }
+        defaults.set(now, forKey: InternetCheckSetting.attemptedKey)
+        guard case .created(let entryID)? = try? await flows.create("ping", answers: ["host": .string(InternetCheckSetting.host)]) else { return false }
+        // Response times ship disabled; the average is the one the score reads.
+        try? await connection.enableEntities(ofEntry: entryID, translationKeys: ["round_trip_time_avg"])
+        defaults.set(now, forKey: InternetCheckSetting.addedKey)
+        return true
     }
 
     /// The electricity meters to count: those of Home Assistant's Energy dashboard, otherwise every
