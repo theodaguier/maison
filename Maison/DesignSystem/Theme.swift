@@ -40,12 +40,14 @@ extension Font {
 
 /// The "Chiffres" number styles: a large semibold value followed by a lighter unit.
 enum NumberSize {
+    case small // 24 / 14 (score rings)
     case medium // 34 / 20
     case large // 42 / 18 (hero ring)
     case xLarge // 56 / 30
 
     var value: Font {
         switch self {
+        case .small: .system(size: 24, weight: .semibold, design: .rounded)
         case .medium: .system(size: 34, weight: .semibold, design: .rounded)
         case .large: .system(size: 42, weight: .semibold, design: .rounded)
         case .xLarge: .system(size: 56, weight: .semibold, design: .rounded)
@@ -54,6 +56,7 @@ enum NumberSize {
 
     var unit: Font {
         switch self {
+        case .small: .system(size: 14, weight: .semibold, design: .rounded)
         case .medium: .system(size: 20, weight: .medium, design: .rounded)
         case .large: .system(size: 18, weight: .medium, design: .rounded)
         case .xLarge: .system(size: 30, weight: .medium, design: .rounded)

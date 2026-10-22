@@ -16,6 +16,8 @@ struct StatisticPoint: Sendable, Hashable {
     let mean: Double?
     let min: Double?
     let max: Double?
+    /// What a total (an energy meter) grew by during the period.
+    var change: Double?
 }
 
 extension HomeAssistantConnection {
@@ -44,7 +46,7 @@ extension HomeAssistantConnection {
             "start_time": .string(start.ISO8601Format()),
             "statistic_ids": [.string(entityID)],
             "period": .string(period),
-            "types": ["mean", "min", "max"],
+            "types": ["mean", "min", "max", "change"],
         ])
         return (result[entityID]?.arrayValue ?? []).compactMap { point in
             guard let start = point["start"]?.doubleValue else { return nil }
@@ -54,7 +56,8 @@ extension HomeAssistantConnection {
                 start: Date(timeIntervalSince1970: seconds),
                 mean: point["mean"]?.doubleValue,
                 min: point["min"]?.doubleValue,
-                max: point["max"]?.doubleValue
+                max: point["max"]?.doubleValue,
+                change: point["change"]?.doubleValue
             )
         }
     }

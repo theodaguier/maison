@@ -47,7 +47,12 @@ enum DemoHome {
             "sensor.sdb_temperature": "bathroom_sensor", "sensor.sdb_humidity": "bathroom_sensor", "sensor.sdb_battery": "bathroom_sensor",
         ]
         layout.hiddenEntities = ["sensor.porte_entree_battery", "sensor.sdb_battery", "sensor.prise_cafe_power"]
-        layout.platformByEntity = ["media_player.sonos": "sonos", "media_player.sonos_cuisine": "sonos"]
+        layout.platformByEntity = [
+            "media_player.sonos": "sonos", "media_player.sonos_cuisine": "sonos",
+            "binary_sensor.internet": "ping", "sensor.internet_round_trip_time_average": "ping",
+            "sensor.internet_round_trip_time_maximum": "ping",
+        ]
+        layout.hiddenEntities.formUnion(["binary_sensor.internet", "sensor.internet_round_trip_time_average", "sensor.internet_round_trip_time_maximum"])
         return layout
     }()
 
@@ -116,6 +121,15 @@ enum DemoHome {
             ]),
             EntityState(entityID: "sensor.chambre_temperature", state: "21.4", attributes: [
                 "friendly_name": "Chambre température", "device_class": "temperature", "unit_of_measurement": "°C",
+            ]),
+            EntityState(entityID: "binary_sensor.internet", state: "on", attributes: [
+                "friendly_name": "Internet", "device_class": "connectivity",
+            ]),
+            EntityState(entityID: "sensor.internet_round_trip_time_average", state: "14", attributes: [
+                "friendly_name": "Internet temps de réponse moyen", "unit_of_measurement": "ms", "state_class": "measurement",
+            ]),
+            EntityState(entityID: "sensor.internet_round_trip_time_maximum", state: "21", attributes: [
+                "friendly_name": "Internet temps de réponse maximum", "unit_of_measurement": "ms", "state_class": "measurement",
             ]),
             EntityState(entityID: "sensor.salon_humidity", state: "48", attributes: [
                 "friendly_name": "Salon humidité", "device_class": "humidity", "unit_of_measurement": "%",
@@ -300,6 +314,23 @@ enum DemoHome {
             return upToNow([(15.2, "cool"), (17.9, "off"), (19.4, "cool")])
         case "binary_sensor.fenetre_chambre":
             return upToNow([(7, "on"), (7.5, "off"), (9.03, "on"), (9.67, "off")])
+        case "sensor.salon_temperature":
+            return hourly(since: start) { hour, _ in 21.4 + 0.6 * sin((hour - 15) / 24 * 2 * .pi) }
+        case "sensor.chambre_temperature":
+            // Too warm for a few hours around 2 am, as in the mock-ups.
+            return hourly(since: start) { hour, _ in hour >= 0 && hour < 4 ? 24.6 : 21.4 + 0.5 * sin((hour - 15) / 24 * 2 * .pi) }
+        case "binary_sensor.internet":
+            let cut = today.addingTimeInterval(3 * 3600 + 12 * 60)
+            return [StateChange(state: "on", date: start)]
+                + [StateChange(state: "off", date: cut), StateChange(state: "on", date: cut.addingTimeInterval(240))]
+                .filter { $0.date > start && $0.date <= .now }
+        case "sensor.internet_round_trip_time_average":
+            return stride(from: start.timeIntervalSince1970, to: Date.now.timeIntervalSince1970, by: 900).map { time in
+                let date = Date(timeIntervalSince1970: time)
+                let wobble = 4 * sin(time / 2_700) + 2 * sin(time / 650)
+                let evening = date >= today && Calendar.current.component(.hour, from: date) == 21 ? 14.0 : 0
+                return StateChange(state: String(format: "%.1f", 15 + wobble + evening), date: date)
+            }
         case "sensor.sdb_temperature":
             let values: [(Double, Double)] = [(-24, 22.6), (-21, 22.2), (-18, 22.1), (-16, 22.1), (-14, 23.9), (-12.5, 23), (-11, 22.7), (-9, 22.9), (-7, 23.2), (-5, 23.1), (-3.5, 23.5), (-2.4, 24.6), (-1.6, 23.6), (-0.8, 23.2), (-0.2, 23.1)]
             return values.map { StateChange(state: String($0.1), date: Date.now.addingTimeInterval($0.0 * 3600)) }
@@ -321,7 +352,33 @@ enum DemoHome {
         ].filter { $0.date >= today }
     }
 
+    /// One reading each hour since `start`, ending with the current hour.
+    private static func hourly(since start: Date, _ value: (Double, Date) -> Double) -> [StateChange] {
+        stride(from: start.timeIntervalSince1970, to: Date.now.timeIntervalSince1970, by: 3600).map { time in
+            let date = Date(timeIntervalSince1970: time)
+            let hour = Double(Calendar.current.component(.hour, from: date))
+            return StateChange(state: String(format: "%.1f", value(hour, date)), date: date)
+        }
+    }
+
+    /// Electricity each hour: a water heater at 7 pm, a quieter day today than the week before.
+    private static func energyChange(at date: Date) -> Double {
+        let calendar = Calendar.current
+        let hour = calendar.component(.hour, from: date)
+        let base = [0.1, 0.08, 0.06, 0.06, 0.06, 0.07, 0.16, 0.28, 0.22, 0.14, 0.12, 0.14, 0.22, 0.18, 0.14, 0.16, 0.2, 0.26, 0.34, 0.3, 0.32, 0.26, 0.18, 0.12][hour]
+        let heater = hour == 19 ? 1.6 : hour == 20 ? 0.6 : 0
+        let isToday = calendar.isDateInToday(date)
+        return (base + heater) * (isToday ? 0.82 : 1 + 0.06 * sin(date.timeIntervalSince1970 / 90_000))
+    }
+
     static func statistics(of entityID: String, since start: Date, period: String) -> [StatisticPoint] {
+        if entityID == "sensor.energy_today", period == "hour" {
+            let first = (start.timeIntervalSince1970 / 3600).rounded(.down) * 3600
+            return stride(from: first, to: Date.now.timeIntervalSince1970 - 3600, by: 3600).map { time in
+                let date = Date(timeIntervalSince1970: time)
+                return StatisticPoint(start: date, mean: nil, min: nil, max: nil, change: energyChange(at: date))
+            }
+        }
         guard entityID.hasSuffix("temperature") else { return [] }
         let step: TimeInterval = period == "day" ? 86_400 : 3600
         return stride(from: start.timeIntervalSince1970, to: Date.now.timeIntervalSince1970, by: step).map { time in

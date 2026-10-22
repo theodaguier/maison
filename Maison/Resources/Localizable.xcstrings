@@ -251,6 +251,38 @@
         }
       }
     },
+    "%@ was too cold around %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ was too cold around %2$@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ a eu trop froid vers %2$@"
+          }
+        }
+      }
+    },
+    "%@ was too warm around %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ was too warm around %2$@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ a eu trop chaud vers %2$@"
+          }
+        }
+      }
+    },
     "%@ · %@": {
       "shouldTranslate": false
     },
@@ -284,6 +316,22 @@
         }
       }
     },
+    "%@ – %@°": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ – %2$@°"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ – %2$@°"
+          }
+        }
+      }
+    },
     "%@° cooler than yesterday": {
       "localizations": {
         "fr": {
@@ -306,6 +354,94 @@
     },
     "%lld": {
       "shouldTranslate": false
+    },
+    "%lld %% comfort: every room stayed in your range, except %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld %% comfort: every room stayed in your range, except %2$@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld %% de confort : toutes les pièces sont restées dans votre plage, sauf %2$@."
+          }
+        }
+      }
+    },
+    "%lld %% comfort: every room stayed in your range.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld %% de confort : toutes les pièces sont restées dans votre plage."
+          }
+        }
+      }
+    },
+    "%lld %% of the day in your range": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld %% de la journée dans votre plage"
+          }
+        }
+      }
+    },
+    "%lld %% over your habit": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld %% au-dessus de votre habitude"
+          }
+        }
+      }
+    },
+    "%lld %% under your habit": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld %% sous votre habitude"
+          }
+        }
+      }
+    },
+    "%lld %%, too cold around %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld %%, too cold around %2$@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld %%, trop froid vers %2$@"
+          }
+        }
+      }
+    },
+    "%lld %%, too warm around %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld %%, too warm around %2$@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld %%, trop chaud vers %2$@"
+          }
+        }
+      }
     },
     "%lld K": {
       "localizations": {
@@ -927,6 +1063,46 @@
         }
       }
     },
+    "%lld outage": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld outage"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld outages"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld coupure"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld coupures"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld rooms found": {
       "localizations": {
         "en": {
@@ -1167,6 +1343,17 @@
         }
       }
     },
+    "%lld:00": {
+      "comment": "An hour of the day; French writes it 19 h",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld h"
+          }
+        }
+      }
+    },
     "0 h": {
       "localizations": {
         "fr": {
@@ -1343,6 +1530,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Actif aujourd’hui"
+          }
+        }
+      }
+    },
+    "Add Ping in Home Assistant": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter Ping dans Home Assistant"
           }
         }
       }
@@ -1717,6 +1914,16 @@
         }
       }
     },
+    "Available": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disponible"
+          }
+        }
+      }
+    },
     "Away": {
       "localizations": {
         "fr": {
@@ -2027,6 +2234,36 @@
         }
       }
     },
+    "Comfort": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confort"
+          }
+        }
+      }
+    },
+    "Comfort counts the time each room spends between these two temperatures. The new range counts from the next refresh.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le confort compte le temps que chaque pièce passe entre ces deux températures. La nouvelle plage compte dès la prochaine mise à jour."
+          }
+        }
+      }
+    },
+    "Comfort counts the time each room spends in your range. Add a temperature sensor to a room in Home Assistant, or assign an existing one to its room.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le confort compte le temps que chaque pièce passe dans votre plage. Ajoutez un capteur de température à une pièce dans Home Assistant, ou rangez un capteur existant dans sa pièce."
+          }
+        }
+      }
+    },
     "Comfortable": {
       "localizations": {
         "fr": {
@@ -2307,6 +2544,16 @@
         }
       }
     },
+    "Cut for %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coupé pendant %@"
+          }
+        }
+      }
+    },
     "Dark": {
       "localizations": {
         "fr": {
@@ -2317,12 +2564,12 @@
         }
       }
     },
-    "Data from %@ · retrying": {
+    "Data from %@, retrying": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Données d’%@ · nouvel essai en cours"
+            "value": "Données d’%@, nouvel essai en cours"
           }
         }
       }
@@ -2597,6 +2844,16 @@
         }
       }
     },
+    "Electricity each hour over the last 24 hours": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Électricité heure par heure sur les dernières 24 heures"
+          }
+        }
+      }
+    },
     "Email or phone number": {
       "localizations": {
         "fr": {
@@ -2657,6 +2914,36 @@
         }
       }
     },
+    "Energy compares today's electricity with your habit. Add your meter to Home Assistant's Energy dashboard, then come back here.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’énergie compare l’électricité du jour avec votre habitude. Ajoutez votre compteur au tableau de bord Énergie de Home Assistant, puis revenez ici."
+          }
+        }
+      }
+    },
+    "Energy: %lld %% over your habit so far.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Énergie : %lld %% au-dessus de votre habitude pour l’instant."
+          }
+        }
+      }
+    },
+    "Energy: %lld %% under your habit so far.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Énergie : %lld %% sous votre habitude pour l’instant."
+          }
+        }
+      }
+    },
     "Enter an email address or a phone number.": {
       "localizations": {
         "fr": {
@@ -2673,6 +2960,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Saisir l’adresse"
+          }
+        }
+      }
+    },
+    "Entered": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saisi"
+          }
+        }
+      }
+    },
+    "Estimated": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimé"
           }
         }
       }
@@ -2743,6 +3050,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Exemples"
+          }
+        }
+      }
+    },
+    "Fair": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correct"
           }
         }
       }
@@ -2857,6 +3174,16 @@
         }
       }
     },
+    "Frugal": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sobre"
+          }
+        }
+      }
+    },
     "Full": {
       "localizations": {
         "fr": {
@@ -2893,6 +3220,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Passez la porte et continuez le scan"
+          }
+        }
+      }
+    },
+    "Good": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bien"
           }
         }
       }
@@ -3077,12 +3414,42 @@
         }
       }
     },
+    "Home Assistant's Ping integration checks the connection every minute. Add it once, pointed at a public address such as 1.1.1.1, and the Network score starts the same day.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’intégration Ping de Home Assistant vérifie la connexion chaque minute. Ajoutez-la une fois, vers une adresse publique comme 1.1.1.1, et le score Réseau démarre le jour même."
+          }
+        }
+      }
+    },
+    "Home Assistant's internet check hasn't reported anything in the last 24 hours.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La vérification internet de Home Assistant n’a rien remonté depuis 24 heures."
+          }
+        }
+      }
+    },
     "Home Server": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Serveur de la maison"
+          }
+        }
+      }
+    },
+    "Hour": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Heure"
           }
         }
       }
@@ -3233,6 +3600,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Intégrations"
+          }
+        }
+      }
+    },
+    "Internet response time over the last 24 hours": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Temps de réponse d’internet sur les dernières 24 heures"
           }
         }
       }
@@ -3443,6 +3820,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Plan et réglages synchronisés par iCloud"
+          }
+        }
+      }
+    },
+    "Learned from your past week": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apprise sur votre dernière semaine"
+          }
+        }
+      }
+    },
+    "Learning Your Habit": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maison apprend votre habitude"
+          }
+        }
+      }
+    },
+    "Learning Your Range": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maison apprend votre plage"
           }
         }
       }
@@ -3717,6 +4124,16 @@
         }
       }
     },
+    "Maison needs three days of readings to learn the temperatures you live in. You can set your range now instead.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maison a besoin de trois jours de mesures pour apprendre les températures où vous vivez. Vous pouvez aussi régler votre plage dès maintenant."
+          }
+        }
+      }
+    },
     "Maison suggests simple rules. Here’s what it understood; you can finish the rule by hand.": {
       "localizations": {
         "fr": {
@@ -3757,12 +4174,32 @@
         }
       }
     },
+    "Measured": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mesuré"
+          }
+        }
+      }
+    },
     "Measurement": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Mesure"
+          }
+        }
+      }
+    },
+    "Measuring": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En mesure"
           }
         }
       }
@@ -3807,6 +4244,16 @@
         }
       }
     },
+    "More electricity than usual today": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plus d’électricité que d’habitude aujourd’hui"
+          }
+        }
+      }
+    },
     "Motion": {
       "localizations": {
         "fr": {
@@ -3847,6 +4294,16 @@
         }
       }
     },
+    "Needs a Look": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À surveiller"
+          }
+        }
+      }
+    },
     "Network": {
       "localizations": {
         "fr": {
@@ -3863,6 +4320,76 @@
           "stringUnit": {
             "state": "translated",
             "value": "Réglages réseau dans Home Assistant"
+          }
+        }
+      }
+    },
+    "Network at %lld %%, no outage today.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réseau à %lld %%, aucune coupure aujourd’hui."
+          }
+        }
+      }
+    },
+    "Network at %lld %%: %lld outage today.": {
+      "localizations": {
+        "en": {
+          "substitutions": {
+            "count": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg outage"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg outages"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "stringUnit": {
+            "state": "translated",
+            "value": "Network at %1$lld %%: %#@count@ today."
+          }
+        },
+        "fr": {
+          "substitutions": {
+            "count": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg coupure"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg coupures"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réseau à %1$lld %% : %#@count@ aujourd’hui."
           }
         }
       }
@@ -3937,6 +4464,16 @@
         }
       }
     },
+    "No Electricity Meter": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas de compteur électrique"
+          }
+        }
+      }
+    },
     "No LiDAR Sensor": {
       "localizations": {
         "fr": {
@@ -3953,6 +4490,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pas de LiDAR : un autre membre pourra scanner le plan"
+          }
+        }
+      }
+    },
+    "No Reading Today": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune mesure aujourd’hui"
           }
         }
       }
@@ -3987,6 +4534,16 @@
         }
       }
     },
+    "No Temperature in Your Rooms": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas de température dans vos pièces"
+          }
+        }
+      }
+    },
     "No Wi-Fi: your server is found on your home network": {
       "localizations": {
         "fr": {
@@ -3997,12 +4554,42 @@
         }
       }
     },
+    "No habit yet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas encore d’habitude"
+          }
+        }
+      }
+    },
     "No matching device": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Aucun appareil trouvé"
+          }
+        }
+      }
+    },
+    "No outage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune coupure"
+          }
+        }
+      }
+    },
+    "No room measures this yet.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune pièce ne le mesure encore."
           }
         }
       }
@@ -4067,6 +4654,16 @@
         }
       }
     },
+    "Not measured yet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas encore mesuré"
+          }
+        }
+      }
+    },
     "Not set up in Home Assistant": {
       "localizations": {
         "fr": {
@@ -4113,6 +4710,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ce n’est pas le bon serveur ?"
+          }
+        }
+      }
+    },
+    "Nothing Checks Your Internet Yet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rien ne vérifie encore votre internet"
           }
         }
       }
@@ -4423,6 +5030,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Autres"
+          }
+        }
+      }
+    },
+    "Outage at %@, %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Outage at %1$@, %2$@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coupure à %1$@, %2$@"
           }
         }
       }
@@ -4777,6 +5400,16 @@
         }
       }
     },
+    "Response": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réponse"
+          }
+        }
+      }
+    },
     "Return to Dock": {
       "localizations": {
         "fr": {
@@ -4963,6 +5596,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Données d’exemple : rien ici ne commande un vrai appareil. Quittez la démo pour connecter votre serveur Home Assistant."
+          }
+        }
+      }
+    },
+    "Save": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrer"
           }
         }
       }
@@ -5177,6 +5820,16 @@
         }
       }
     },
+    "Set My Range": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Régler ma plage"
+          }
+        }
+      }
+    },
     "Set Up": {
       "localizations": {
         "fr": {
@@ -5193,6 +5846,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Configurer ma maison"
+          }
+        }
+      }
+    },
+    "Set by you": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réglée par vous"
           }
         }
       }
@@ -5757,6 +6420,16 @@
         }
       }
     },
+    "The internet dropped at %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Internet a coupé à %@"
+          }
+        }
+      }
+    },
     "The person invited finds everything: rooms, plan and automations.": {
       "localizations": {
         "fr": {
@@ -5813,6 +6486,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Le scan est calculé sur l’iPhone, rien n’est envoyé en ligne."
+          }
+        }
+      }
+    },
+    "The score compares today with the same hours of your previous days. It appears after three days of readings.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le score compare aujourd’hui avec les mêmes heures de vos jours précédents. Il apparaît après trois jours de mesures."
           }
         }
       }
@@ -5983,6 +6666,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "À"
+          }
+        }
+      }
+    },
+    "To Look At Today, %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À voir aujourd’hui, %@"
           }
         }
       }
@@ -6333,6 +7026,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Utilise les personnes suivies par Home Assistant, en général grâce à son app compagnon."
+          }
+        }
+      }
+    },
+    "Usual": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Habituel"
           }
         }
       }
@@ -6747,6 +7450,16 @@
         }
       }
     },
+    "Your Range": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre plage"
+          }
+        }
+      }
+    },
     "Your Request": {
       "localizations": {
         "fr": {
@@ -6829,16 +7542,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ouvrir"
-          }
-        }
-      }
-    },
-    "active": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "actifs"
           }
         }
       }
@@ -7036,18 +7739,12 @@
         }
       }
     },
-    "light.on.one": {
+    "last 24 hours": {
       "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "on"
-          }
-        },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "allumée"
+            "value": "dernières 24 heures"
           }
         }
       }
@@ -7078,16 +7775,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "blanc neutre"
-          }
-        }
-      }
-    },
-    "on": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "allumées"
           }
         }
       }
@@ -7210,6 +7897,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "depuis %@"
+          }
+        }
+      }
+    },
+    "since midnight": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "depuis minuit"
           }
         }
       }
