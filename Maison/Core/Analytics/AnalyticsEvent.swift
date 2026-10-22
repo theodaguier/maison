@@ -58,12 +58,13 @@ enum AnalyticsConnector: String, CaseIterable, Sendable {
     case homeAssistant = "home_assistant"
 }
 
-/// Kinds of document a person can scan. Add a case to record a new kind; there is no free-text field.
+/// Kinds of document a person can scan: in V1, only those that feed the Energy or Network score.
+/// Add a case to record a new kind; there is no free-text field.
 enum AnalyticsDocument: String, CaseIterable, Sendable {
-    case barcode
-    case energyLabel = "energy_label"
-    case bill
-    case manual
+    case energyBill = "energy_bill"
+    case energyContract = "energy_contract"
+    case boxBill = "box_bill"
+    case boxContract = "box_contract"
 }
 
 enum AnalyticsPayload {

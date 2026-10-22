@@ -14,9 +14,9 @@ final class Analytics: @unchecked Sendable {
         self.defaults = defaults
     }
 
-    /// On until the person turns it off. A missing value is on, which is what TestFlight ships with.
+    /// Off until the person turns it on: an identifier stored on the device needs their consent.
     var isEnabled: Bool {
-        defaults.object(forKey: Self.enabledKey) as? Bool ?? true
+        defaults.bool(forKey: Self.enabledKey)
     }
 
     func setEnabled(_ enabled: Bool) {
@@ -24,9 +24,10 @@ final class Analytics: @unchecked Sendable {
         client.setEnabled(enabled)
     }
 
+    /// The SDK is only set up once sharing is on, so a person who never opts in never reaches PostHog.
     func track(_ event: AnalyticsEvent) {
-        client.start(enabled: isEnabled)
         guard isEnabled, client.isConfigured else { return }
+        client.start(enabled: true)
         client.capture(name: event.name, properties: event.properties)
     }
 

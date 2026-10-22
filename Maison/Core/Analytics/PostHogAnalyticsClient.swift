@@ -36,6 +36,11 @@ final class PostHogAnalyticsClient: AnalyticsClient, @unchecked Sendable {
     }
 
     func setEnabled(_ enabled: Bool) {
+        lock.lock()
+        let started = didStart
+        lock.unlock()
+        // Turning off before the SDK was ever set up: nothing to opt out of, and no reason to set it up.
+        guard enabled || started else { return }
         start(enabled: enabled)
     }
 

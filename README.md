@@ -45,7 +45,7 @@ Usage events go to PostHog in the EU (`https://eu.i.posthog.com`). The project t
 - **On your Mac:** copy [`Config/Secrets.xcconfig.example`](Config/Secrets.xcconfig.example) to `Config/Secrets.xcconfig` and set `POSTHOG_API_KEY`. That file is gitignored. Use the project token (`phc_…`) from the EU project's settings, never a personal key (`phx_…`).
 - **TestFlight:** repository secret `POSTHOG_API_KEY`. The release workflow passes it to `xcodebuild`. If the secret is missing, the upload still runs and analytics stays off.
 
-Xcode writes that setting into Info.plist as `PostHogAPIKey`. Settings → Share Usage Data is on by default and turns capture off.
+Xcode writes that setting into Info.plist as `PostHogAPIKey`. Settings → Share Usage Data is off by default: nothing is recorded, and the SDK is not even set up, until the person turns it on.
 
 ## Household sharing
 

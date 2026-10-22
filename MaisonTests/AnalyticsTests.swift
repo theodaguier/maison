@@ -1,6 +1,6 @@
 import Foundation
-import Testing
 @testable import Maison
+import Testing
 
 struct AnalyticsTests {
     @Test func aMissingTokenSendsNothing() {
@@ -12,17 +12,26 @@ struct AnalyticsTests {
         #expect(log.events.isEmpty)
     }
 
-    @Test func sharingIsOnUntilItIsTurnedOff() {
+    @Test func sharingIsOffUntilItIsTurnedOn() {
         let defaults = suite()
-        let analytics = Analytics(client: AnalyticsLog(isConfigured: true), defaults: defaults)
-        #expect(analytics.isEnabled)
-
-        analytics.setEnabled(false)
         let log = AnalyticsLog(isConfigured: true)
-        let restored = Analytics(client: log, defaults: defaults)
-        #expect(!restored.isEnabled)
-        restored.track(.appOpened)
+        let analytics = Analytics(client: log, defaults: defaults)
+        #expect(!analytics.isEnabled)
+        analytics.track(.appOpened)
         #expect(log.events.isEmpty)
+        #expect(log.startCount == 0)
+
+        analytics.setEnabled(true)
+        let restored = Analytics(client: AnalyticsLog(isConfigured: true), defaults: defaults)
+        #expect(restored.isEnabled)
+
+        restored.setEnabled(false)
+        let off = AnalyticsLog(isConfigured: true)
+        let restoredOff = Analytics(client: off, defaults: defaults)
+        #expect(!restoredOff.isEnabled)
+        restoredOff.track(.appOpened)
+        #expect(off.events.isEmpty)
+        #expect(off.startCount == 0)
     }
 
     @Test func turnedOffSendsNothingAndOnSendsTheEvent() {
@@ -36,13 +45,13 @@ struct AnalyticsTests {
 
         analytics.setEnabled(true)
         analytics.track(.scoreOpened(.network))
-        analytics.track(.documentScanned(.energyLabel))
+        analytics.track(.documentScanned(.energyBill))
         analytics.track(.sourceConnected(.homeAssistant))
         #expect(log.enabled == true)
         #expect(log.events.map(\.name) == ["score_opened", "document_scanned", "source_connected"])
         #expect(log.events.map(\.properties) == [
             ["score": "network"],
-            ["kind": "energy_label"],
+            ["kind": "energy_bill"],
             ["connector": "home_assistant"],
         ])
     }
@@ -55,13 +64,14 @@ struct AnalyticsTests {
             .scoreOpened(.energy),
             .scoreOpened(.network),
             .sourceConnected(.homeAssistant),
-            .documentScanned(.bill),
-            .documentScanned(.barcode),
-            .documentScanned(.manual),
+            .documentScanned(.energyBill),
+            .documentScanned(.energyContract),
+            .documentScanned(.boxBill),
+            .documentScanned(.boxContract),
         ]
         #expect(events.map(\.name) == [
             "app_opened", "screen_viewed", "score_opened", "score_opened", "score_opened",
-            "source_connected", "document_scanned", "document_scanned", "document_scanned",
+            "source_connected", "document_scanned", "document_scanned", "document_scanned", "document_scanned",
         ])
         for event in events {
             var payload: [String: Any] = [:]
@@ -112,7 +122,7 @@ struct AnalyticsTests {
     }
 
     @Test func theSDKAllowlistLeavesOutIdentifiers() {
-        let forbidden: Set<String> = [
+        let forbidden: Set = [
             "$device_name", "$device_id", "$idfa", "$idfv", "$ip", "$timezone",
             "$elements_chain", "$screen_name", "$exception_list", "$set",
         ]
@@ -152,7 +162,19 @@ final class AnalyticsLog: AnalyticsClient, @unchecked Sendable {
         self.isConfigured = isConfigured
     }
 
-    func start(enabled: Bool) {}
+    private var starts = 0
+
+    func start(enabled: Bool) {
+        lock.lock()
+        starts += 1
+        lock.unlock()
+    }
+
+    var startCount: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return starts
+    }
 
     func setEnabled(_ enabled: Bool) {
         lock.lock()

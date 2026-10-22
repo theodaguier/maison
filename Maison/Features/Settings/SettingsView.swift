@@ -25,7 +25,7 @@ struct SettingsView: View {
     @Environment(\.setDemoMode) private var setDemoMode
     @AppStorage("appearance") private var appearance: Appearance = .system
     @AppStorage(DaySummarySetting.key) private var daySummary = true
-    @AppStorage(Analytics.enabledKey) private var analyticsEnabled = true
+    @AppStorage(Analytics.enabledKey) private var analyticsEnabled = false
 
     var body: some View {
         NavigationStack {
