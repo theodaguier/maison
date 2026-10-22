@@ -21,6 +21,10 @@ extension HomeStore {
             ])
         }
         let temperature = devices.filter { $0.deviceClass == "temperature" }
+        let registry = (try? await registryEntries()) ?? []
+        let pingRegistry = registry.filter { $0["platform"]?.stringValue == "ping" }.map { entry in
+            "\(entry["entity_id"]?.stringValue ?? "?") disabled=\(entry["disabled_by"]?.stringValue ?? "no") key=\(entry["translation_key"]?.stringValue ?? "none") keys=\(entry.objectValue?.keys.sorted().joined(separator: ",") ?? "")"
+        }
         let report: [String: Any] = [
             "date": Date.now.ISO8601Format(),
             "durationSeconds": Double(duration.components.seconds),
@@ -42,6 +46,7 @@ extension HomeStore {
             "platforms": Dictionary(grouping: layout.platformByEntity.values, by: { $0 }).mapValues(\.count),
             "climateWithTemperature": devices.filter { $0.kind == .climate && $0.currentTemperature != nil }.count,
             "weather": states.values.filter { $0.domain == "weather" }.count,
+            "pingRegistry": pingRegistry,
         ]
         guard let data = try? JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys]),
               let folder = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return }

@@ -325,6 +325,14 @@ final class HomeStore {
         return (try? await connection.statistics(of: entityID, since: start, period: period)) ?? []
     }
 
+    #if DEBUG
+    /// The raw entity registry, for the debug report.
+    func registryEntries() async throws -> [JSONValue] {
+        guard let connection else { return [] }
+        return try await connection.send(["type": "config/entity_registry/list"]).arrayValue ?? []
+    }
+    #endif
+
     /// Everything Maison sets up on the server by itself, so the person never has to open Home Assistant:
     /// devices it found, integrations that failed, remote access, the internet check. Administrators only.
     func setUpServer(now: Date = .now) async {
