@@ -1,0 +1,6 @@
+{
+  "storage": [
+    {"id": "person-1", "name": "Théo", "user_id": "abc123", "device_trackers": ["device_tracker.phone"]}
+  ],
+  "config": []
+}

@@ -1,0 +1,7 @@
+{
+  "light.salon": [
+    {"s": "off", "lc": 1760000000},
+    {"s": "on", "lu": 1760003600},
+    {"state": "ignored-without-a-timestamp"}
+  ]
+}

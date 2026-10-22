@@ -1,0 +1,7 @@
+{
+  "notify": {
+    "mobile_app_iphone_de_theo": {"name": "iPhone de Théo", "description": "Sends a notification"},
+    "notify": {"name": "Notify"}
+  },
+  "light": {"turn_on": {"name": "Turn on"}, "turn_off": {"name": "Turn off"}}
+}

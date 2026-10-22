@@ -1,0 +1,24 @@
+[
+  {
+    "run_id": "run-1",
+    "domain": "automation",
+    "item_id": "trop_chaud",
+    "timestamp": {"start": "2026-10-20T18:00:00.123456+00:00", "finish": "2026-10-20T18:00:01.000000+00:00"},
+    "script_execution": "finished"
+  },
+  {
+    "run_id": "run-2",
+    "domain": "automation",
+    "item_id": "porte",
+    "timestamp": {"start": "2026-10-20T18:05:00+00:00"},
+    "script_execution": "failed_conditions"
+  },
+  {
+    "run_id": "run-3",
+    "domain": "automation",
+    "item_id": "erreur",
+    "timestamp": {"start": "2026-10-20T18:06:00+00:00"},
+    "script_execution": "error"
+  },
+  {"item_id": "dropped-without-a-timestamp"}
+]
