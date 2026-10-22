@@ -68,6 +68,7 @@ struct CloudKitHousehold: HouseholdCloud {
         return true
         #endif
     }()
+
     private var container: CKContainer { Self.container }
 
     /// Reads an invitation link (scanned or pasted) as iOS does when the link is tapped.

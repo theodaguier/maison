@@ -400,7 +400,7 @@ private struct ClimateControls: View {
                         }
                         .padding(.vertical, 10)
                     }
-                    if !fanModes.isEmpty && swingModes.contains("on") {
+                    if !fanModes.isEmpty, swingModes.contains("on") {
                         Theme.separator.frame(height: 1)
                     }
                     if swingModes.contains("on") {

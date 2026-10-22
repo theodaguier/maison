@@ -3107,6 +3107,16 @@
         }
       }
     },
+    "How you use Maison. Never your home.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comment vous utilisez Maison. Jamais votre maison."
+          }
+        }
+      }
+    },
     "Humid": {
       "localizations": {
         "fr": {
@@ -5243,6 +5253,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Réglages"
+          }
+        }
+      }
+    },
+    "Share Usage Data": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Partager les données d’usage"
           }
         }
       }

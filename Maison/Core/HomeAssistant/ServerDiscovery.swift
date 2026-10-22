@@ -35,7 +35,7 @@ final class ServerDiscovery {
         isBrowsing = false
     }
 
-    nonisolated private static func servers(from results: Set<NWBrowser.Result>) -> [DiscoveredServer] {
+    private nonisolated static func servers(from results: Set<NWBrowser.Result>) -> [DiscoveredServer] {
         let servers = results.compactMap { result -> DiscoveredServer? in
             guard case .bonjour(let txtRecord) = result.metadata else { return nil }
             return DiscoveredServer(txtRecord: txtRecord.dictionary)

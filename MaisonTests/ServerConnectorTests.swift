@@ -1,6 +1,6 @@
 import Foundation
-import Testing
 @testable import Maison
+import Testing
 
 struct ServerConnectorTests {
     let local = URL(string: "http://homeassistant.local:8123")!

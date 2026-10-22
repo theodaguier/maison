@@ -96,6 +96,7 @@ struct OnboardingView: View {
         .errorFeedback(error)
         // The server found and the home ready are the two moments worth celebrating.
         .sensoryFeedback(trigger: step) { _, new in new == .found || new == .ready ? .success : nil }
+        .trackScreen(.onboarding)
     }
 
     /// The household's server first (when this iPhone joined one through iCloud), then those found on the Wi-Fi.
@@ -819,8 +820,8 @@ private struct PresenceStep: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Location").font(.roundedHeadline)
                     Text(store.isTrackedByHomeAssistant
-                         ? String(localized: "Home Assistant already knows when you’re home, through its own app.")
-                         : String(localized: "For “When everyone leaves”. Shared only with your server."))
+                        ? String(localized: "Home Assistant already knows when you’re home, through its own app.")
+                        : String(localized: "For “When everyone leaves”. Shared only with your server."))
                         .font(.roundedSubheadline)
                         .foregroundStyle(.secondary)
                 }

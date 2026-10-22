@@ -143,6 +143,21 @@ final class PresenceReporter: NSObject, CLLocationManagerDelegate {
     }
 }
 
+/// Home Assistant's reply to `/api/mobile_app/registrations`.
+struct MobileAppRegistration: Equatable, Sendable {
+    let webhookID: String
+    /// Home Assistant Cloud's address, sent even when no external URL is set.
+    let remoteURL: URL?
+    let cloudhookURL: URL?
+
+    init?(_ reply: JSONValue) {
+        guard let id = reply["webhook_id"]?.stringValue else { return nil }
+        webhookID = id
+        remoteURL = reply["remote_ui_url"]?.stringValue.flatMap(URL.init(string:))
+        cloudhookURL = reply["cloudhook_url"]?.stringValue.flatMap(URL.init(string:))
+    }
+}
+
 /// The webhook Home Assistant gave Maison, kept in the keychain: whoever has it can post positions.
 struct Webhook: Codable, Sendable, Equatable {
     let id: String
@@ -150,15 +165,15 @@ struct Webhook: Codable, Sendable, Equatable {
     let localURL: URL?
     let remoteURL: URL?
     /// Home Assistant Cloud's address for this webhook, which works from anywhere.
-    var cloudhookURL: URL? = nil
+    var cloudhookURL: URL?
 
     /// What earlier builds saved when presence was turned on in the demo.
     var isDemo: Bool { id == "demo" && localURL == nil && remoteURL == nil }
 
     /// Where to post, local first. `addresses` are the server's current ones, which may have changed since registration.
     func endpoints(addresses: [URL]?) -> [URL] {
-        let servers = addresses ?? [localURL, remoteURL].compactMap { $0 }
-        let all = servers.map { $0.appending(path: "api/webhook/\(id)") } + [cloudhookURL].compactMap { $0 }
+        let servers = addresses ?? [localURL, remoteURL].compactMap(\.self)
+        let all = servers.map { $0.appending(path: "api/webhook/\(id)") } + [cloudhookURL].compactMap(\.self)
         return all.reduce(into: []) { endpoints, url in
             if !endpoints.contains(url) { endpoints.append(url) }
         }

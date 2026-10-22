@@ -1,0 +1,15 @@
+{
+  "id": "trop_chaud",
+  "alias": "Trop chaud",
+  "description": "Baisse le chauffage",
+  "mode": "single",
+  "triggers": [
+    {"trigger": "numeric_state", "entity_id": "sensor.salon_temperature", "above": 26}
+  ],
+  "conditions": [
+    {"condition": "numeric_state", "entity_id": "zone.home", "above": 0}
+  ],
+  "actions": [
+    {"action": "climate.set_temperature", "target": {"entity_id": "climate.salon"}, "data": {"temperature": 22}}
+  ]
+}

@@ -56,8 +56,8 @@ struct RuleEditor: View {
                     }
 
                     Label(proposal == nil ? LocalizedStringKey("Saved on your server and shared with the household")
-                                           : LocalizedStringKey("Nothing is saved until you confirm. Then the rule runs on your server, like the others."),
-                          systemImage: "server.rack")
+                        : LocalizedStringKey("Nothing is saved until you confirm. Then the rule runs on your server, like the others."),
+                        systemImage: "server.rack")
                         .labelStyle(.compact)
                         .font(.roundedFootnote)
                         .foregroundStyle(.tertiary)
@@ -350,7 +350,7 @@ private struct EntityPicker: View {
         Picker(title, selection: $entityID) {
             Text("Choose…").tag("")
             ForEach(store.states.values.filter(filter).sortedByName()) { entity in
-                Text([entity.name, store.area(of: entity)?.name].compactMap { $0 }.joined(separator: " · ")).tag(entity.entityID)
+                Text([entity.name, store.area(of: entity)?.name].compactMap(\.self).joined(separator: " · ")).tag(entity.entityID)
             }
         }
     }
@@ -420,7 +420,7 @@ private struct TriggerFields: View {
                 TextField("Value", value: Binding(get: { above ?? below }, set: { value in
                     trigger = above != nil || below == nil ? .threshold(entityID: id, above: value, below: nil) : .threshold(entityID: id, above: nil, below: value)
                 }), format: .number)
-                .keyboardType(.decimalPad)
+                    .keyboardType(.decimalPad)
             case .everyoneLeaves, .someoneArrives:
                 Picker("When", selection: Binding(get: { trigger == .everyoneLeaves }, set: { trigger = $0 ? .everyoneLeaves : .someoneArrives })) {
                     Text("Everyone leaves").tag(true)

@@ -1,7 +1,7 @@
 import CloudKit
 import Foundation
-import Testing
 @testable import Maison
+import Testing
 
 struct HouseholdMappingTests {
     let zoneID = HouseholdLocation.owned.zoneID

@@ -81,6 +81,7 @@ struct AutomationsView: View {
             .task(id: store.automations.map(\.entityID)) { await load() }
             .refreshable { await load() }
         }
+        .trackScreen(.automations)
     }
 
     private func load() async {

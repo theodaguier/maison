@@ -1,9 +1,9 @@
 import Foundation
-import Testing
 @testable import Maison
+import Testing
 
 struct InviteLinkTests {
-    @Test func carriesTheShareThroughThePage() throws {
+    @Test func carriesTheShareThroughThePage() {
         let share = URL(string: "https://www.icloud.com/share/0abcDEF123#Maison")!
         let link = InviteLink.url(share: share, household: "Maison", inviter: "Théo")
         #expect(link.absoluteString.hasPrefix("https://theodaguier.github.io/maison/invite/?"))

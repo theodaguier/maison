@@ -9,9 +9,13 @@ actor FakeTransport: WebSocketTransport {
     private(set) var sent: [JSONValue] = []
 
     /// Starts with Home Assistant's `auth_required` greeting already queued.
-    init(responder: @escaping @Sendable (JSONValue) -> [JSONValue] = FakeTransport.acceptingAuth) {
+    /// `greeting` replaces that frame when a test replays a recorded one.
+    init(
+        responder: @escaping @Sendable (JSONValue) -> [JSONValue] = FakeTransport.acceptingAuth,
+        greeting: JSONValue? = nil
+    ) {
         self.responder = responder
-        inbox = [Self.encode(["type": "auth_required", "ha_version": "2026.8.1"])]
+        inbox = [Self.encode(greeting ?? ["type": "auth_required", "ha_version": "2026.8.1"])]
     }
 
     func send(_ text: String) async throws {
@@ -47,7 +51,8 @@ actor FakeTransport: WebSocketTransport {
     }
 
     private static func encode(_ message: JSONValue) -> String {
-        String(decoding: try! JSONEncoder().encode(message), as: UTF8.self)
+        let data = (try? JSONEncoder().encode(message)) ?? Data()
+        return String(decoding: data, as: UTF8.self)
     }
 }
 

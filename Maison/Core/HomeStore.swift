@@ -44,6 +44,8 @@ final class HomeStore {
     @ObservationIgnored private var activeURL: URL?
     @ObservationIgnored private var updatesTask: Task<Void, Never>?
     @ObservationIgnored private var retryTask: Task<Void, Never>?
+    /// `source_connected` is sent once per sign-in, not again when a lost connection comes back.
+    @ObservationIgnored private var reportedConnection = false
     @ObservationIgnored private let isDemo: Bool
     /// The sample home, opened from onboarding or with `-demo`.
     var isDemoHome: Bool { isDemo }
@@ -156,6 +158,11 @@ final class HomeStore {
             serverVersion = await connection.serverVersion
             lastUpdate = .now
             phase = .connected
+            // Pull to refresh and reconnections are not a new source. The address is not recorded.
+            if !reportedConnection {
+                reportedConnection = true
+                Analytics.shared.track(.sourceConnected(.homeAssistant))
+            }
             Task { await loadServerDetails(from: connection) }
 
             updatesTask?.cancel()
@@ -292,6 +299,7 @@ final class HomeStore {
         presence.forget()
         states = [:]
         layout = HomeLayout()
+        reportedConnection = false
         phase = .signedOut
         discovery.start()
     }
@@ -319,7 +327,7 @@ final class HomeStore {
 
     /// Automations that act on or watch the entity.
     func automations(using entity: EntityState) async -> [EntityState] {
-        if isDemo { return entity.kind == .cover ? [states["automation.trop_chaud"]].compactMap { $0 } : [] }
+        if isDemo { return entity.kind == .cover ? [states["automation.trop_chaud"]].compactMap(\.self) : [] }
         guard let connection, let ids = try? await connection.automations(using: entity.entityID) else { return [] }
         return ids.compactMap { states[$0] }
     }
@@ -375,18 +383,18 @@ final class HomeStore {
         let (data, response) = try await URLSession.shared.data(for: request)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         guard (200..<300).contains(status) else { throw HomeAssistantError.invalidResponse(statusCode: status) }
-        let registration = try JSONDecoder().decode(JSONValue.self, from: data)
-        guard let id = registration["webhook_id"]?.stringValue else { throw HomeAssistantError.invalidResponse(statusCode: status) }
+        let reply = try JSONDecoder().decode(JSONValue.self, from: data)
+        guard let registration = MobileAppRegistration(reply) else { throw HomeAssistantError.invalidResponse(statusCode: status) }
         // With Home Assistant Cloud, the reply carries the remote address even when no external URL is set.
-        if credentials.remoteURL == nil, let remote = registration["remote_ui_url"]?.stringValue.flatMap(URL.init(string:)) {
+        if credentials.remoteURL == nil, let remote = registration.remoteURL {
             credentials.remoteURL = remote
             try? keep(credentials)
         }
         return Webhook(
-            id: id,
+            id: registration.webhookID,
             localURL: credentials.serverURL,
             remoteURL: credentials.remoteURL,
-            cloudhookURL: registration["cloudhook_url"]?.stringValue.flatMap(URL.init(string:))
+            cloudhookURL: registration.cloudhookURL
         )
     }
 
@@ -740,7 +748,7 @@ struct HomeSummary: Equatable {
     var text: String { sentences.joined(separator: " ") }
 }
 
-extension Sequence where Element == EntityState {
+extension Sequence<EntityState> {
     func sortedByName() -> [EntityState] {
         sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }

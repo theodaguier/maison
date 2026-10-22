@@ -1,0 +1,6 @@
+{
+  "webhook_id": "wh-from-ha",
+  "cloudhook_url": "https://hooks.nabu.casa/wh-from-ha",
+  "remote_ui_url": "https://abc123.ui.nabu.casa",
+  "secret": null
+}

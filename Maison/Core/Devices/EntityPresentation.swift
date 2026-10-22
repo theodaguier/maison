@@ -47,7 +47,7 @@ extension EntityState {
     // MARK: Appearance
 
     var symbolName: String {
-        let name = self.name.lowercased()
+        let name = name.lowercased()
         switch kind {
         case .light:
             if name.contains("lampadaire") || name.contains("floor") { return "lamp.floor.fill" }
@@ -158,12 +158,12 @@ extension EntityState {
             case "idle": String(localized: "Idle")
             default: nil
             }
-            return [action, measured].compactMap { $0 }.joined(separator: " · ")
+            return [action, measured].compactMap(\.self).joined(separator: " · ")
         case .mediaPlayer:
             let title = attributes["media_title"]?.stringValue
             let artist = attributes["media_artist"]?.stringValue
             if state == "playing" || state == "paused", let title {
-                return [title, artist].compactMap { $0 }.joined(separator: " · ")
+                return [title, artist].compactMap(\.self).joined(separator: " · ")
             }
             return state == "off" ? String(localized: "Off") : mediaStateText
         case .lock:

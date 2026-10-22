@@ -1,0 +1,21 @@
+{
+  "rooms": [
+    {
+      "id": "4F2A6B1C-7D3E-4A90-8B21-6C5D4E3F2A10",
+      "name": "Salon",
+      "areaID": "salon",
+      "outline": [
+        {"x": 0, "y": 0},
+        {"x": 4, "y": 0},
+        {"x": 4, "y": 3},
+        {"x": 0, "y": 3}
+      ]
+    }
+  ],
+  "walls": [{"start": {"x": 0, "y": 0}, "end": {"x": 4, "y": 0}}],
+  "doors": [],
+  "windows": [{"start": {"x": 1, "y": 3}, "end": {"x": 2, "y": 3}}],
+  "objects": [{"category": "sofa", "center": {"x": 2, "y": 1}, "width": 2, "depth": 0.9, "angle": 0}],
+  "devices": {"light.salon": {"x": 1.5, "y": 2.25}},
+  "scannedAt": 781692800
+}

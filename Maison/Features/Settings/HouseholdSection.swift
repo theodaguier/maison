@@ -50,13 +50,13 @@ struct HouseholdSection: View {
                         MemberRow(member: member, fallbackName: store.currentUser?.name)
                     }
                     .buttonStyle(.plain)
-                        .contextMenu {
-                            if household.currentRole.canManageMembers, !member.isCurrentUser, member.role != .owner {
-                                Button("Remove from Household", systemImage: "person.badge.minus", role: .destructive) {
-                                    memberToRemove = member
-                                }
+                    .contextMenu {
+                        if household.currentRole.canManageMembers, !member.isCurrentUser, member.role != .owner {
+                            Button("Remove from Household", systemImage: "person.badge.minus", role: .destructive) {
+                                memberToRemove = member
                             }
                         }
+                    }
                 }
                 if let sentConfirmation {
                     Label(sentConfirmation, systemImage: "checkmark.circle.fill")
@@ -163,7 +163,7 @@ private struct MemberRow: View {
                 if member.isCurrentUser {
                     Text("You").font(.roundedFootnote).foregroundStyle(.tertiary)
                 } else if member.isPending {
-                    Text([name, String(localized: "Waiting via iCloud")].compactMap { $0 }.joined(separator: " · "))
+                    Text([name, String(localized: "Waiting via iCloud")].compactMap(\.self).joined(separator: " · "))
                         .font(.roundedFootnote)
                         .foregroundStyle(.tertiary)
                         .lineLimit(1)

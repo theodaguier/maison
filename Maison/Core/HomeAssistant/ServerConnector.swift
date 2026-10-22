@@ -8,6 +8,7 @@ struct ServerConnector: Sendable {
     var refresh: @Sendable (Credentials, URL) async throws -> Credentials = { credentials, address in
         try await HomeAssistantAuth(serverURL: address).refresh(credentials)
     }
+
     var open: @Sendable (URL, String) -> HomeAssistantConnection = { address, accessToken in
         HomeAssistantConnection(serverURL: address, accessToken: accessToken)
     }
