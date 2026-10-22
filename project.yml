@@ -79,6 +79,10 @@ targets:
       testTargets:
         - MaisonTests
       gatherCoverageData: true
+      # User schemes live in xcuserdata and are invisible on CI. This writes
+      # Maison.xcscheme under xcshareddata, which is what xcodebuild loads.
+      management:
+        shared: true
 
   MaisonTests:
     type: bundle.unit-test
