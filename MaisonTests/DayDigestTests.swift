@@ -1,6 +1,6 @@
 import Foundation
-import Testing
 @testable import Maison
+import Testing
 
 struct GroundedNumbersTests {
     let french = Locale(identifier: "fr_FR")

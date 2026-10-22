@@ -1,6 +1,6 @@
 import Foundation
-import Testing
 @testable import Maison
+import Testing
 
 /// The model's reading of a request becomes a rule in Swift: these check that part, with the demo home.
 @MainActor

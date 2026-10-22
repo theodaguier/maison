@@ -1,0 +1,43 @@
+name: Lint
+
+# SwiftLint and SwiftFormat. The job name is the status check.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: lint-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: macos-26
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: SwiftLint
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/swiftlint.zip" \
+            https://github.com/realm/SwiftLint/releases/download/0.65.1/portable_swiftlint.zip
+          unzip -q -o "$RUNNER_TEMP/swiftlint.zip" -d "$RUNNER_TEMP"
+          chmod +x "$RUNNER_TEMP/swiftlint"
+          xattr -dr com.apple.quarantine "$RUNNER_TEMP/swiftlint" || true
+          "$RUNNER_TEMP/swiftlint" version
+          "$RUNNER_TEMP/swiftlint" lint --strict --reporter github-actions-logging
+
+      - name: SwiftFormat
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/swiftformat.zip" \
+            https://github.com/nicklockwood/SwiftFormat/releases/download/0.62.1/swiftformat.zip
+          unzip -q -o "$RUNNER_TEMP/swiftformat.zip" -d "$RUNNER_TEMP"
+          chmod +x "$RUNNER_TEMP/swiftformat"
+          xattr -dr com.apple.quarantine "$RUNNER_TEMP/swiftformat" || true
+          "$RUNNER_TEMP/swiftformat" --version
+          "$RUNNER_TEMP/swiftformat" --lint --reporter github-actions-log .

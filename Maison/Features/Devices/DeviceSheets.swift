@@ -66,8 +66,8 @@ struct SheetFooter: View {
                         .frame(width: 22, height: 22)
                         .background(Color.indigo, in: .circle)
                     Text(automation.state == "on"
-                         ? String(localized: "Used by “\(automation.name)”")
-                         : String(localized: "Used by “\(automation.name)” (off)"))
+                        ? String(localized: "Used by “\(automation.name)”")
+                        : String(localized: "Used by “\(automation.name)” (off)"))
                         .font(.roundedSubheadline)
                         .foregroundStyle(.secondary)
                     Spacer(minLength: 0)
@@ -77,7 +77,7 @@ struct SheetFooter: View {
                 .cardStyle(radius: Theme.rowRadius)
             }
             Label {
-                Text([String(localized: "Via \(store.source(of: entity))"), store.area(of: entity)?.name].compactMap { $0 }.joined(separator: " · "))
+                Text([String(localized: "Via \(store.source(of: entity))"), store.area(of: entity)?.name].compactMap(\.self).joined(separator: " · "))
             } icon: {
                 Image(systemName: "house.fill")
             }
@@ -861,7 +861,7 @@ struct SensorControls: View {
             }
             .chartYScale(domain: yDomain)
             .chartXAxis {
-                AxisMarks(values: .automatic(desiredCount: 5)) { value in
+                AxisMarks(values: .automatic(desiredCount: 5)) { _ in
                     AxisValueLabel(format: range == .day ? .dateTime.hour() : .dateTime.day().month(.abbreviated))
                 }
             }
@@ -871,7 +871,7 @@ struct SensorControls: View {
     }
 
     private var yDomain: ClosedRange<Double> {
-        let values = points.map(\.value) + [usual?.lowerBound, usual?.upperBound].compactMap { $0 }
+        let values = points.map(\.value) + [usual?.lowerBound, usual?.upperBound].compactMap(\.self)
         let low = values.min() ?? 0, high = values.max() ?? 1
         let margin = max((high - low) * 0.15, 0.5)
         return (low - margin)...(high + margin)

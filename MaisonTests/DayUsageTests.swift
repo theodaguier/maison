@@ -1,6 +1,6 @@
 import Foundation
-import Testing
 @testable import Maison
+import Testing
 
 struct DayUsageTests {
     let day = DateInterval(start: Date(timeIntervalSince1970: 0), duration: 86_400)

@@ -258,8 +258,8 @@ struct DaySummaryPage: View {
                 .padding(.vertical, 8)
             }
             Explanation(text: DayDigest.isAvailable
-                        ? "The home card tells how your day went, written on this iPhone by Apple Intelligence. Nothing leaves the iPhone. Takes effect next time the app opens."
-                        : "Needs Apple Intelligence, turned on in the Settings app, in a supported language. Until then the home card keeps its plain sentences.")
+                ? "The home card tells how your day went, written on this iPhone by Apple Intelligence. Nothing leaves the iPhone. Takes effect next time the app opens."
+                : "Needs Apple Intelligence, turned on in the Settings app, in a supported language. Until then the home card keeps its plain sentences.")
         }
     }
 }

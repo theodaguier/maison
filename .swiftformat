@@ -1,0 +1,17 @@
+# SwiftFormat 0.62.1 (nicklockwood). Lint with: swiftformat --lint .
+--min-version 0.62.1
+--swift-version 6.0
+--indent 4
+--linebreaks lf
+--binary-grouping none
+--decimal-grouping none
+--hex-grouping none
+--octal-grouping none
+--ifdef preserve
+--no-space-operators ...,..<
+--pattern-let inline
+--strip-unused-args closure-only
+# The app already uses compact single-line branches, properties, and argument lists.
+# hoistTry/hoistAwait mis-place try/await on the outer call. numberFormatting would strip
+# separators such as 86_400. noForceUnwrapInTests rewrites Swift Testing helpers.
+--disable wrapIfStatementBodies,wrapPropertyBodies,wrapFunctionBodies,wrapMultilineStatementBraces,wrapIfExpressionBodies,wrapLoopBodies,wrapArguments,noForceUnwrapInTests,hoistTry,hoistAwait,numberFormatting,conditionalAssignment

@@ -10,7 +10,7 @@ enum InviteLink {
             URLQueryItem(name: "s", value: share.absoluteString),
             URLQueryItem(name: "h", value: household),
             inviter.map { URLQueryItem(name: "f", value: $0) },
-        ].compactMap { $0 }
+        ].compactMap(\.self)
         return components.url!
     }
 

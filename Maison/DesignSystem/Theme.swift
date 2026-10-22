@@ -29,20 +29,20 @@ enum Theme {
 
 extension Font {
     // Text styles from the "Arrondi" set.
-    static let roundedHeadline = Font.system(.headline, design: .rounded)                   // 17 semibold
-    static let roundedBody = Font.system(.body, design: .rounded)                           // 17 regular
-    static let roundedSubheadline = Font.system(.subheadline, design: .rounded)             // 15 regular
+    static let roundedHeadline = Font.system(.headline, design: .rounded) // 17 semibold
+    static let roundedBody = Font.system(.body, design: .rounded) // 17 regular
+    static let roundedSubheadline = Font.system(.subheadline, design: .rounded) // 15 regular
     static let roundedSubheadlineEmphasized = Font.system(.subheadline, design: .rounded).weight(.semibold)
-    static let roundedFootnote = Font.system(.footnote, design: .rounded)                   // 13 regular
+    static let roundedFootnote = Font.system(.footnote, design: .rounded) // 13 regular
     static let roundedFootnoteEmphasized = Font.system(.footnote, design: .rounded).weight(.semibold)
-    static let roundedTitle3 = Font.system(.title3, design: .rounded).weight(.semibold)     // 20 semibold
+    static let roundedTitle3 = Font.system(.title3, design: .rounded).weight(.semibold) // 20 semibold
 }
 
 /// The "Chiffres" number styles: a large semibold value followed by a lighter unit.
 enum NumberSize {
-    case medium   // 34 / 20
-    case large    // 42 / 18 (hero ring)
-    case xLarge   // 56 / 30
+    case medium // 34 / 20
+    case large // 42 / 18 (hero ring)
+    case xLarge // 56 / 30
 
     var value: Font {
         switch self {

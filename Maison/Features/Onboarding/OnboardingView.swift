@@ -820,8 +820,8 @@ private struct PresenceStep: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Location").font(.roundedHeadline)
                     Text(store.isTrackedByHomeAssistant
-                         ? String(localized: "Home Assistant already knows when you’re home, through its own app.")
-                         : String(localized: "For “When everyone leaves”. Shared only with your server."))
+                        ? String(localized: "Home Assistant already knows when you’re home, through its own app.")
+                        : String(localized: "For “When everyone leaves”. Shared only with your server."))
                         .font(.roundedSubheadline)
                         .foregroundStyle(.secondary)
                 }

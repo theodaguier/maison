@@ -8,7 +8,7 @@ struct Credentials: Sendable, Hashable, Codable {
     let refreshToken: String
     var expiresAt: Date
     /// The address that works away from home: Home Assistant's external URL, or Home Assistant Cloud's.
-    var remoteURL: URL? = nil
+    var remoteURL: URL?
 
     func isExpired(at now: Date = .now) -> Bool {
         now.addingTimeInterval(60) >= expiresAt
@@ -16,7 +16,7 @@ struct Credentials: Sendable, Hashable, Codable {
 
     /// Where to reach the server, local first. The same tokens work through every address.
     var addresses: [URL] {
-        [serverURL, remoteURL].compactMap { $0 }.reduce(into: []) { addresses, url in
+        [serverURL, remoteURL].compactMap(\.self).reduce(into: []) { addresses, url in
             if !addresses.contains(url) { addresses.append(url) }
         }
     }

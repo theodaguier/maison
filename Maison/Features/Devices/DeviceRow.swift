@@ -55,7 +55,7 @@ struct DeviceRow: View {
     private var detail: String? {
         let room = showsRoom ? store.area(of: entity)?.name : nil
         let status = usesStateLabel ? nil : entity.statusText
-        let parts = [room, status].compactMap { $0 }.filter { !$0.isEmpty }
+        let parts = [room, status].compactMap(\.self).filter { !$0.isEmpty }
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 

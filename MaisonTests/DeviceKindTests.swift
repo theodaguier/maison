@@ -1,5 +1,5 @@
-import Testing
 @testable import Maison
+import Testing
 
 struct DeviceKindTests {
     @Test(arguments: [
