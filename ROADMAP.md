@@ -6,7 +6,7 @@
 
 Home Assistant collects; Maison understands and acts. Going further than Home Assistant doesn't mean collecting more data than it does — it already reads thousands of brands — but doing more with that data: explaining, estimating, learning, and turning what it finds into actions.
 
-V1 is that core, and that core only: three scores — Comfort, Energy and Network — and the connectors that feed them, whatever the brand.
+V1 is that core, and that core only: three scores — Comfort, Energy and Network — fed through one abstract source boundary that knows no brand.
 
 ## Principles
 
@@ -23,7 +23,7 @@ V1 is that core, and that core only: three scores — Comfort, Energy and Networ
 
 - **Home Assistant is the home's memory.** It is the always-on device that measures and keeps history, which neither the iPhone (no background work) nor HomeKit (no history) can do. Home Assistant is the only source of history for now; HomeKit and Matter will be discussed if Maison opens up to people without Home Assistant.
 - **The iPhone adds what Home Assistant doesn't have:** location and presence, sleep from Health, the weather forecast, the calendar, and Focus modes. iOS only says whether a Focus is on, not which one: Maison learns "Sleep" or "Work" through a Focus filter the person adds to that Focus once (assisted). The iPhone can't list the devices on the Wi-Fi nor read what other apps play (Apple Music aside); Home Assistant brings those through the router's and the speakers' integrations.
-- **Each source is a connector, and Maison stays brand-agnostic.** Home Assistant is the first connector, not the product: the same picture of the home can take a box, a meter or another cloud. What V1 shows does not depend on the brand behind the source.
+- **Each source is a connector behind one abstract boundary, and Maison stays brand-agnostic.** Home Assistant is the first connector, not the product, and for now the only one: a box, a router or a meter reaches Maison through its Home Assistant integration, never through a connector written for that brand. Another source could later plug into the same boundary; nothing in it, and nothing V1 shows, depends on the brand behind a value.
 - **Documents feed the scores, and only those.** An energy bill, an internet-box bill, an energy contract or a box contract is analysed on the device and linked to Energy or Network. A warranty, a manual, insurance or a lease waits with the inventory (see Parking).
 - **What isn't connected waits.** An inventory of objects is paused, not dropped (see Parking). V1 does not ask the household to list what it owns.
 - **Maison sets Home Assistant up itself:** an internet check (Ping), devices Home Assistant discovered, the energy dashboard, through the same APIs as Home Assistant's own settings. These need an administrator account; for a resident, Maison asks the administrator in one tap instead. History retention has no API (it is only set in `configuration.yaml`): the add-on sets it.
@@ -85,10 +85,10 @@ Comfort ranges are never hard-coded: they are learned from the home's history or
 
 ## V1
 
-The core: the three scores, and the connectors that feed them. Brand-agnostic.
+The core: the three scores, and the source boundary that feeds them. Brand-agnostic.
 
 1. **Comfort, Energy, Network.** Each score keeps the origin of every value (measured, estimated or entered), says why, and ends in one tap.
-2. **The source boundary.** The intelligence layer is one module behind it, with the origin of every value. Home Assistant is the first connector; another brand plugs in the same way. No screen reads a source directly.
+2. **The source boundary.** The intelligence layer is one module behind it, with the origin of every value. Home Assistant is the first and only connector; the boundary stays generic so another source could plug in later. No screen reads a source directly.
 3. **Documents, only when they feed a score.** Energy bills, internet-box bills, energy contracts, box contracts. Analysed on the device, linked to Energy or to Network.
 4. **Today:** the three scores and the day summary. Each finding has its origin, its reason and a one-tap action.
 5. **A useful first launch:** import Home Assistant's existing history (detailed history and long-term statistics), so Maison has something to say within minutes.
