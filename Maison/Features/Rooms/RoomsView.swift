@@ -23,6 +23,8 @@ struct RoomsView: View {
                             PillPicker(options: [(.list, "List", nil), (.plan, "Plan", nil)], selection: $mode)
                             switch mode {
                             case .list:
+                                FavoritesSection(opened: $opened)
+                                ScenesSection()
                                 LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
                                     ForEach(store.rooms) { room in
                                         NavigationLink(value: room) {
@@ -70,7 +72,7 @@ private struct RoomCard: View {
         let active = devices.filter { $0.isActive && $0.kind != .sensor && $0.kind != .binarySensor }
         VStack(alignment: .leading, spacing: 14) {
             HStack {
-                Image(systemName: Self.symbol(for: room.name))
+                Image(systemName: room.symbol)
                     .font(.system(size: 22, weight: .medium))
                     .foregroundStyle(active.isEmpty ? Color.secondary : Color.orange)
                 Spacer()
@@ -95,8 +97,11 @@ private struct RoomCard: View {
         .frame(maxWidth: .infinity, minHeight: 110, alignment: .topLeading)
         .cardStyle(radius: Theme.tileRadius)
     }
+}
 
-    static func symbol(for name: String) -> String {
+extension Area {
+    /// A symbol guessed from the room's name.
+    var symbol: String {
         let name = name.lowercased()
         if ["salon", "living", "séjour"].contains(where: name.contains) { return "sofa.fill" }
         if ["chambre", "bedroom"].contains(where: name.contains) { return "bed.double.fill" }

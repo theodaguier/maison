@@ -227,7 +227,6 @@ struct CheckNote: View {
 private struct TooComplexView: View {
     @Environment(HomeStore.self) private var store
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.openURL) private var openURL
     let proposal: RuleProposal
     let onRephrase: () -> Void
     let onContinue: () -> Void
@@ -277,16 +276,6 @@ private struct TooComplexView: View {
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 15)
                                 .background(Theme.pillActive, in: .capsule)
-                        }
-                        if let serverURL = store.serverURL {
-                            Button {
-                                openURL(serverURL.appending(path: "config/automation/edit/new"))
-                            } label: {
-                                Text("Open Home Assistant’s Editor")
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 15)
-                                    .background(Theme.pill, in: .capsule)
-                            }
                         }
                     }
                     .font(.roundedHeadline)

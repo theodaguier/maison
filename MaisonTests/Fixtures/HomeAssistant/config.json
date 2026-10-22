@@ -8,5 +8,6 @@
   "version": "2026.8.1",
   "external_url": "https://maison.example.com",
   "internal_url": "http://homeassistant.local:8123",
-  "currency": "EUR"
+  "currency": "EUR",
+  "country": "FR"
 }

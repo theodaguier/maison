@@ -707,7 +707,7 @@ private struct PreparingStep: View {
             ),
             SetupStep(
                 title: String(localized: "Remote Access"),
-                detail: store.serverConfig == nil ? nil : remote?.host() ?? String(localized: "Not set up in Home Assistant"),
+                detail: store.serverConfig == nil ? nil : remote?.host() ?? String(localized: "Not Set Up"),
                 isReady: store.serverConfig != nil
             ),
             SetupStep(

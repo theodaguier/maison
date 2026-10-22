@@ -1,0 +1,15 @@
+{
+  "energy_sources": [
+    {
+      "type": "grid",
+      "flow_from": [
+        {"stat_energy_from": "sensor.linky_hchc", "stat_cost": null, "entity_energy_price": null, "number_energy_price": 0.2068},
+        {"stat_energy_from": "sensor.linky_hchp", "stat_cost": null, "entity_energy_price": null, "number_energy_price": 0.27}
+      ],
+      "flow_to": [],
+      "cost_adjustment_day": 0
+    },
+    {"type": "solar", "stat_energy_from": "sensor.solar_production", "config_entry_solar_forecast": null}
+  ],
+  "device_consumption": [{"stat_consumption": "sensor.lave_linge_energy"}]
+}

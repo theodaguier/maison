@@ -4,3 +4,8 @@ updates:
     directory: /
     schedule:
       interval: weekly
+  # The relay's base images (Go toolchain, distroless).
+  - package-ecosystem: docker
+    directory: /relay
+    schedule:
+      interval: weekly

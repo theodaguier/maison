@@ -61,7 +61,6 @@ struct ProfilePage: View {
 
 struct ServerPage: View {
     @Environment(HomeStore.self) private var store
-    @Environment(\.openURL) private var openURL
 
     var body: some View {
         SettingsPage(title: "Home Server") {
@@ -81,6 +80,17 @@ struct ServerPage: View {
                                 value: update.formatted(.relative(presentation: .named)))
                 }
             }
+            let added = ServerSetupLog.added + (InternetCheckSetting.addedAt == nil ? [] : ["ping"])
+            if !added.isEmpty {
+                SettingsGroup("Set Up by Maison") {
+                    ForEach(Array(added.enumerated()), id: \.offset) { index, domain in
+                        if index > 0 { SettingsDivider() }
+                        let title = store.integrations.first { $0.domain == domain }?.title ?? domain
+                        SettingsRow(title: LocalizedStringKey(stringLiteral: title)) { IntegrationLogo(domain: domain, size: 30) }
+                    }
+                }
+                Explanation(text: "Maison adds what your server needs by itself: devices it found on your network, and the check behind the Network score.")
+            }
             HStack(spacing: 12) {
                 Button {
                     Task { await store.connect() }
@@ -88,14 +98,6 @@ struct ServerPage: View {
                     Label("Reconnect", systemImage: "arrow.clockwise").frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.glass)
-                if let url = store.serverURL {
-                    Button {
-                        openURL(url)
-                    } label: {
-                        Label("Open", systemImage: "safari").frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.glass)
-                }
             }
             .font(.roundedHeadline)
             .controlSize(.large)
@@ -107,7 +109,6 @@ struct ServerPage: View {
 
 struct RemoteAccessPage: View {
     @Environment(HomeStore.self) private var store
-    @Environment(\.openURL) private var openURL
 
     var body: some View {
         SettingsPage(title: "Remote Access") {
@@ -123,19 +124,9 @@ struct RemoteAccessPage: View {
             if store.remoteAccessName == "Tailscale" {
                 Explanation(text: "Away from home, Maison goes through Tailscale. Each member needs the Tailscale app and to accept the server’s sharing.")
             } else if store.remoteAccessName == nil {
-                Explanation(text: "Your server has no external address, so Maison only works at home. Set one up in Home Assistant (Settings › System › Network), for instance with Tailscale or Home Assistant Cloud.")
+                Explanation(text: "Your server has no remote access yet, so Maison only reaches it at home. When Home Assistant Cloud is signed in, Maison turns its remote access on by itself.")
             } else {
                 Explanation(text: "At home, Maison talks to the server directly. Away, it switches to this address on its own.")
-            }
-            if let url = store.serverURL {
-                Button {
-                    openURL(url.appending(path: "config/network"))
-                } label: {
-                    Label("Network Settings in Home Assistant", systemImage: "safari").frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.glass)
-                .controlSize(.large)
-                .font(.roundedHeadline)
             }
         }
     }
@@ -181,7 +172,7 @@ struct PermissionsPage: View {
                 permission("Location for “When everyone leaves”", allowed: isAdmin)
             }
             if !isAdmin {
-                Explanation(text: "These need an administrator account. An administrator can change your account in Home Assistant (Settings › People).")
+                Explanation(text: "These need an administrator account on your server. Everything else works with yours.")
             }
         }
     }
@@ -195,7 +186,6 @@ struct PermissionsPage: View {
 
 struct IntegrationPage: View {
     @Environment(HomeStore.self) private var store
-    @Environment(\.openURL) private var openURL
     let integration: IntegrationSummary
     @State private var opened: OpenedDevice?
 
@@ -222,15 +212,10 @@ struct IntegrationPage: View {
                     }
                 }
             }
-            if let url = store.serverURL {
-                Button {
-                    openURL(url.appending(path: "config/integrations/integration/\(integration.domain)"))
-                } label: {
-                    Label("Open in Home Assistant", systemImage: "safari").frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.glass)
-                .controlSize(.large)
-                .font(.roundedHeadline)
+            if store.integrations.contains(where: { $0.domain == integration.domain && $0.isFailing }) {
+                Explanation(text: store.currentUser?.isAdmin == true
+                    ? "This integration isn’t working. Maison restarts it by itself, once a day."
+                    : "This integration isn’t working. Maison restarts it the next time an administrator opens the app.")
             }
         }
         .sheet(item: $opened) { DeviceSheet(entityID: $0.id) }

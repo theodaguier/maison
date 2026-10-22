@@ -82,6 +82,12 @@ struct RecordedWebSocketTests {
         #expect(statistics.map(\.max) == [22.4, 19.8] as [Double?])
     }
 
+    @Test func readsTheGridMetersOfTheEnergyDashboard() async throws {
+        let connection = try await recordedConnection(results: ["energy/get_prefs": "energy-prefs"])
+        // Solar production and per-device meters are not electricity taken from the grid.
+        #expect(try await connection.gridConsumptionStatistics() == ["sensor.linky_hchc", "sensor.linky_hchp"])
+    }
+
     @Test func readsTheUserConfigIntegrationsAndCloudAddress() async throws {
         let connection = try await recordedConnection(results: [
             "auth/current_user": "current-user",
@@ -96,6 +102,7 @@ struct RecordedWebSocketTests {
         let config = try await connection.serverConfig()
         #expect(config.locationName == "Maison")
         #expect(config.version == "2026.8.1")
+        #expect(config.country == "FR")
         #expect(config.internalURL == "http://homeassistant.local:8123")
         let cloud = try await connection.send(["type": "cloud/status"])
         #expect(config.remoteURL(cloudStatus: cloud) == URL(string: "https://maison.example.com"))
@@ -104,6 +111,8 @@ struct RecordedWebSocketTests {
         #expect(integrations.map(\.domain) == ["hue", "sonos"])
         #expect(integrations.map(\.title) == ["Philips Hue", "Sonos"])
         #expect(integrations.map(\.state) == ["loaded", "setup_error"])
+        #expect(integrations.map(\.entryID) == ["hue-1", "sonos-1"])
+        #expect(integrations.map(\.isFailing) == [false, true])
     }
 
     @Test func cloudIsTheRemoteAddressWhenNoExternalURLIsSet() async throws {

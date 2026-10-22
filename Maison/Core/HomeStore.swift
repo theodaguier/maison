@@ -84,7 +84,7 @@ final class HomeStore {
         serverVersion = "2026.8.1"
         lastUpdate = .now
         currentUser = HomeAssistantUser(name: "Théo", isAdmin: true)
-        serverConfig = ServerConfig(locationName: "Maison", version: "2026.8.1", externalURL: nil, internalURL: "http://homeassistant.local:8123")
+        serverConfig = ServerConfig(locationName: "Maison", version: "2026.8.1", externalURL: nil, internalURL: "http://homeassistant.local:8123", country: "FR")
         integrations = [
             Integration(domain: "sonos", title: "Sonos", state: "loaded"),
             Integration(domain: "hue", title: "Philips Hue", state: "loaded"),
@@ -323,6 +323,133 @@ final class HomeStore {
         if isDemo { return DemoHome.statistics(of: entityID, since: start, period: period) }
         guard let connection else { return [] }
         return (try? await connection.statistics(of: entityID, since: start, period: period)) ?? []
+    }
+
+    #if DEBUG
+    /// The raw entity registry, for the debug report.
+    func registryEntries() async throws -> [JSONValue] {
+        guard let connection else { return [] }
+        return try await connection.send(["type": "config/entity_registry/list"]).arrayValue ?? []
+    }
+    #endif
+
+    /// Everything Maison sets up on the server by itself, so the person never has to open Home Assistant:
+    /// devices it found, integrations that failed, remote access, the internet check. Administrators only.
+    func setUpServer(now: Date = .now) async {
+        guard !isDemo, phase == .connected, let connection else { return }
+        // The account is read after connecting, in the background: ask for it if it isn't there yet.
+        var user = currentUser
+        if user == nil { user = try? await connection.currentUser() }
+        guard user?.isAdmin == true, let credentials = try? await freshCredentials() else { return }
+        let flows = ConfigFlowClient(serverURL: activeURL ?? credentials.serverURL, accessToken: credentials.accessToken)
+        var changed = await adoptDiscoveredDevices(flows: flows, connection: connection)
+        changed = await repairIntegrations(flows: flows, now: now) || changed
+        changed = await turnOnCloudRemoteAccess(connection: connection) || changed
+        if await ensureInternetCheck(flows: flows, connection: connection, now: now) {
+            changed = true
+        }
+        await syncGridConsumption(now: now)
+        // New integrations bring entities and registry entries: reconnecting reads them.
+        if changed { await connect() }
+    }
+
+    static let gridStatisticID = "maison:grid_consumption"
+
+    /// Brings the grid operator's readings since the last import into the server's statistics. They
+    /// arrive the day after, so this runs with every refresh and only asks for the days not imported yet.
+    @discardableResult
+    func syncGridConsumption(now: Date = .now) async -> Bool {
+        guard !isDemo, var link = GridLink.load(), link.operatorID == "enedis", let relay = MaisonRelay.url, let connection else { return false }
+        let today = Calendar.current.startOfDay(for: now)
+        // Enedis keeps three years; a first import goes back a month, enough for a habit.
+        let start = link.importedUntil ?? today.addingTimeInterval(-30 * 86_400)
+        guard start < today else { return false }
+        do {
+            let hourly = try await EnedisDataConnect(relay: relay)
+                .hourlyConsumption(meter: link.meterID, accessKey: link.accessKey, from: start, to: today)
+            guard let first = hourly.first?.start else { return false }
+            let before = await statistics(of: Self.gridStatisticID, since: first.addingTimeInterval(-3 * 86_400), period: "hour")
+            let previousSum = before.last { $0.start < first }?.sum ?? 0
+            try await connection.importEnergyStatistics(
+                id: Self.gridStatisticID,
+                name: String(localized: "Electricity from the grid"),
+                hourly: hourly,
+                previousSum: previousSum
+            )
+            link.importedUntil = today
+            link.save()
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    /// Confirms the devices Home Assistant found on the network when it only waits for a "Submit".
+    /// Those that need a code or a password stay where they are.
+    private func adoptDiscoveredDevices(flows: ConfigFlowClient, connection: HomeAssistantConnection) async -> Bool {
+        var added = false
+        for flow in (try? await connection.discoveredFlows()) ?? [] {
+            guard case .created? = try? await flows.confirmIfNothingToAsk(flowID: flow.flowID) else { continue }
+            ServerSetupLog.recordAdded(flow.handler)
+            added = true
+        }
+        return added
+    }
+
+    /// Reloads integrations that failed to start, once a day each, as one would from their menu.
+    private func repairIntegrations(flows: ConfigFlowClient, now: Date) async -> Bool {
+        var reloaded = false
+        let repaired = ServerSetupLog.repairedAt
+        for integration in integrations where integration.isFailing {
+            guard let entryID = integration.entryID,
+                  repaired[entryID].map({ now.timeIntervalSince($0) >= 86_400 }) ?? true else { continue }
+            ServerSetupLog.recordRepair(entryID, at: now)
+            if (try? await flows.reload(entryID: entryID)) != nil { reloaded = true }
+        }
+        return reloaded
+    }
+
+    /// With Home Assistant Cloud signed in but its remote access off, turns it on: Maison then works away
+    /// from home with the same sign-in.
+    private func turnOnCloudRemoteAccess(connection: HomeAssistantConnection) async -> Bool {
+        guard remoteURL == nil, let status = try? await connection.send(["type": "cloud/status"]),
+              status["logged_in"]?.boolValue == true, status["remote_connected"]?.boolValue != true,
+              status["prefs"]?["remote_enabled"]?.boolValue != true else { return false }
+        return (try? await connection.send(["type": "cloud/remote/connect"])) != nil
+    }
+
+    /// Switches on Home Assistant's internet check (the Ping integration) when nothing measures the
+    /// connection, so the Network score fills in. Tried at most once a day.
+    private func ensureInternetCheck(flows: ConfigFlowClient, connection: HomeAssistantConnection, now: Date) async -> Bool {
+        let defaults = UserDefaults.standard
+        guard internetSources == nil else { return false }
+        if let attempted = defaults.object(forKey: InternetCheckSetting.attemptedKey) as? Date, now.timeIntervalSince(attempted) < 86_400 { return false }
+        defaults.set(now, forKey: InternetCheckSetting.attemptedKey)
+        guard case .created(let entryID)? = try? await flows.create("ping", answers: ["host": .string(InternetCheckSetting.host)]) else { return false }
+        // Response times ship disabled; the average is the one the score reads.
+        try? await connection.enableEntities(ofEntry: entryID, translationKeys: ["round_trip_time_avg"])
+        defaults.set(now, forKey: InternetCheckSetting.addedKey)
+        return true
+    }
+
+    /// The electricity meters to count. Those of Home Assistant's Energy dashboard add up (peak and
+    /// off-peak indexes); otherwise each energy total is a candidate, and only one is the home's meter.
+    /// Never picked by name.
+    func electricityMeters() async -> (ids: [String], addUp: Bool) {
+        if isDemo {
+            #if DEBUG
+            // `-noMeter YES` shows the demo home as one without a meter, to check the proposal.
+            if UserDefaults.standard.bool(forKey: "noMeter") { return ([], false) }
+            #endif
+            return (["sensor.energy_today"], true)
+        }
+        if let connection, let grid = try? await connection.gridConsumptionStatistics(), !grid.isEmpty { return (grid, true) }
+        // Readings from the grid operator, imported into the server's statistics.
+        if GridLink.load() != nil { return ([Self.gridStatisticID], true) }
+        let totals = devices
+            .filter { $0.deviceClass == "energy" && ["total_increasing", "total"].contains($0.attributes["state_class"]?.stringValue ?? "") }
+            .map(\.entityID)
+        return (totals, false)
     }
 
     /// Automations that act on or watch the entity.

@@ -48,13 +48,11 @@ struct OpenedDevice: Identifiable {
 
 private struct HomeDashboard: View {
     @Environment(HomeStore.self) private var store
-    @Environment(\.openURL) private var openURL
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var opened: OpenedDevice?
-    @State private var showsAllScenes = false
-    /// Today's energy use compared with the same time yesterday.
-    @State private var energyTrend: Trend?
+    @State private var scores: HomeScores?
+    @State private var openedScore: ScoreKind?
     @State private var temperatureChange: Double?
     @State private var confirmsTurnOff = false
     @State private var turnedOff = 0
@@ -70,19 +68,22 @@ private struct HomeDashboard: View {
     /// The bar gets its opaque edge only once the illustration has scrolled away.
     @State private var isPastHero = false
 
-    private let heroHeight: CGFloat = 480
-    /// Space between the large-title bar and the first card (design: cards start at 438 pt, bar ends at 187 pt).
-    private let heroSpace: CGFloat = 251
+    private let heroHeight: CGFloat = 358
+    /// Space between the large-title bar and the scores (design: they start at 238 pt, the bar ends at 187 pt).
+    private let heroSpace: CGFloat = 51
 
     var body: some View {
         ScrollView {
             VStack(spacing: Theme.sectionSpacing) {
                 hero
-                metrics
-                SummaryCard(summary: summary, digest: digest) { readsDigest = true }
-                scenes
-                favorites
+                ScoresCard(scores: scores, isDimmed: store.phase != .connected) { openedScore = $0 }
+                SummaryCard(summary: scoredSummary, digest: digest) { readsDigest = true }
+                if let attention = Attention.pick(from: scores) {
+                    AttentionCard(attention: attention) { openedScore = attention.kind }
+                        .transition(.opacity)
+                }
             }
+            .animation(.smooth, value: Attention.pick(from: scores))
             .padding(.horizontal, Theme.screenPadding)
             .padding(.bottom, 24)
             .background(alignment: .top) { illustration.offset(y: -topInset) }
@@ -90,28 +91,20 @@ private struct HomeDashboard: View {
         .onScrollGeometryChange(for: CGFloat.self, of: { $0.contentInsets.top }) { _, inset in
             topInset = inset
         }
-        .onScrollGeometryChange(for: Bool.self, of: { $0.contentOffset.y + $0.contentInsets.top > 300 }) { _, isPast in
+        .scrollEdgeEffectHidden(!isPastHero, for: .top)
+        .onScrollGeometryChange(for: Bool.self, of: { $0.contentOffset.y + $0.contentInsets.top > 180 }) { _, isPast in
             isPastHero = isPast
         }
-        .scrollEdgeEffectHidden(!isPastHero, for: .top)
         .background(Theme.background)
         .scrollEdgeEffectStyle(.hard, for: .top)
         .navigationTitle(store.serverConfig?.locationName ?? String(localized: "Home"))
         .navigationSubtitle(subtitle)
         .toolbar {
-            if digest != nil {
-                ToolbarItem(placement: .topBarTrailing) {
-                    IntelligenceButton("Your Day in Brief") { readsDigest = true }
-                }
-                ToolbarSpacer(.fixed, placement: .topBarTrailing)
-            }
             ToolbarItemGroup(placement: .topBarTrailing) {
-                if let serverURL = store.serverURL {
-                    Button("Add in Home Assistant", systemImage: "plus") {
-                        openURL(serverURL.appending(path: "config/integrations/dashboard"))
-                    }
-                }
                 Menu("More", systemImage: "ellipsis") {
+                    if digest?.written != nil {
+                        Button("Your Day in Brief", systemImage: "sparkles") { readsDigest = true }
+                    }
                     Button("Turn Everything Off", systemImage: "power") {
                         confirmsTurnOff = true
                     }
@@ -119,13 +112,21 @@ private struct HomeDashboard: View {
                     Button("Refresh", systemImage: "arrow.clockwise") {
                         Task { await store.connect() }
                     }
-                    if let serverURL = store.serverURL {
-                        Button("Open Home Assistant", systemImage: "safari") { openURL(serverURL) }
-                    }
                 }
             }
         }
-        .refreshable { await store.connect() }
+        .refreshable {
+            await store.connect()
+            scores = await store.loadScores()
+        }
+        .task(id: store.phase == .connected) {
+            // Scores move slowly: every five minutes is enough, and the history queries stay light.
+            while !Task.isCancelled {
+                await refreshScores()
+                try? await Task.sleep(for: .seconds(300))
+            }
+        }
+        .sheet(item: $openedScore) { ScoreSheet(kind: $0, scores: scores) }
         .task(id: store.indoorTemperatureSensors.map(\.entityID)) {
             temperatureChange = await store.temperatureChangeSinceYesterday()
         }
@@ -145,6 +146,7 @@ private struct HomeDashboard: View {
             switch id {
             case "day": readsDigest = digest != nil
             case "describe": describesRule = true
+            case "comfort", "energy", "network": openedScore = ScoreKind(rawValue: id)
             default: opened = OpenedDevice(id: id)
             }
         }
@@ -183,11 +185,34 @@ private struct HomeDashboard: View {
 
     private var summary: HomeSummary { store.summary(temperatureChange: temperatureChange) }
 
-    /// "Tuesday 20 October · 15:49".
+    private func refreshScores() async {
+        guard store.phase == .connected || scores == nil, !store.states.isEmpty else { return }
+        await store.setUpServer()
+        let started = ContinuousClock.now
+        let loaded = await store.loadScores()
+        scores = loaded
+        #if DEBUG
+        await store.writeScoreDiagnostics(loaded, duration: ContinuousClock.now - started)
+        #endif
+    }
+
+    /// The scores first; on a calm day the device sentences wait behind "more".
+    private var scoredSummary: HomeSummary {
+        let sentences = scores?.sentences ?? []
+        guard !sentences.isEmpty else { return summary }
+        return HomeSummary(
+            title: summary.title,
+            sentences: sentences + (summary.isCalm ? [] : summary.sentences),
+            more: (summary.isCalm ? summary.sentences : []) + summary.more,
+            isCalm: summary.isCalm
+        )
+    }
+
+    /// "Tuesday 20 October, 15:49".
     private var subtitle: Text {
         let day = Date.now.formatted(.dateTime.weekday(.wide).day().month(.wide))
         let time = Date.now.formatted(date: .omitted, time: .shortened)
-        return Text(verbatim: "\(day.prefix(1).localizedUppercase)\(day.dropFirst()) · \(time)")
+        return Text(verbatim: "\(day.prefix(1).localizedUppercase)\(day.dropFirst()), \(time)")
             .fontWeight(.medium)
             .foregroundStyle(.secondary)
     }
@@ -212,94 +237,10 @@ private struct HomeDashboard: View {
                 OfflineBanner(since: since)
                     .padding(.bottom, 10)
                     .transition(.opacity.combined(with: .scale(0.96, anchor: .bottom)))
-            } else {
-                Spacer().frame(height: 9)
             }
-            HeroRing(temperature: store.heroTemperature, isDimmed: store.phase != .connected)
-            Spacer(minLength: 0)
         }
         .animation(.smooth, value: store.phase)
-        .frame(height: heroSpace - Theme.sectionSpacing)
-    }
-
-    // MARK: Sections
-
-    private var metrics: some View {
-        HStack(spacing: 12) {
-            MetricCard(
-                symbol: "lightbulb.fill",
-                title: "Lights",
-                value: "\(store.lightsOn.count)",
-                unit: store.lightsOn.count == 1 ? String(localized: "light.on.one", defaultValue: "on") : String(localized: "on")
-            )
-            if let energy = store.energyToday {
-                MetricCard(
-                    symbol: "bolt.fill",
-                    title: "Energy",
-                    value: energy.numericState?.formatted(.number.precision(.fractionLength(0...1))) ?? energy.state,
-                    unit: energy.unit,
-                    trend: energyTrend
-                )
-                .task(id: energy.entityID) {
-                    guard let change = await store.changeSinceYesterday(of: energy), change != 0 else { return }
-                    energyTrend = change < 0 ? .down : .up
-                }
-            } else {
-                MetricCard(
-                    symbol: "power",
-                    title: "Devices",
-                    value: "\(store.devices.filter { $0.isActive && $0.kind != .sensor && $0.kind != .binarySensor }.count)",
-                    unit: String(localized: "active")
-                )
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var scenes: some View {
-        let scenes = store.scenes
-        if !scenes.isEmpty {
-            VStack(spacing: 12) {
-                if scenes.count > 4 {
-                    SectionHeader(title: "Scenes", actionTitle: showsAllScenes ? "Show Less" : "See All") {
-                        withAnimation(.smooth) { showsAllScenes.toggle() }
-                    }
-                } else if let serverURL = store.serverURL {
-                    SectionHeader(title: "Scenes", actionTitle: "Edit") {
-                        openURL(serverURL.appending(path: "config/scene/dashboard"))
-                    }
-                } else {
-                    SectionHeader(title: "Scenes")
-                }
-                LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
-                    ForEach(showsAllScenes ? scenes : Array(scenes.prefix(4))) { scene in
-                        SceneTile(entity: scene)
-                    }
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var favorites: some View {
-        let favorites = store.favorites
-        if !favorites.isEmpty {
-            VStack(spacing: 8) {
-                HStack {
-                    Text("Favorites").font(.roundedTitle3)
-                    Spacer()
-                    NavigationLink("See All") { AllDevicesView() }
-                        .font(.roundedSubheadline)
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.horizontal, 4)
-                .padding(.top, 10)
-                .padding(.bottom, 4)
-                ForEach(favorites) { entity in
-                    DeviceRow(entity: entity, showsRoom: true) { opened = OpenedDevice(id: entity.entityID) }
-                }
-            }
-        }
+        .frame(minHeight: heroSpace - Theme.sectionSpacing, alignment: .bottom)
     }
 }
 
@@ -314,7 +255,7 @@ private struct OfflineBanner: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text("Server Unreachable")
                     .font(.roundedHeadline)
-                Text("Data from \(since, format: .relative(presentation: .named)) · retrying")
+                Text("Data from \(since, format: .relative(presentation: .named)), retrying")
                     .font(.roundedFootnote)
                     .foregroundStyle(.secondary)
             }

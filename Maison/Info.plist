@@ -20,6 +20,8 @@
 	<string>1</string>
 	<key>CKSharingSupported</key>
 	<true/>
+	<key>MaisonRelayURL</key>
+	<string>$(MAISON_RELAY_URL)</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsLocalNetworking</key>
@@ -29,11 +31,11 @@
 	<array>
 		<string>_home-assistant._tcp</string>
 	</array>
+	<key>PostHogAPIKey</key>
+	<string>$(POSTHOG_API_KEY)</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
 	</array>
-	<key>PostHogAPIKey</key>
-	<string>$(POSTHOG_API_KEY)</string>
 </dict>
 </plist>

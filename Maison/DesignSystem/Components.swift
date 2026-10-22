@@ -32,7 +32,7 @@ struct NumberLabel: View {
     var unitStyle: AnyShapeStyle = .init(.tertiary)
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: size == .large ? 1 : 4) {
+        HStack(alignment: .firstTextBaseline, spacing: size == .large || size == .small ? 1 : 4) {
             Text(value)
                 .font(size.value)
                 .monospacedDigit()

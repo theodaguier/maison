@@ -94,12 +94,15 @@ struct ServerConfig: Sendable, Hashable, Decodable {
     let version: String?
     let externalURL: String?
     let internalURL: String?
+    /// ISO 3166 code set in Home Assistant's general settings ("FR").
+    var country: String?
 
     private enum CodingKeys: String, CodingKey {
         case locationName = "location_name"
         case version
         case externalURL = "external_url"
         case internalURL = "internal_url"
+        case country
     }
 }
 
@@ -146,9 +149,18 @@ struct DayUsage: Sendable, Equatable {
 
 /// A configured integration (config entry).
 struct Integration: Sendable, Hashable, Decodable {
+    var entryID: String?
     let domain: String
     let title: String
     let state: String?
+
+    /// Set up, but failing: Maison reloads it on its own.
+    var isFailing: Bool { state == "setup_error" || state == "setup_retry" }
+
+    private enum CodingKeys: String, CodingKey {
+        case entryID = "entry_id"
+        case domain, title, state
+    }
 }
 
 extension HomeAssistantConnection {
