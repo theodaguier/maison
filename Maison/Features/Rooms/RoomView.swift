@@ -81,6 +81,7 @@ struct RoomView: View {
         .navigationBarTitleDisplayMode(.large)
         .toolbarBackgroundVisibility(.hidden, for: .navigationBar)
         .sheet(item: $opened) { DeviceSheet(entityID: $0.id) }
+        .trackScreen(.room)
     }
 
     private func subtitle(_ devices: [EntityState]) -> String {

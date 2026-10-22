@@ -44,6 +44,8 @@ final class HomeStore {
     @ObservationIgnored private var activeURL: URL?
     @ObservationIgnored private var updatesTask: Task<Void, Never>?
     @ObservationIgnored private var retryTask: Task<Void, Never>?
+    /// `source_connected` is sent once per sign-in, not again when a lost connection comes back.
+    @ObservationIgnored private var reportedConnection = false
     @ObservationIgnored private let isDemo: Bool
     /// The sample home, opened from onboarding or with `-demo`.
     var isDemoHome: Bool { isDemo }
@@ -156,6 +158,11 @@ final class HomeStore {
             serverVersion = await connection.serverVersion
             lastUpdate = .now
             phase = .connected
+            // Pull to refresh and reconnections are not a new source. The address is not recorded.
+            if !reportedConnection {
+                reportedConnection = true
+                Analytics.shared.track(.sourceConnected(.homeAssistant))
+            }
             Task { await loadServerDetails(from: connection) }
 
             updatesTask?.cancel()
@@ -292,6 +299,7 @@ final class HomeStore {
         presence.forget()
         states = [:]
         layout = HomeLayout()
+        reportedConnection = false
         phase = .signedOut
         discovery.start()
     }

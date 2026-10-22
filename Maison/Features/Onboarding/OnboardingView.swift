@@ -96,6 +96,7 @@ struct OnboardingView: View {
         .errorFeedback(error)
         // The server found and the home ready are the two moments worth celebrating.
         .sensoryFeedback(trigger: step) { _, new in new == .found || new == .ready ? .success : nil }
+        .trackScreen(.onboarding)
     }
 
     /// The household's server first (when this iPhone joined one through iCloud), then those found on the Wi-Fi.

@@ -19,6 +19,7 @@ struct HomeView: View {
                 HomeDashboard()
             }
         }
+        .trackScreen(.home)
     }
 }
 

@@ -33,5 +33,7 @@
 	<array>
 		<string>location</string>
 	</array>
+	<key>PostHogAPIKey</key>
+	<string>$(POSTHOG_API_KEY)</string>
 </dict>
 </plist>
