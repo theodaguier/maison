@@ -82,6 +82,12 @@ struct RecordedWebSocketTests {
         #expect(statistics.map(\.max) == [22.4, 19.8] as [Double?])
     }
 
+    @Test func readsTheGridMetersOfTheEnergyDashboard() async throws {
+        let connection = try await recordedConnection(results: ["energy/get_prefs": "energy-prefs"])
+        // Solar production and per-device meters are not electricity taken from the grid.
+        #expect(try await connection.gridConsumptionStatistics() == ["sensor.linky_hchc", "sensor.linky_hchp"])
+    }
+
     @Test func readsTheUserConfigIntegrationsAndCloudAddress() async throws {
         let connection = try await recordedConnection(results: [
             "auth/current_user": "current-user",

@@ -62,6 +62,15 @@ extension HomeAssistantConnection {
         }
     }
 
+    /// The statistics Home Assistant's Energy dashboard counts as electricity taken from the grid.
+    func gridConsumptionStatistics() async throws -> [String] {
+        let prefs = try await send(["type": "energy/get_prefs"])
+        return (prefs["energy_sources"]?.arrayValue ?? [])
+            .filter { $0["type"]?.stringValue == "grid" }
+            .flatMap { $0["flow_from"]?.arrayValue ?? [] }
+            .compactMap { $0["stat_energy_from"]?.stringValue }
+    }
+
     /// Automations that mention the entity, as entity ids (`automation.trop_chaud`).
     func automations(using entityID: String) async throws -> [String] {
         let result = try await send([

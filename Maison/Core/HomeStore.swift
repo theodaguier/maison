@@ -325,6 +325,16 @@ final class HomeStore {
         return (try? await connection.statistics(of: entityID, since: start, period: period)) ?? []
     }
 
+    /// The electricity meters to count: those of Home Assistant's Energy dashboard, otherwise every
+    /// energy total the server keeps statistics for. Never picked by name.
+    func electricityMeters() async -> [String] {
+        if isDemo { return ["sensor.energy_today"] }
+        if let connection, let grid = try? await connection.gridConsumptionStatistics(), !grid.isEmpty { return grid }
+        return devices
+            .filter { $0.deviceClass == "energy" && ["total_increasing", "total"].contains($0.attributes["state_class"]?.stringValue ?? "") }
+            .map(\.entityID)
+    }
+
     /// Automations that act on or watch the entity.
     func automations(using entity: EntityState) async -> [EntityState] {
         if isDemo { return entity.kind == .cover ? [states["automation.trop_chaud"]].compactMap(\.self) : [] }

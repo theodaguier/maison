@@ -83,7 +83,14 @@ extension HomeStore {
             var means: [Double] = []
             for (_, sensor) in sensors {
                 let points = await statistics(of: sensor.entityID, since: weekAgo, period: "hour")
-                means += points.filter { $0.start < window.start }.compactMap(\.mean)
+                var values = points.filter { $0.start < window.start }.compactMap(\.mean)
+                if values.isEmpty {
+                    // A sensor without `state_class` keeps no statistics: read its raw history instead.
+                    values = await changes(of: sensor.entityID, since: weekAgo)
+                        .filter { $0.date < window.start }
+                        .compactMap { Double($0.state) }
+                }
+                means += values
             }
             guard let learned = ComfortRangeSetting.learned(from: means) else { return nil }
             (range, origin) = (learned, .estimated)
@@ -96,10 +103,17 @@ extension HomeStore {
     }
 
     private func energyScore(now: Date, weekAgo: Date) async -> EnergyScore? {
-        guard let meter = energyToday else { return nil }
-        let points = await statistics(of: meter.entityID, since: Calendar.current.startOfDay(for: weekAgo), period: "hour")
-        let hourly = points.compactMap { point in point.change.map { (start: point.start, value: max(0, $0)) } }
-        return EnergyScore.compute(hourly: hourly, unit: meter.unit ?? "kWh", now: now)
+        let meters = await electricityMeters()
+        guard !meters.isEmpty else { return nil }
+        // Several meters (peak and off-peak indexes) add up, hour by hour.
+        var byHour: [Date: Double] = [:]
+        for meter in meters {
+            for point in await statistics(of: meter, since: Calendar.current.startOfDay(for: weekAgo), period: "hour") {
+                if let change = point.change { byHour[point.start, default: 0] += max(0, change) }
+            }
+        }
+        let unit = meters.lazy.compactMap { self.states[$0]?.unit }.first ?? "kWh"
+        return EnergyScore.compute(hourly: byHour.map { (start: $0.key, value: $0.value) }, unit: unit, now: now)
     }
 
     private func networkScore(window: DateInterval, weekAgo: Date) async -> NetworkScore? {
