@@ -32,7 +32,7 @@ struct GridOperatorTests {
     @Test func theLinkIsKeptAcrossLaunches() throws {
         let defaults = try #require(UserDefaults(suiteName: "GridLink-\(UUID().uuidString)"))
         #expect(GridLink.load(from: defaults) == nil)
-        var link = GridLink(operatorID: "enedis", meterID: "12345678901234", linkedAt: Date(timeIntervalSinceReferenceDate: 0))
+        var link = GridLink(operatorID: "enedis", meterID: "12345678901234", accessKey: "k", linkedAt: Date(timeIntervalSinceReferenceDate: 0))
         link.importedUntil = Date(timeIntervalSinceReferenceDate: 86_400)
         link.save(to: defaults)
         #expect(GridLink.load(from: defaults) == link)
@@ -47,14 +47,18 @@ struct GridOperatorTests {
         #expect(url.absoluteString == "https://relay.maison.example/enedis/authorize?state=abc")
     }
 
-    @Test func theCallbackGivesTheMeterOnlyWithTheRightState() throws {
-        let callback = try #require(URL(string: "maison://grid/enedis?usage_point_id=09876543210987&state=abc"))
-        #expect(EnedisDataConnect.meterID(fromCallback: callback, expectedState: "abc") == "09876543210987")
-        #expect(EnedisDataConnect.meterID(fromCallback: callback, expectedState: "other") == nil)
+    @Test func theCallbackGivesTheMeterAndItsKeyOnlyWithTheRightState() throws {
+        let callback = try #require(URL(string: "maison://grid/enedis?usage_point_id=09876543210987&access=signed-key&state=abc"))
+        let link = try #require(EnedisDataConnect.link(fromCallback: callback, expectedState: "abc"))
+        #expect(link.meterID == "09876543210987")
+        #expect(link.accessKey == "signed-key")
+        #expect(EnedisDataConnect.link(fromCallback: callback, expectedState: "other") == nil)
         let homeAssistant = try #require(URL(string: "maison://auth-callback?code=x&state=abc"))
-        #expect(EnedisDataConnect.meterID(fromCallback: homeAssistant, expectedState: "abc") == nil)
-        let empty = try #require(URL(string: "maison://grid/enedis?usage_point_id=&state=abc"))
-        #expect(EnedisDataConnect.meterID(fromCallback: empty, expectedState: "abc") == nil)
+        #expect(EnedisDataConnect.link(fromCallback: homeAssistant, expectedState: "abc") == nil)
+        let withoutKey = try #require(URL(string: "maison://grid/enedis?usage_point_id=09876543210987&state=abc"))
+        #expect(EnedisDataConnect.link(fromCallback: withoutKey, expectedState: "abc") == nil)
+        let refused = try #require(URL(string: "maison://grid/enedis?error=access_denied&state=abc"))
+        #expect(EnedisDataConnect.link(fromCallback: refused, expectedState: "abc") == nil)
     }
 
     // MARK: Readings
@@ -94,9 +98,10 @@ struct GridOperatorTests {
                 : (200, #"{"meter_reading": {"interval_reading": [{"value": "9100", "date": "2026-10-21"}]}}"#)
         }
         let readings = try await EnedisDataConnect(relay: relay, client: http)
-            .hourlyConsumption(meter: "12345678901234", from: parisDate(2026, 10, 21), to: parisDate(2026, 10, 22))
+            .hourlyConsumption(meter: "12345678901234", accessKey: "signed-key", from: parisDate(2026, 10, 21), to: parisDate(2026, 10, 22))
 
         #expect(readings.map(\.value) == [9.1])
+        #expect(http.sent.allSatisfy { $0.value(forHTTPHeaderField: "Authorization") == "Bearer signed-key" })
         #expect(http.sent.map { $0.url?.path() } == ["/enedis/consumption_load_curve", "/enedis/daily_consumption"])
         let query = URLComponents(url: http.sent[0].url!, resolvingAgainstBaseURL: false)?.queryItems ?? []
         #expect(query.first { $0.name == "usage_point_id" }?.value == "12345678901234")
@@ -108,7 +113,7 @@ struct GridOperatorTests {
         let http = ScriptedHTTPClient { _ in (500, "") }
         await #expect(throws: EnedisDataConnect.EnedisError.refused(statusCode: 500)) {
             _ = try await EnedisDataConnect(relay: relay, client: http)
-                .hourlyConsumption(meter: "1", from: parisDate(2026, 10, 21), to: parisDate(2026, 10, 22))
+                .hourlyConsumption(meter: "1", accessKey: "k", from: parisDate(2026, 10, 21), to: parisDate(2026, 10, 22))
         }
     }
 

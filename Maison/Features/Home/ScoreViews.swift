@@ -709,11 +709,11 @@ private struct GridLinkCard: View {
                 callbackURLScheme: EnedisDataConnect.callbackScheme,
                 preferredBrowserSession: .ephemeral
             )
-            guard let meter = EnedisDataConnect.meterID(fromCallback: callback, expectedState: state) else {
+            guard let approved = EnedisDataConnect.link(fromCallback: callback, expectedState: state) else {
                 error = String(localized: "\(gridOperator.name) didn’t confirm the link. Try again.")
                 return
             }
-            GridLink(operatorID: gridOperator.id, meterID: meter, linkedAt: .now).save()
+            GridLink(operatorID: gridOperator.id, meterID: approved.meterID, accessKey: approved.accessKey, linkedAt: .now).save()
             error = nil
             await store.syncGridConsumption()
         } catch let failure as ASWebAuthenticationSessionError where failure.code == .canceledLogin {

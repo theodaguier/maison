@@ -365,7 +365,8 @@ final class HomeStore {
         let start = link.importedUntil ?? today.addingTimeInterval(-30 * 86_400)
         guard start < today else { return false }
         do {
-            let hourly = try await EnedisDataConnect(relay: relay).hourlyConsumption(meter: link.meterID, from: start, to: today)
+            let hourly = try await EnedisDataConnect(relay: relay)
+                .hourlyConsumption(meter: link.meterID, accessKey: link.accessKey, from: start, to: today)
             guard let first = hourly.first?.start else { return false }
             let before = await statistics(of: Self.gridStatisticID, since: first.addingTimeInterval(-3 * 86_400), period: "hour")
             let previousSum = before.last { $0.start < first }?.sum ?? 0

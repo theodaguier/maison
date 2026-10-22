@@ -42,6 +42,9 @@ struct GridLink: Codable, Equatable, Sendable {
     let operatorID: String
     /// Enedis's PRM, Datadis's CUPS: the operator's id for the meter.
     let meterID: String
+    /// Signed by the relay for this meter alone: knowing a meter id (it is on every bill) is not enough
+    /// to read its consumption.
+    var accessKey: String = ""
     let linkedAt: Date
     /// The end of the last reading imported into Home Assistant.
     var importedUntil: Date?
@@ -81,28 +84,32 @@ struct EnedisDataConnect: Sendable {
 
     static let callbackScheme = "maison"
 
-    /// Opens Enedis's consent page; it comes back as `maison://grid/enedis?usage_point_id=…&state=…`.
+    /// Opens Enedis's consent page; it comes back as `maison://grid/enedis?usage_point_id=…&access=…&state=…`.
     func authorizationURL(state: String) -> URL {
         relay.appending(path: "enedis/authorize").appending(queryItems: [URLQueryItem(name: "state", value: state)])
     }
 
-    /// The meter the person approved, once the state matches the one sent.
-    static func meterID(fromCallback url: URL, expectedState: String) -> String? {
+    /// The meter the person approved and the relay's key for it, once the state matches the one sent.
+    /// `nil` when they refused or anything is missing.
+    static func link(fromCallback url: URL, expectedState: String) -> (meterID: String, accessKey: String)? {
         guard url.scheme == callbackScheme, url.host() == "grid",
-              let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems,
-              items.first(where: { $0.name == "state" })?.value == expectedState,
-              let meter = items.first(where: { $0.name == "usage_point_id" })?.value, !meter.isEmpty else { return nil }
-        return meter
+              let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems else { return nil }
+        func value(_ name: String) -> String? {
+            items.first { $0.name == name }?.value.flatMap { $0.isEmpty ? nil : $0 }
+        }
+        guard value("state") == expectedState, value("error") == nil,
+              let meter = value("usage_point_id"), let access = value("access") else { return nil }
+        return (meter, access)
     }
 
     /// Energy used each hour between `start` and `end` (Enedis keeps three years), in kWh.
     /// Falls back to one value per day when the load curve isn't collected.
-    func hourlyConsumption(meter: String, from start: Date, to end: Date) async throws -> [(start: Date, value: Double)] {
+    func hourlyConsumption(meter: String, accessKey: String, from start: Date, to end: Date) async throws -> [(start: Date, value: Double)] {
         do {
-            let curve = try await get("consumption_load_curve", meter: meter, from: start, to: end)
+            let curve = try await get("consumption_load_curve", meter: meter, accessKey: accessKey, from: start, to: end)
             return Self.hourly(fromLoadCurve: curve)
         } catch EnedisError.loadCurveNotCollected {
-            let daily = try await get("daily_consumption", meter: meter, from: start, to: end)
+            let daily = try await get("daily_consumption", meter: meter, accessKey: accessKey, from: start, to: end)
             return Self.daily(from: daily)
         }
     }
@@ -112,13 +119,15 @@ struct EnedisDataConnect: Sendable {
         case refused(statusCode: Int)
     }
 
-    private func get(_ resource: String, meter: String, from start: Date, to end: Date) async throws -> JSONValue {
+    private func get(_ resource: String, meter: String, accessKey: String, from start: Date, to end: Date) async throws -> JSONValue {
         let url = relay.appending(path: "enedis/\(resource)").appending(queryItems: [
             URLQueryItem(name: "usage_point_id", value: meter),
             URLQueryItem(name: "start", value: Self.day(start)),
             URLQueryItem(name: "end", value: Self.day(end)),
         ])
-        let (data, response) = try await client.data(for: URLRequest(url: url))
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(accessKey)", forHTTPHeaderField: "Authorization")
+        let (data, response) = try await client.data(for: request)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         // Enedis answers 404 with ADAM-ERR0123 when the household never turned the load curve on.
         if resource == "consumption_load_curve", status == 404 || status == 403 { throw EnedisError.loadCurveNotCollected }
