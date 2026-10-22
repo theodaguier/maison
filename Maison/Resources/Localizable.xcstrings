@@ -1464,6 +1464,26 @@
         }
       }
     },
+    "A Wi-Fi measuring clamp": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une pince de mesure Wi-Fi"
+          }
+        }
+      }
+    },
+    "A Wi-Fi reader for the %@ port": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un lecteur Wi-Fi pour la prise %@"
+          }
+        }
+      }
+    },
     "A device changes": {
       "localizations": {
         "fr": {
@@ -1490,6 +1510,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Une mesure franchit un seuil"
+          }
+        }
+      }
+    },
+    "A small reader, then nothing to set up": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un petit lecteur, puis rien à régler"
           }
         }
       }
@@ -2274,6 +2304,16 @@
         }
       }
     },
+    "Connect it to your Wi-Fi": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connectez-le à votre Wi-Fi"
+          }
+        }
+      }
+    },
     "Connected locally": {
       "localizations": {
         "fr": {
@@ -2890,16 +2930,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Consommation aujourd’hui"
-          }
-        }
-      }
-    },
-    "Energy compares today's electricity with your habit. No meter reaches your server yet, so Maison has nothing to compare.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "L’énergie compare l’électricité du jour avec votre habitude. Aucun compteur n’arrive encore sur votre serveur : Maison n’a rien à comparer."
           }
         }
       }
@@ -3664,6 +3694,46 @@
         }
       }
     },
+    "It finds the reader on your network and adds it by itself.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elle trouve le lecteur sur votre réseau et l’ajoute toute seule."
+          }
+        }
+      }
+    },
+    "It goes around the main cable in your electrical panel, and works with any meter.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elle se pose autour du câble principal de votre tableau électrique, et marche avec n’importe quel compteur."
+          }
+        }
+      }
+    },
+    "It plugs into your smart meter’s customer port.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il se branche sur la prise client de votre compteur communicant."
+          }
+        }
+      }
+    },
+    "It plugs onto your Linky’s customer terminals, under its cover.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il se branche sur les bornes client de votre Linky, sous son capot."
+          }
+        }
+      }
+    },
     "It’s %@": {
       "localizations": {
         "fr": {
@@ -4084,6 +4154,16 @@
         }
       }
     },
+    "Maison does the rest": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maison fait le reste"
+          }
+        }
+      }
+    },
     "Maison is looking for Home Assistant on your Wi-Fi.": {
       "localizations": {
         "fr": {
@@ -4170,6 +4250,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vérifiez que cet iPhone est sur le même Wi-Fi que Home Assistant, et que Maison a accès au réseau local dans Réglages."
+          }
+        }
+      }
+    },
+    "Measure Your Electricity": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mesurer votre électricité"
           }
         }
       }
@@ -4454,16 +4544,6 @@
         }
       }
     },
-    "No Electricity Meter": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pas de compteur électrique"
-          }
-        }
-      }
-    },
     "No LiDAR Sensor": {
       "localizations": {
         "fr": {
@@ -4530,6 +4610,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pas de Wi-Fi : votre serveur se trouve sur le réseau de la maison"
+          }
+        }
+      }
+    },
+    "No access to the meter? A Wi-Fi measuring clamp in your electrical panel works with any meter.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas d’accès au compteur ? Une pince de mesure Wi-Fi dans votre tableau électrique marche avec n’importe quel compteur."
           }
         }
       }
@@ -7270,6 +7360,26 @@
         }
       }
     },
+    "Measured, your electricity shows hour by hour, and Maison tells you when it drifts from your habit.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mesurée, votre électricité apparaît heure par heure, et Maison vous prévient quand elle s’écarte de votre habitude."
+          }
+        }
+      }
+    },
+    "With the reader’s own app, once.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avec l’app du lecteur, une seule fois."
+          }
+        }
+      }
+    },
     "Worth a Look": {
       "localizations": {
         "fr": {
@@ -7420,6 +7530,16 @@
         }
       }
     },
+    "Your Meter Can Talk to Maison": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre compteur peut parler à Maison"
+          }
+        }
+      }
+    },
     "Your Plan": {
       "localizations": {
         "fr": {
@@ -7446,6 +7566,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Votre demande"
+          }
+        }
+      }
+    },
+    "Your meter can talk to Maison": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre compteur peut parler à Maison"
           }
         }
       }

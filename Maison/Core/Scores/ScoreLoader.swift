@@ -7,6 +7,8 @@ struct HomeScores: Sendable, Equatable {
     var network: NetworkScore?
     /// Nothing measures the internet yet (no Ping integration in Home Assistant).
     var hasNetworkSource = false
+    /// An electricity meter reaches the server, even if it has no habit to compare with yet.
+    var hasElectricityMeter = false
     var computedAt: Date
 }
 
@@ -60,12 +62,14 @@ extension HomeStore {
         let weekAgo = now.addingTimeInterval(-8 * 86_400)
         async let comfort = comfortScore(window: window, weekAgo: weekAgo)
         async let energy = energyScore(now: now, weekAgo: weekAgo)
+        async let meters = electricityMeters()
         async let network = networkScore(window: window, weekAgo: weekAgo)
         return await HomeScores(
             comfort: comfort,
             energy: energy,
             network: network,
             hasNetworkSource: internetSources != nil,
+            hasElectricityMeter: !meters.ids.isEmpty,
             computedAt: now
         )
     }
@@ -104,15 +108,28 @@ extension HomeStore {
 
     private func energyScore(now: Date, weekAgo: Date) async -> EnergyScore? {
         let meters = await electricityMeters()
-        guard !meters.isEmpty else { return nil }
-        // Several meters (peak and off-peak indexes) add up, hour by hour.
-        var byHour: [Date: Double] = [:]
-        for meter in meters {
+        guard !meters.ids.isEmpty else { return nil }
+        var series: [(id: String, byHour: [Date: Double])] = []
+        for meter in meters.ids {
+            var byHour: [Date: Double] = [:]
             for point in await statistics(of: meter, since: Calendar.current.startOfDay(for: weekAgo), period: "hour") {
                 if let change = point.change { byHour[point.start, default: 0] += max(0, change) }
             }
+            series.append((meter, byHour))
         }
-        let unit = meters.lazy.compactMap { self.states[$0]?.unit }.first ?? "kWh"
+        let byHour: [Date: Double]
+        let used: [String]
+        if meters.addUp {
+            byHour = series.reduce(into: [:]) { total, meter in total.merge(meter.byHour, uniquingKeysWith: +) }
+            used = meters.ids
+        } else {
+            // Without the Energy dashboard, a plug's own total would count twice: the home's meter is
+            // the one that used the most.
+            guard let largest = series.max(by: { $0.byHour.values.reduce(0, +) < $1.byHour.values.reduce(0, +) }) else { return nil }
+            byHour = largest.byHour
+            used = [largest.id]
+        }
+        let unit = used.lazy.compactMap { self.states[$0]?.unit }.first ?? "kWh"
         return EnergyScore.compute(hourly: byHour.map { (start: $0.key, value: $0.value) }, unit: unit, now: now)
     }
 

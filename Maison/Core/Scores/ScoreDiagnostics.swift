@@ -7,7 +7,7 @@ extension HomeStore {
     func writeScoreDiagnostics(_ scores: HomeScores, duration: Duration) async {
         let weekAgo = Date.now.addingTimeInterval(-8 * 86_400)
         var meters: [[String: Any]] = []
-        for meter in await electricityMeters() {
+        for meter in await electricityMeters().ids {
             let points = await statistics(of: meter, since: weekAgo, period: "hour")
             meters.append(["id": meter, "hourlyPoints": points.count, "withChange": points.count { $0.change != nil }])
         }

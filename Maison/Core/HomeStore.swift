@@ -84,7 +84,7 @@ final class HomeStore {
         serverVersion = "2026.8.1"
         lastUpdate = .now
         currentUser = HomeAssistantUser(name: "Théo", isAdmin: true)
-        serverConfig = ServerConfig(locationName: "Maison", version: "2026.8.1", externalURL: nil, internalURL: "http://homeassistant.local:8123")
+        serverConfig = ServerConfig(locationName: "Maison", version: "2026.8.1", externalURL: nil, internalURL: "http://homeassistant.local:8123", country: "FR")
         integrations = [
             Integration(domain: "sonos", title: "Sonos", state: "loaded"),
             Integration(domain: "hue", title: "Philips Hue", state: "loaded"),
@@ -392,14 +392,22 @@ final class HomeStore {
         return true
     }
 
-    /// The electricity meters to count: those of Home Assistant's Energy dashboard, otherwise every
-    /// energy total the server keeps statistics for. Never picked by name.
-    func electricityMeters() async -> [String] {
-        if isDemo { return ["sensor.energy_today"] }
-        if let connection, let grid = try? await connection.gridConsumptionStatistics(), !grid.isEmpty { return grid }
-        return devices
+    /// The electricity meters to count. Those of Home Assistant's Energy dashboard add up (peak and
+    /// off-peak indexes); otherwise each energy total is a candidate, and only one is the home's meter.
+    /// Never picked by name.
+    func electricityMeters() async -> (ids: [String], addUp: Bool) {
+        if isDemo {
+            #if DEBUG
+            // `-noMeter YES` shows the demo home as one without a meter, to check the proposal.
+            if UserDefaults.standard.bool(forKey: "noMeter") { return ([], false) }
+            #endif
+            return (["sensor.energy_today"], true)
+        }
+        if let connection, let grid = try? await connection.gridConsumptionStatistics(), !grid.isEmpty { return (grid, true) }
+        let totals = devices
             .filter { $0.deviceClass == "energy" && ["total_increasing", "total"].contains($0.attributes["state_class"]?.stringValue ?? "") }
             .map(\.entityID)
+        return (totals, false)
     }
 
     /// Automations that act on or watch the entity.

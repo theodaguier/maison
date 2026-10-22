@@ -102,6 +102,7 @@ struct RecordedWebSocketTests {
         let config = try await connection.serverConfig()
         #expect(config.locationName == "Maison")
         #expect(config.version == "2026.8.1")
+        #expect(config.country == "FR")
         #expect(config.internalURL == "http://homeassistant.local:8123")
         let cloud = try await connection.send(["type": "cloud/status"])
         #expect(config.remoteURL(cloudStatus: cloud) == URL(string: "https://maison.example.com"))

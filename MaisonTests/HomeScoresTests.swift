@@ -167,9 +167,34 @@ struct HomeScoresTests {
             window: window
         ))
 
-        #expect(Attention.pick(from: HomeScores(comfort: comfort, network: network, computedAt: start))?.kind == .network)
-        #expect(Attention.pick(from: HomeScores(comfort: comfort, computedAt: start))?.kind == .comfort)
-        #expect(Attention.pick(from: HomeScores(computedAt: start)) == nil)
-        #expect(Attention.pick(from: nil) == nil)
+        #expect(Attention.pick(from: HomeScores(comfort: comfort, network: network, computedAt: start), meterProposalSeen: true)?.kind == .network)
+        #expect(Attention.pick(from: HomeScores(comfort: comfort, computedAt: start), meterProposalSeen: true)?.kind == .comfort)
+        #expect(Attention.pick(from: HomeScores(computedAt: start), meterProposalSeen: true) == nil)
+        #expect(Attention.pick(from: nil, meterProposalSeen: false) == nil)
+    }
+
+    @Test func aHomeWithoutMeterIsOfferedToReadItOnce() {
+        let noMeter = HomeScores(computedAt: start)
+        #expect(Attention.pick(from: noMeter, meterProposalSeen: false)?.kind == .energy)
+        #expect(Attention.pick(from: noMeter, meterProposalSeen: true) == nil)
+        #expect(Attention.pick(from: HomeScores(hasElectricityMeter: true, computedAt: start), meterProposalSeen: false) == nil)
+    }
+
+    // MARK: Meter reading
+
+    @Test func theWayToReadTheMeterFollowsTheCountry() {
+        #expect(MeterReading.forCountry("FR") == .port(.tic))
+        #expect(MeterReading.forCountry("nl") == .port(.p1))
+        #expect(MeterReading.forCountry("BE") == .port(.p1))
+        #expect(MeterReading.forCountry("SE") == .port(.han))
+        // Anywhere else, a clamp in the electrical panel works with any meter.
+        #expect(MeterReading.forCountry("US") == .clamp)
+        #expect(MeterReading.forCountry("JP") == .clamp)
+    }
+
+    @Test func withoutACountryOnTheServerTheIPhoneRegionDecides() {
+        #expect(MeterReading.forCountry(nil, region: "NO") == .port(.han))
+        #expect(MeterReading.forCountry(nil, region: nil) == .clamp)
+        #expect(MeterReading.forCountry("DE", region: "FR") == .clamp)
     }
 }

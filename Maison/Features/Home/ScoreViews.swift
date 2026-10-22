@@ -85,7 +85,8 @@ private struct ScoreRing: View {
 
     var body: some View {
         VStack(spacing: 8) {
-            ProgressRing(progress: Double(percent ?? 0) / 100, color: kind.color, lineWidth: 12) {
+            // An empty ring has no arc at all, not the dot a zero progress leaves.
+            ProgressRing(progress: Double(percent ?? 0) / 100, color: percent == nil ? Color.clear : kind.color, lineWidth: 12) {
                 if let percent {
                     NumberLabel(value: "\(percent)", unit: "%", size: .small, unitStyle: AnyShapeStyle(.primary))
                         .contentTransition(.numericText(value: Double(percent)))
@@ -116,7 +117,7 @@ struct Attention: Equatable {
     let title: String
     let detail: String
 
-    static func pick(from scores: HomeScores?) -> Attention? {
+    static func pick(from scores: HomeScores?, meterProposalSeen: Bool = MeterProposalSetting.wasSeen) -> Attention? {
         guard let scores else { return nil }
         if let outage = scores.network?.outages.max(by: { $0.duration < $1.duration }) {
             return Attention(
@@ -133,6 +134,13 @@ struct Attention: Equatable {
                     ? String(localized: "\(room.name) was too warm around \(hour)")
                     : String(localized: "\(room.name) was too cold around \(hour)"),
                 detail: String(localized: "\(room.percent) % of the day in your range")
+            )
+        }
+        if !scores.hasElectricityMeter, !meterProposalSeen {
+            return Attention(
+                kind: .energy,
+                title: String(localized: "Your meter can talk to Maison"),
+                detail: String(localized: "A small reader, then nothing to set up")
             )
         }
         if let energy = scores.energy, let difference = energy.difference, difference > 0.1 {
@@ -595,11 +603,8 @@ private struct EnergyFiche: View {
                 }
             }
         } else {
-            MissingScore(
-                symbol: "bolt.slash",
-                title: "No Electricity Meter",
-                message: "Energy compares today's electricity with your habit. No meter reaches your server yet, so Maison has nothing to compare."
-            )
+            MeterProposal(reading: .forCountry(store.serverConfig?.country))
+                .onAppear { MeterProposalSetting.markSeen() }
         }
     }
 
@@ -616,6 +621,92 @@ private struct EnergyFiche: View {
         guard let difference = score?.difference else { return String(localized: "No habit yet") }
         let percent = Int((abs(difference) * 100).rounded())
         return difference < 0 ? String(localized: "\(percent) % under your habit") : String(localized: "\(percent) % over your habit")
+    }
+}
+
+/// Whether the home screen already proposed reading the meter: it does so once, then only in the fiche.
+enum MeterProposalSetting {
+    static let seenKey = "meterProposalSeen"
+    static var wasSeen: Bool { UserDefaults.standard.bool(forKey: seenKey) }
+    static func markSeen() { UserDefaults.standard.set(true, forKey: seenKey) }
+}
+
+/// No meter reaches the server: what reading it brings, and the way that fits the home's country.
+/// Once the reader is on the Wi-Fi, Home Assistant finds it and Maison adds it; nothing to set up.
+private struct MeterProposal: View {
+    let reading: MeterReading
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 8) {
+                Image(systemName: "bolt.fill")
+                    .font(.system(size: 19, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 40, height: 40)
+                    .background(.yellow, in: .rect(cornerRadius: 11))
+                Text(title).font(.roundedTitle3)
+                Text("Measured, your electricity shows hour by hour, and Maison tells you when it drifts from your habit.")
+                    .font(.roundedSubheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            VStack(spacing: 0) {
+                step(symbol: "cable.connector", color: .yellow, title: what, detail: whatDetail)
+                Theme.separator.frame(height: 1).padding(.leading, 60)
+                step(symbol: "wifi", color: .cyan, title: String(localized: "Connect it to your Wi-Fi"), detail: String(localized: "With the reader’s own app, once."))
+                Theme.separator.frame(height: 1).padding(.leading, 60)
+                step(symbol: "sparkles", color: .indigo, title: String(localized: "Maison does the rest"), detail: String(localized: "It finds the reader on your network and adds it by itself."))
+            }
+            .cardStyle()
+            if case .port = reading {
+                Text("No access to the meter? A Wi-Fi measuring clamp in your electrical panel works with any meter.")
+                    .font(.roundedFootnote)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private var title: String {
+        switch reading {
+        case .port: String(localized: "Your Meter Can Talk to Maison")
+        case .clamp: String(localized: "Measure Your Electricity")
+        }
+    }
+
+    private var what: String {
+        switch reading {
+        case .port(let port): String(localized: "A Wi-Fi reader for the \(port.name) port")
+        case .clamp: String(localized: "A Wi-Fi measuring clamp")
+        }
+    }
+
+    private var whatDetail: String {
+        switch reading {
+        case .port(.tic): String(localized: "It plugs onto your Linky’s customer terminals, under its cover.")
+        case .port: String(localized: "It plugs into your smart meter’s customer port.")
+        case .clamp: String(localized: "It goes around the main cable in your electrical panel, and works with any meter.")
+        }
+    }
+
+    private func step(symbol: String, color: Color, title: String, detail: String) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: symbol)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 32, height: 32)
+                .background(color, in: .rect(cornerRadius: 9))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(.roundedHeadline)
+                Text(detail)
+                    .font(.roundedFootnote)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
     }
 }
 
