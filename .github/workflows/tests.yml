@@ -13,7 +13,6 @@ concurrency:
 
 permissions:
   contents: read
-  actions: write
 
 jobs:
   unit:
@@ -21,7 +20,7 @@ jobs:
     runs-on: macos-26
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Select Xcode
         id: xcode
@@ -35,16 +34,17 @@ jobs:
           xcode-select -p
           xcrun simctl list runtimes
 
-      - name: Cache DerivedData and Swift packages
+      # Only the Swift packages are cached: their versions are pinned in project.yml, so the key
+      # changes when a dependency does, not on every commit.
+      - name: Cache Swift packages
         uses: actions/cache@v4
         with:
           path: |
-            DerivedData
+            SourcePackages
             ~/Library/Caches/org.swift.swiftpm
-            ~/Library/org.swift.swiftpm
-          key: macos-xcode-${{ steps.xcode.outputs.version }}-${{ hashFiles('project.yml', '**/*.swift', '**/*.plist', '**/*.entitlements') }}
+          key: spm-xcode-${{ steps.xcode.outputs.version }}-${{ hashFiles('project.yml') }}
           restore-keys: |
-            macos-xcode-${{ steps.xcode.outputs.version }}-
+            spm-xcode-${{ steps.xcode.outputs.version }}-
 
       - name: XcodeGen
         run: |
@@ -70,18 +70,15 @@ jobs:
             -scheme Maison \
             -destination "id=$UDID" \
             -derivedDataPath DerivedData \
+            -clonedSourcePackagesDirPath SourcePackages \
             -resultBundlePath build/Tests.xcresult \
             -only-testing:MaisonTests \
             CODE_SIGNING_ALLOWED=NO \
             2>&1 | tee build/xcodebuild.log | xcbeautify --renderer github-actions
 
-      - name: Trim DerivedData before caching
-        if: always()
-        run: rm -rf DerivedData/Index.noindex DerivedData/ModuleCache.noindex DerivedData/SymbolCache.noindex
-
       - name: Test results
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tests-xcresult
           path: build/Tests.xcresult

@@ -21,3 +21,4 @@ xcuserdata/
 *.p12
 *.mobileprovision
 .env
+SourcePackages/

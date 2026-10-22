@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Prints the path of the newest Xcode that can build Maison (Xcode 26 or later).
+# Prints the path of the newest released Xcode that can build Maison (Xcode 26 or later).
+# Betas and release candidates are skipped: hosted runners install them next to the release.
 # The iOS 26 / Liquid Glass deployment target does not build on older Xcodes.
 set -euo pipefail
 
@@ -14,6 +15,13 @@ if [[ ${#apps[@]} -eq 0 ]]; then
 fi
 
 for app in "${apps[@]}"; do
+  shopt -s nocasematch
+  if [[ "$app" == *beta* || "$app" == *release_candidate* || "$app" == *_rc* ]]; then
+    shopt -u nocasematch
+    echo "Skipping prerelease $app" >&2
+    continue
+  fi
+  shopt -u nocasematch
   plist="$app/Contents/Info.plist"
   [[ -f "$plist" ]] || continue
   ver="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$plist" 2>/dev/null || true)"
