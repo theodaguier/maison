@@ -61,6 +61,26 @@
         }
       }
     },
+    "%@ couldn’t be reached. Try again in a moment.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ ne répond pas. Réessayez dans un instant."
+          }
+        }
+      }
+    },
+    "%@ didn’t confirm the link. Try again.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ n’a pas confirmé la liaison. Réessayez."
+          }
+        }
+      }
+    },
     "%@ for %@": {
       "localizations": {
         "fr": {
@@ -247,6 +267,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$@ a tourné %2$@"
+          }
+        }
+      }
+    },
+    "%@ sends the previous day’s readings each morning. The score appears with the first of them.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ envoie les relevés de la veille chaque matin. Le score apparaît avec les premiers."
           }
         }
       }
@@ -2874,6 +2904,16 @@
         }
       }
     },
+    "Electricity from the grid": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Électricité du réseau"
+          }
+        }
+      }
+    },
     "Email or phone number": {
       "localizations": {
         "fr": {
@@ -2930,6 +2970,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Consommation aujourd’hui"
+          }
+        }
+      }
+    },
+    "Energy yesterday: %lld %% over your habit.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Énergie hier : %lld %% au-dessus de votre habitude."
+          }
+        }
+      }
+    },
+    "Energy yesterday: %lld %% under your habit.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Énergie hier : %lld %% sous votre habitude."
           }
         }
       }
@@ -3974,12 +4034,32 @@
         }
       }
     },
+    "Link My %@ Account": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Relier mon compte %@"
+          }
+        }
+      }
+    },
     "Linked": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Associée"
+          }
+        }
+      }
+    },
+    "Linked to Your Grid Operator": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Relié à votre gestionnaire de réseau"
           }
         }
       }
@@ -4340,6 +4420,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Plus d’électricité que d’habitude aujourd’hui"
+          }
+        }
+      }
+    },
+    "More electricity than usual yesterday": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plus d’électricité que d’habitude hier"
           }
         }
       }
@@ -6740,6 +6830,16 @@
         }
       }
     },
+    "To Measure It Live": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour la mesure en direct"
+          }
+        }
+      }
+    },
     "Today": {
       "localizations": {
         "fr": {
@@ -7380,6 +7480,16 @@
         }
       }
     },
+    "Without Hardware": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sans matériel"
+          }
+        }
+      }
+    },
     "Worth a Look": {
       "localizations": {
         "fr": {
@@ -7570,12 +7680,32 @@
         }
       }
     },
+    "Your meter already sends its readings to %@. Approve Maison once on its site: Maison then receives the previous day’s consumption every morning.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre compteur envoie déjà ses relevés à %1$@. Autorisez Maison une fois sur son site : Maison reçoit ensuite la consommation de la veille chaque matin."
+          }
+        }
+      }
+    },
     "Your meter can talk to Maison": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Votre compteur peut parler à Maison"
+          }
+        }
+      }
+    },
+    "Your readings from %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos relevés %@"
           }
         }
       }
@@ -8163,6 +8293,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "blanc chaud"
+          }
+        }
+      }
+    },
+    "yesterday, whole day": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "hier, journée entière"
           }
         }
       }

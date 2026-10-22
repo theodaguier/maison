@@ -115,8 +115,12 @@ struct ComfortScore: Sendable, Equatable {
 
 /// Today's electricity compared with the household's own habit at the same time of day.
 struct EnergyScore: Sendable, Equatable {
-    /// Energy used since midnight, in `unit`.
+    /// Energy used on `day`, from midnight to `asOf`, in `unit`.
     let today: Double
+    /// The midnight the score is about: today with a live meter, yesterday with readings from the grid operator.
+    var day: Date = .distantPast
+    /// The end of the last hour with a reading.
+    var asOf: Date = .distantPast
     /// The median of the previous days at the same time; `nil` until there are three of them.
     let usual: Double?
     let unit: String
@@ -144,14 +148,16 @@ struct EnergyScore: Sendable, Equatable {
     static let minimumDays = 3
 
     /// `hourly` is the energy used each hour (the statistics' `change`), over the last eight days or more.
+    /// The score stops at the last hour with a reading: a meter read the next day scores yesterday, whole.
     static func compute(hourly: [(start: Date, value: Double)], unit: String, now: Date, calendar: Calendar = .current) -> EnergyScore? {
-        guard !hourly.isEmpty else { return nil }
-        let midnight = calendar.startOfDay(for: now)
-        let elapsed = now.timeIntervalSince(midnight)
+        guard let latest = hourly.map(\.start).max() else { return nil }
+        let asOf = min(now, latest.addingTimeInterval(3600))
+        let midnight = calendar.startOfDay(for: asOf.addingTimeInterval(-1))
+        let elapsed = asOf.timeIntervalSince(midnight)
         func used(from start: Date, to end: Date) -> Double {
             hourly.filter { $0.start >= start && $0.start < end }.reduce(0) { $0 + $1.value }
         }
-        let today = used(from: midnight, to: now)
+        let today = used(from: midnight, to: asOf)
         var previous: [Double] = []
         for back in 1...7 {
             guard let day = calendar.date(byAdding: .day, value: -back, to: midnight),
@@ -159,12 +165,12 @@ struct EnergyScore: Sendable, Equatable {
             previous.append(used(from: day, to: day.addingTimeInterval(elapsed)))
         }
         let usual = previous.count >= minimumDays ? median(previous) : nil
-        let lastDay = hourly.filter { $0.start >= now.addingTimeInterval(-86_400) && $0.start < now }.sorted { $0.start < $1.start }
-        return EnergyScore(today: today, usual: usual, unit: unit, lastDay: lastDay)
+        let lastDay = hourly.filter { $0.start >= asOf.addingTimeInterval(-86_400) && $0.start < asOf }.sorted { $0.start < $1.start }
+        return EnergyScore(today: today, day: midnight, asOf: asOf, usual: usual, unit: unit, lastDay: lastDay)
     }
 
     static func == (lhs: EnergyScore, rhs: EnergyScore) -> Bool {
-        lhs.today == rhs.today && lhs.usual == rhs.usual && lhs.unit == rhs.unit
+        lhs.today == rhs.today && lhs.day == rhs.day && lhs.asOf == rhs.asOf && lhs.usual == rhs.usual && lhs.unit == rhs.unit
             && lhs.lastDay.map(\.start) == rhs.lastDay.map(\.start) && lhs.lastDay.map(\.value) == rhs.lastDay.map(\.value)
     }
 }

@@ -1,3 +1,4 @@
+import AuthenticationServices
 import Charts
 import SwiftUI
 
@@ -146,7 +147,9 @@ struct Attention: Equatable {
         if let energy = scores.energy, let difference = energy.difference, difference > 0.1 {
             return Attention(
                 kind: .energy,
-                title: String(localized: "More electricity than usual today"),
+                title: Calendar.current.isDateInToday(energy.day)
+                    ? String(localized: "More electricity than usual today")
+                    : String(localized: "More electricity than usual yesterday"),
                 detail: String(localized: "\(Int((difference * 100).rounded())) % over your habit")
             )
         }
@@ -210,9 +213,15 @@ extension HomeScores {
         }
         if let energy, let difference = energy.difference {
             let percent = Int((abs(difference) * 100).rounded())
-            result.append(difference < 0
-                ? String(localized: "Energy: \(percent) % under your habit so far.")
-                : String(localized: "Energy: \(percent) % over your habit so far."))
+            if Calendar.current.isDateInToday(energy.day) {
+                result.append(difference < 0
+                    ? String(localized: "Energy: \(percent) % under your habit so far.")
+                    : String(localized: "Energy: \(percent) % over your habit so far."))
+            } else {
+                result.append(difference < 0
+                    ? String(localized: "Energy yesterday: \(percent) % under your habit.")
+                    : String(localized: "Energy yesterday: \(percent) % over your habit."))
+            }
         }
         if let network {
             result.append(network.outages.isEmpty
@@ -586,7 +595,7 @@ private struct EnergyFiche: View {
                     value: score.today.formatted(.number.precision(.fractionLength(0...1))),
                     unit: score.unit,
                     origin: .measured,
-                    caption: String(localized: "since midnight"),
+                    caption: Calendar.current.isDateInToday(score.day) ? String(localized: "since midnight") : String(localized: "yesterday, whole day"),
                     status: status.0,
                     statusColor: status.1,
                     detail: detail
@@ -602,9 +611,21 @@ private struct EnergyFiche: View {
                     )
                 }
             }
+        } else if let link = GridLink.load() {
+            MissingScore(
+                symbol: "bolt.badge.clock",
+                title: "Linked to Your Grid Operator",
+                message: LocalizedStringKey("\(GridOperator.byCountry.values.first { $0.id == link.operatorID }?.name ?? "") sends the previous day’s readings each morning. The score appears with the first of them.")
+            )
         } else {
-            MeterProposal(reading: .forCountry(store.serverConfig?.country))
-                .onAppear { MeterProposalSetting.markSeen() }
+            VStack(alignment: .leading, spacing: 18) {
+                let gridOperator = MaisonRelay.url == nil ? nil : GridOperator.supported(in: store.serverConfig?.country)
+                if let gridOperator {
+                    GridLinkCard(gridOperator: gridOperator)
+                }
+                MeterProposal(reading: .forCountry(store.serverConfig?.country), isAlternative: gridOperator != nil)
+            }
+            .onAppear { MeterProposalSetting.markSeen() }
         }
     }
 
@@ -631,10 +652,84 @@ enum MeterProposalSetting {
     static func markSeen() { UserDefaults.standard.set(true, forKey: seenKey) }
 }
 
+/// The way without hardware: the grid operator already has the meter's readings, and hands them over
+/// once the person approves Maison on its site. They arrive the day after.
+private struct GridLinkCard: View {
+    @Environment(HomeStore.self) private var store
+    @Environment(\.webAuthenticationSession) private var webAuthenticationSession
+    let gridOperator: GridOperator
+    @State private var isLinking = false
+    @State private var error: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 14) {
+                Image(systemName: "bolt.horizontal.fill")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 40, height: 40)
+                    .background(.yellow, in: .rect(cornerRadius: 11))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Without Hardware").font(.roundedFootnoteEmphasized).foregroundStyle(.secondary)
+                    Text("Your readings from \(gridOperator.name)").font(.roundedHeadline)
+                }
+            }
+            Text("Your meter already sends its readings to \(gridOperator.name). Approve Maison once on its site: Maison then receives the previous day’s consumption every morning.")
+                .font(.roundedSubheadline)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Button {
+                Task { await link() }
+            } label: {
+                Group {
+                    if isLinking { ProgressView() } else { Text("Link My \(gridOperator.name) Account") }
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.glassProminent)
+            .controlSize(.large)
+            .disabled(isLinking)
+            if let error {
+                Text(error).font(.roundedFootnote).foregroundStyle(.orange)
+            }
+        }
+        .padding(16)
+        .cardStyle()
+        .errorFeedback(error)
+    }
+
+    private func link() async {
+        guard let relay = MaisonRelay.url else { return }
+        isLinking = true
+        defer { isLinking = false }
+        let state = UUID().uuidString
+        do {
+            let callback = try await webAuthenticationSession.authenticate(
+                using: EnedisDataConnect(relay: relay).authorizationURL(state: state),
+                callbackURLScheme: EnedisDataConnect.callbackScheme,
+                preferredBrowserSession: .ephemeral
+            )
+            guard let meter = EnedisDataConnect.meterID(fromCallback: callback, expectedState: state) else {
+                error = String(localized: "\(gridOperator.name) didn’t confirm the link. Try again.")
+                return
+            }
+            GridLink(operatorID: gridOperator.id, meterID: meter, linkedAt: .now).save()
+            error = nil
+            await store.syncGridConsumption()
+        } catch let failure as ASWebAuthenticationSessionError where failure.code == .canceledLogin {
+            return
+        } catch {
+            self.error = String(localized: "\(gridOperator.name) couldn’t be reached. Try again in a moment.")
+        }
+    }
+}
+
 /// No meter reaches the server: what reading it brings, and the way that fits the home's country.
 /// Once the reader is on the Wi-Fi, Home Assistant finds it and Maison adds it; nothing to set up.
 private struct MeterProposal: View {
     let reading: MeterReading
+    /// Shown under the grid operator's card: the reader is then the way to measure live.
+    var isAlternative = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -668,7 +763,8 @@ private struct MeterProposal: View {
     }
 
     private var title: String {
-        switch reading {
+        if isAlternative { return String(localized: "To Measure It Live") }
+        return switch reading {
         case .port: String(localized: "Your Meter Can Talk to Maison")
         case .clamp: String(localized: "Measure Your Electricity")
         }

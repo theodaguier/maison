@@ -18,6 +18,8 @@ struct StatisticPoint: Sendable, Hashable {
     let max: Double?
     /// What a total (an energy meter) grew by during the period.
     var change: Double?
+    /// The running total at the end of the period.
+    var sum: Double?
 }
 
 extension HomeAssistantConnection {
@@ -46,7 +48,7 @@ extension HomeAssistantConnection {
             "start_time": .string(start.ISO8601Format()),
             "statistic_ids": [.string(entityID)],
             "period": .string(period),
-            "types": ["mean", "min", "max", "change"],
+            "types": ["mean", "min", "max", "change", "sum"],
         ])
         return (result[entityID]?.arrayValue ?? []).compactMap { point in
             guard let start = point["start"]?.doubleValue else { return nil }
@@ -57,9 +59,30 @@ extension HomeAssistantConnection {
                 mean: point["mean"]?.doubleValue,
                 min: point["min"]?.doubleValue,
                 max: point["max"]?.doubleValue,
-                change: point["change"]?.doubleValue
+                change: point["change"]?.doubleValue,
+                sum: point["sum"]?.doubleValue
             )
         }
+    }
+
+    /// Writes hourly energy into Home Assistant's long-term statistics, under a statistic of Maison's own
+    /// (`maison:grid_consumption`), so the server keeps the history as it does for a meter. `hourly` must
+    /// follow `previousSum`, the running total before its first hour. Administrators only.
+    func importEnergyStatistics(id: String, name: String, hourly: [(start: Date, value: Double)], previousSum: Double) async throws {
+        var sum = previousSum
+        let stats: [JSONValue] = hourly.sorted { $0.start < $1.start }.map { hour in
+            sum += hour.value
+            return ["start": .string(hour.start.ISO8601Format()), "sum": .number(sum), "state": .number(sum)]
+        }
+        guard !stats.isEmpty else { return }
+        _ = try await send([
+            "type": "recorder/import_statistics",
+            "metadata": [
+                "has_mean": false, "has_sum": true, "name": .string(name), "source": "maison",
+                "statistic_id": .string(id), "unit_of_measurement": "kWh",
+            ],
+            "stats": .array(stats),
+        ])
     }
 
     /// The statistics Home Assistant's Energy dashboard counts as electricity taken from the grid.
