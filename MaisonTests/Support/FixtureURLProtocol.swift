@@ -41,9 +41,9 @@ final class FixtureURLProtocol: URLProtocol, @unchecked Sendable {
         return URLSessionHTTPClient(session: session())
     }
 
-    override class func canInit(with request: URLRequest) -> Bool { true }
+    override static func canInit(with request: URLRequest) -> Bool { true }
 
-    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+    override static func canonicalRequest(for request: URLRequest) -> URLRequest { request }
 
     override func startLoading() {
         let handler = Self.state.get()

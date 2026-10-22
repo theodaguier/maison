@@ -1,6 +1,6 @@
 import Foundation
-import Testing
 @testable import Maison
+import Testing
 
 /// On-device persistence before GRDB.
 ///
@@ -125,23 +125,16 @@ struct LocalPersistenceTests {
         #expect(!defaults.bool(forKey: LocalPersistenceHarness.presenceKey))
     }
 
-    /// `devices` has a default in the struct, but the synthesized decoder still requires the key.
-    /// `HouseholdStore` drops the plan (`try?`) when it is missing. A GRDB migration has to choose
-    /// an explicit default; these bytes do not survive the current reader.
-    @Test func aFloorPlanWrittenWithoutDevicesDoesNotLoad() throws {
+    /// `HouseholdStore` drops a plan it cannot decode (`try?`), so a missing `devices` key must not fail.
+    @Test func aFloorPlanWrittenWithoutDevicesStillLoads() throws {
         let data = try LocalPersistenceHarness.data("floor-plan-missing-devices")
-        do {
-            _ = try JSONDecoder().decode(FloorPlan.self, from: data)
-            Issue.record("Expected the plan to be rejected")
-        } catch DecodingError.keyNotFound(let key, _) {
-            #expect(key.stringValue == "devices")
-        } catch {
-            Issue.record(Comment(rawValue: "Unexpected error: \(error)"))
-        }
+        let plan = try JSONDecoder().decode(FloorPlan.self, from: data)
+        #expect(plan.devices.isEmpty)
+        #expect(!plan.rooms.isEmpty)
 
         let defaults = LocalPersistenceHarness.suite()
         defaults.set(data, forKey: LocalPersistenceHarness.floorPlanKey)
-        #expect(HouseholdStore(cloud: nil, defaults: defaults).floorPlan == nil)
+        #expect(HouseholdStore(cloud: nil, defaults: defaults).floorPlan == plan)
     }
 
     private func expectCredentials(_ data: Data, token: String, refresh: String, remote: URL?) throws {

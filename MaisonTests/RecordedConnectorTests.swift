@@ -1,6 +1,6 @@
 import Foundation
-import Testing
 @testable import Maison
+import Testing
 
 /// Recorded Home Assistant replies, played back offline.
 ///
@@ -444,19 +444,15 @@ struct RecordedRESTTests {
         #expect(String(decoding: sent.fixtureBody ?? Data(), as: UTF8.self).contains("Soir"))
     }
 
-    /// `HomeStore.registerMobileApp` posts to `URLSession.shared` and decodes this body.
-    /// The shared session is not injected, so the test decodes the fixture the same way and reads the same keys.
+    /// The reply `HomeStore.registerMobileApp` reads, through the same `MobileAppRegistration`.
     @Test func mobileAppRegistrationCarriesTheWebhook() throws {
-        let registration = try JSONDecoder().decode(
-            JSONValue.self,
-            from: RecordedFixture.data("mobile-app-registration", directory: "Fixtures/HomeAssistant")
-        )
-        let id = try #require(registration["webhook_id"]?.stringValue)
+        let reply = try RecordedFixture.json("mobile-app-registration")
+        let registration = try #require(MobileAppRegistration(reply))
         let webhook = Webhook(
-            id: id,
+            id: registration.webhookID,
             localURL: server,
-            remoteURL: registration["remote_ui_url"]?.stringValue.flatMap(URL.init(string:)),
-            cloudhookURL: registration["cloudhook_url"]?.stringValue.flatMap(URL.init(string:))
+            remoteURL: registration.remoteURL,
+            cloudhookURL: registration.cloudhookURL
         )
 
         #expect(webhook.id == "wh-from-ha")
@@ -467,8 +463,8 @@ struct RecordedRESTTests {
             "https://abc123.ui.nabu.casa/api/webhook/wh-from-ha",
             "https://hooks.nabu.casa/wh-from-ha",
         ])
+        #expect(MobileAppRegistration(["remote_ui_url": "https://abc123.ui.nabu.casa"]) == nil)
     }
-
 }
 
 /// Installs the URL protocol stub for one call, then removes it.

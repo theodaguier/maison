@@ -375,18 +375,18 @@ final class HomeStore {
         let (data, response) = try await URLSession.shared.data(for: request)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         guard (200..<300).contains(status) else { throw HomeAssistantError.invalidResponse(statusCode: status) }
-        let registration = try JSONDecoder().decode(JSONValue.self, from: data)
-        guard let id = registration["webhook_id"]?.stringValue else { throw HomeAssistantError.invalidResponse(statusCode: status) }
+        let reply = try JSONDecoder().decode(JSONValue.self, from: data)
+        guard let registration = MobileAppRegistration(reply) else { throw HomeAssistantError.invalidResponse(statusCode: status) }
         // With Home Assistant Cloud, the reply carries the remote address even when no external URL is set.
-        if credentials.remoteURL == nil, let remote = registration["remote_ui_url"]?.stringValue.flatMap(URL.init(string:)) {
+        if credentials.remoteURL == nil, let remote = registration.remoteURL {
             credentials.remoteURL = remote
             try? keep(credentials)
         }
         return Webhook(
-            id: id,
+            id: registration.webhookID,
             localURL: credentials.serverURL,
             remoteURL: credentials.remoteURL,
-            cloudhookURL: registration["cloudhook_url"]?.stringValue.flatMap(URL.init(string:))
+            cloudhookURL: registration.cloudhookURL
         )
     }
 

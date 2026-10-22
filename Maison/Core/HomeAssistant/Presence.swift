@@ -143,6 +143,21 @@ final class PresenceReporter: NSObject, CLLocationManagerDelegate {
     }
 }
 
+/// Home Assistant's reply to `/api/mobile_app/registrations`.
+struct MobileAppRegistration: Equatable, Sendable {
+    let webhookID: String
+    /// Home Assistant Cloud's address, sent even when no external URL is set.
+    let remoteURL: URL?
+    let cloudhookURL: URL?
+
+    init?(_ reply: JSONValue) {
+        guard let id = reply["webhook_id"]?.stringValue else { return nil }
+        webhookID = id
+        remoteURL = reply["remote_ui_url"]?.stringValue.flatMap(URL.init(string:))
+        cloudhookURL = reply["cloudhook_url"]?.stringValue.flatMap(URL.init(string:))
+    }
+}
+
 /// The webhook Home Assistant gave Maison, kept in the keychain: whoever has it can post positions.
 struct Webhook: Codable, Sendable, Equatable {
     let id: String

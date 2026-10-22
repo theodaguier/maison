@@ -93,6 +93,21 @@ struct FloorPlan: Codable, Equatable, Sendable {
     }
 }
 
+extension FloorPlan {
+    /// A plan saved before `devices` existed still opens, with no device placed.
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        rooms = try container.decode([Room].self, forKey: .rooms)
+        walls = try container.decode([Segment].self, forKey: .walls)
+        doors = try container.decode([Segment].self, forKey: .doors)
+        windows = try container.decode([Segment].self, forKey: .windows)
+        objects = try container.decode([Object].self, forKey: .objects)
+        devices = try container.decodeIfPresent([String: Point].self, forKey: .devices) ?? [:]
+        scannedAt = try container.decode(Date.self, forKey: .scannedAt)
+        scannedBy = try container.decodeIfPresent(String.self, forKey: .scannedBy)
+    }
+}
+
 // MARK: - iCloud
 
 enum FloorPlanRecord {
