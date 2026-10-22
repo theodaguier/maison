@@ -1534,16 +1534,6 @@
         }
       }
     },
-    "Add Ping in Home Assistant": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ajouter Ping dans Home Assistant"
-          }
-        }
-      }
-    },
     "Add a Condition": {
       "localizations": {
         "fr": {
@@ -2254,12 +2244,12 @@
         }
       }
     },
-    "Comfort counts the time each room spends in your range. Add a temperature sensor to a room in Home Assistant, or assign an existing one to its room.": {
+    "Comfort counts the time each room spends in your range. No temperature reading reaches your server yet, so Maison has nothing to count.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Le confort compte le temps que chaque pièce passe dans votre plage. Ajoutez un capteur de température à une pièce dans Home Assistant, ou rangez un capteur existant dans sa pièce."
+            "value": "Le confort compte le temps que chaque pièce passe dans votre plage. Aucune température n’arrive encore sur votre serveur : Maison n’a rien à compter."
           }
         }
       }
@@ -2914,12 +2904,12 @@
         }
       }
     },
-    "Energy compares today's electricity with your habit. Add your meter to Home Assistant's Energy dashboard, then come back here.": {
+    "Energy compares today's electricity with your habit. No meter reaches your server yet, so Maison has nothing to compare.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "L’énergie compare l’électricité du jour avec votre habitude. Ajoutez votre compteur au tableau de bord Énergie de Home Assistant, puis revenez ici."
+            "value": "L’énergie compare l’électricité du jour avec votre habitude. Aucun compteur n’arrive encore sur votre serveur : Maison n’a rien à comparer."
           }
         }
       }
@@ -3410,26 +3400,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Home Assistant · %@"
-          }
-        }
-      }
-    },
-    "Home Assistant's Ping integration checks the connection every minute. Add it once, pointed at a public address such as 1.1.1.1, and the Network score starts the same day.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "L’intégration Ping de Home Assistant vérifie la connexion chaque minute. Ajoutez-la une fois, vers une adresse publique comme 1.1.1.1, et le score Réseau démarre le jour même."
-          }
-        }
-      }
-    },
-    "Home Assistant's internet check hasn't reported anything in the last 24 hours.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La vérification internet de Home Assistant n’a rien remonté depuis 24 heures."
           }
         }
       }
@@ -4124,6 +4094,16 @@
         }
       }
     },
+    "Maison is setting up an internet check on your server. If it can't, it tries again tomorrow.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maison installe une vérification d’internet sur votre serveur. Si elle n’y arrive pas, elle réessaie demain."
+          }
+        }
+      }
+    },
     "Maison needs three days of readings to learn the temperatures you live in. You can set your range now instead.": {
       "localizations": {
         "fr": {
@@ -4140,6 +4120,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Maison propose des règles simples. Voici ce qu’elle a compris ; vous pouvez finir la règle à la main."
+          }
+        }
+      }
+    },
+    "Maison switched on an internet check on your server %@.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maison a activé une vérification d’internet sur votre serveur %@."
+          }
+        }
+      }
+    },
+    "Maison switches on the internet check on your server by itself, with an administrator's account. It starts the next time an administrator opens Maison.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maison active elle-même la vérification d’internet sur votre serveur, avec un compte administrateur. Elle démarre la prochaine fois qu’un administrateur ouvre Maison."
           }
         }
       }
@@ -4494,16 +4494,6 @@
         }
       }
     },
-    "No Reading Today": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aucune mesure aujourd’hui"
-          }
-        }
-      }
-    },
     "No Response": {
       "localizations": {
         "fr": {
@@ -4710,16 +4700,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ce n’est pas le bon serveur ?"
-          }
-        }
-      }
-    },
-    "Nothing Checks Your Internet Yet": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rien ne vérifie encore votre internet"
           }
         }
       }
@@ -6300,6 +6280,16 @@
         }
       }
     },
+    "Switching On the Internet Check": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activation de la vérification d’internet"
+          }
+        }
+      }
+    },
     "THEN": {
       "localizations": {
         "fr": {
@@ -7120,6 +7110,16 @@
         }
       }
     },
+    "Waiting for an Administrator": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En attente d’un administrateur"
+          }
+        }
+      }
+    },
     "Waiting for them to accept the invitation in iCloud. Once they do, they sign in to Home Assistant with their own account.": {
       "localizations": {
         "fr": {
@@ -7466,6 +7466,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Votre demande"
+          }
+        }
+      }
+    },
+    "Your server checks the internet regularly. The score appears with the first readings.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre serveur vérifie internet régulièrement. Le score apparaît avec les premières mesures."
           }
         }
       }

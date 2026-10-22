@@ -325,6 +325,32 @@ final class HomeStore {
         return (try? await connection.statistics(of: entityID, since: start, period: period)) ?? []
     }
 
+    /// Switches on Home Assistant's internet check (the Ping integration) when nothing measures the
+    /// connection, so the Network score fills in without the person doing anything. Administrators only;
+    /// tried at most once a day.
+    func ensureInternetCheck(now: Date = .now) async {
+        let defaults = UserDefaults.standard
+        guard !isDemo, phase == .connected, internetSources == nil, let connection else { return }
+        // The account is read after connecting, in the background: ask for it if it isn't there yet.
+        var user = currentUser
+        if user == nil { user = try? await connection.currentUser() }
+        guard user?.isAdmin == true else { return }
+        if let attempted = defaults.object(forKey: InternetCheckSetting.attemptedKey) as? Date, now.timeIntervalSince(attempted) < 86_400 { return }
+        defaults.set(now, forKey: InternetCheckSetting.attemptedKey)
+        do {
+            let credentials = try await freshCredentials()
+            let flows = ConfigFlowClient(serverURL: activeURL ?? credentials.serverURL, accessToken: credentials.accessToken)
+            guard case .created(let entryID) = try await flows.create("ping", answers: ["host": .string(InternetCheckSetting.host)]) else { return }
+            // Response times ship disabled; the average is the one the score reads.
+            try? await connection.enableEntities(ofEntry: entryID, translationKeys: ["round_trip_time_avg"])
+            defaults.set(now, forKey: InternetCheckSetting.addedKey)
+            // The registry changed: reconnecting reads the new entities and where they come from.
+            await connect()
+        } catch {
+            return
+        }
+    }
+
     /// The electricity meters to count: those of Home Assistant's Energy dashboard, otherwise every
     /// energy total the server keeps statistics for. Never picked by name.
     func electricityMeters() async -> [String] {

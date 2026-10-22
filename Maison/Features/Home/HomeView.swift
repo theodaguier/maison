@@ -129,9 +129,7 @@ private struct HomeDashboard: View {
         .task(id: store.phase == .connected) {
             // Scores move slowly: every five minutes is enough, and the history queries stay light.
             while !Task.isCancelled {
-                if store.phase == .connected || scores == nil, !store.states.isEmpty {
-                    scores = await store.loadScores()
-                }
+                await refreshScores()
                 try? await Task.sleep(for: .seconds(300))
             }
         }
@@ -193,6 +191,17 @@ private struct HomeDashboard: View {
     }
 
     private var summary: HomeSummary { store.summary(temperatureChange: temperatureChange) }
+
+    private func refreshScores() async {
+        guard store.phase == .connected || scores == nil, !store.states.isEmpty else { return }
+        await store.ensureInternetCheck()
+        let started = ContinuousClock.now
+        let loaded = await store.loadScores()
+        scores = loaded
+        #if DEBUG
+        await store.writeScoreDiagnostics(loaded, duration: ContinuousClock.now - started)
+        #endif
+    }
 
     /// The scores first; on a calm day the device sentences wait behind "more".
     private var scoredSummary: HomeSummary {

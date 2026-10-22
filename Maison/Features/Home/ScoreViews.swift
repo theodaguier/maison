@@ -400,7 +400,7 @@ private struct ComfortFiche: View {
             MissingScore(
                 symbol: "thermometer.medium.slash",
                 title: "No Temperature in Your Rooms",
-                message: "Comfort counts the time each room spends in your range. Add a temperature sensor to a room in Home Assistant, or assign an existing one to its room."
+                message: "Comfort counts the time each room spends in your range. No temperature reading reaches your server yet, so Maison has nothing to count."
             )
         } else {
             VStack(spacing: 14) {
@@ -598,7 +598,7 @@ private struct EnergyFiche: View {
             MissingScore(
                 symbol: "bolt.slash",
                 title: "No Electricity Meter",
-                message: "Energy compares today's electricity with your habit. Add your meter to Home Assistant's Energy dashboard, then come back here."
+                message: "Energy compares today's electricity with your habit. No meter reaches your server yet, so Maison has nothing to compare."
             )
         }
     }
@@ -660,7 +660,6 @@ private struct EnergyChart: View {
 
 private struct NetworkFiche: View {
     @Environment(HomeStore.self) private var store
-    @Environment(\.openURL) private var openURL
     let score: NetworkScore?
     let hasSource: Bool
 
@@ -682,6 +681,14 @@ private struct NetworkFiche: View {
                 if !score.latency.isEmpty {
                     LatencyChart(score: score)
                 }
+                if let added = InternetCheckSetting.addedAt, Date.now.timeIntervalSince(added) < 7 * 86_400 {
+                    Label(
+                        "Maison switched on an internet check on your server \(added.formatted(.relative(presentation: .named))).",
+                        systemImage: "checkmark.circle.fill"
+                    )
+                    .font(.roundedFootnote)
+                    .foregroundStyle(.secondary)
+                }
                 HStack(spacing: 12) {
                     StatTile(
                         symbol: "checkmark.circle.fill",
@@ -701,24 +708,22 @@ private struct NetworkFiche: View {
             }
         } else if hasSource {
             MissingScore(
-                symbol: "wifi.exclamationmark",
-                title: "No Reading Today",
-                message: "Home Assistant's internet check hasn't reported anything in the last 24 hours."
+                symbol: "wifi",
+                title: "Measuring",
+                message: "Your server checks the internet regularly. The score appears with the first readings."
+            )
+        } else if store.currentUser?.isAdmin == false {
+            MissingScore(
+                symbol: "wifi",
+                title: "Waiting for an Administrator",
+                message: "Maison switches on the internet check on your server by itself, with an administrator's account. It starts the next time an administrator opens Maison."
             )
         } else {
-            VStack(spacing: 14) {
-                MissingScore(
-                    symbol: "wifi",
-                    title: "Nothing Checks Your Internet Yet",
-                    message: "Home Assistant's Ping integration checks the connection every minute. Add it once, pointed at a public address such as 1.1.1.1, and the Network score starts the same day."
-                )
-                if let serverURL = store.serverURL {
-                    Button("Add Ping in Home Assistant") {
-                        openURL(serverURL.appending(path: "config/integrations/dashboard/add").appending(queryItems: [URLQueryItem(name: "domain", value: "ping")]))
-                    }
-                    .buttonStyle(.glassProminent)
-                }
-            }
+            MissingScore(
+                symbol: "wifi",
+                title: "Switching On the Internet Check",
+                message: "Maison is setting up an internet check on your server. If it can't, it tries again tomorrow."
+            )
         }
     }
 }
