@@ -6,7 +6,7 @@ Native iOS app, SwiftUI, Liquid Glass. It targets iOS 26 and Swift 6, and needs 
 
 ## V1
 
-V1 is three scores — Comfort, Energy, Network — and a brand-agnostic connector architecture. Home Assistant is the first connector, not the product. No screen reads a source directly: every source goes through the intelligence layer. Today's screens still read `HomeStore` directly; that gap is known, so do not widen a change to fix it.
+V1 is three scores — Comfort, Energy, Network — behind one abstract, brand-agnostic source boundary. Home Assistant is the first connector, not the product, and for now the only one. No screen reads a source directly: every source goes through the intelligence layer. Today's screens still read `HomeStore` directly; that gap is known, so do not widen a change to fix it.
 
 Documents in V1 are only energy and box documents: an energy bill, an internet-box bill, an energy contract, a box contract. They feed Energy or Network. Nothing else on paper is in V1.
 
@@ -22,7 +22,9 @@ The same capability is provided by interchangeable sources:
 
 - **iPhone only**
 - **Common sources**
-- **Specialised sources**, such as a box, a router, a meter, or Home Assistant
+- **Specialised sources**: a box, a router, a meter, reached through their Home Assistant integration
+
+Do not write a connector for a brand (a Freebox, a Linky, a Netatmo). The source boundary stays generic: no type, name or screen outside the Home Assistant connector depends on Home Assistant or on a brand.
 
 A value the person enters is a starting point. A sensor replaces it on its own when one appears.
 
