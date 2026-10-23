@@ -77,7 +77,7 @@ struct SheetFooter: View {
                 .cardStyle(radius: Theme.rowRadius)
             }
             Label {
-                Text([String(localized: "Via \(store.source(of: entity))"), store.area(of: entity)?.name].compactMap(\.self).joined(separator: " · "))
+                Text([String(localized: "Via \(store.source(of: entity))"), store.area(of: entity)?.name].compactMap(\.self).joined(separator: ", "))
             } icon: {
                 Image(systemName: "house.fill")
             }
@@ -367,7 +367,7 @@ struct LockControls: View {
                 ) {
                     Task { await toggle(isLocked: isLocked) }
                 }
-                Text(isLocked ? "Tap to unlock · Face ID required" : "Tap to lock")
+                Text(isLocked ? "Tap to unlock with Face ID" : "Tap to lock")
                     .font(.roundedFootnote)
                     .foregroundStyle(.secondary)
                 if let error {
@@ -441,7 +441,7 @@ struct LockControls: View {
     }
 
     private func who(_ entry: LogbookEntry) -> String? {
-        if let automation = entry.automationName { return String(localized: "Automation · “\(automation)”") }
+        if let automation = entry.automationName { return String(localized: "Automation “\(automation)”") }
         return entry.userID.flatMap(store.personName(userID:))
     }
 }
@@ -845,7 +845,7 @@ struct SensorControls: View {
                         .foregroundStyle(Color.orange)
                         .symbolSize(30)
                         .annotation(position: .top, spacing: 4) {
-                            Text("\(Phrasing.time(peak.date)) · \(format(peak.value))")
+                            Text("\(Phrasing.time(peak.date)), \(format(peak.value))")
                                 .font(.caption2.weight(.semibold))
                                 .foregroundStyle(.white)
                                 .padding(.horizontal, 8)

@@ -115,7 +115,7 @@ extension HomeStore {
         }
         if let brightness = data["brightness_pct"]?.doubleValue { parts.append("\(Self.number(brightness)) %") }
         if let kelvin = data["color_temp_kelvin"]?.doubleValue { parts.append(RuleTime.whiteName(kelvin)) }
-        return parts.joined(separator: " · ")
+        return parts.joined(separator: ", ")
     }
 
     /// One line saying what a rule does: its description, or a summary of its actions.

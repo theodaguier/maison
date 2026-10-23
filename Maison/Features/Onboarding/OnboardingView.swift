@@ -685,7 +685,7 @@ private struct PreparingStep: View {
         return [
             SetupStep(
                 title: String(localized: "Server Connection"),
-                detail: store.serverURL.flatMap { $0.host() }.map { String(localized: "Home Assistant · \($0)") },
+                detail: store.serverURL.flatMap { $0.host() }.map { String(localized: "Home Assistant, \($0)") },
                 isReady: isConnected
             ),
             SetupStep(

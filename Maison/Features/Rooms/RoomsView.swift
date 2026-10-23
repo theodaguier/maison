@@ -5,17 +5,21 @@ struct RoomsView: View {
     @State private var mode: Mode = .list
     @State private var opened: OpenedDevice?
     @State private var isScanning = false
+    @State private var addsRoom = false
+    @State private var path: [Area] = []
+    @State private var newRoom = ""
+    @State private var error: String?
 
     enum Mode: Hashable { case list, plan }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             Group {
-                if store.rooms.isEmpty {
+                if store.layout.areas.isEmpty, store.currentUser?.isAdmin == false {
                     ContentUnavailableView(
                         "No Rooms Yet",
                         systemImage: "square.grid.2x2",
-                        description: Text("Rooms will be imported from Home Assistant.")
+                        description: Text("An administrator of your home adds them from Maison.")
                     )
                 } else {
                     ScrollView {
@@ -24,15 +28,17 @@ struct RoomsView: View {
                             switch mode {
                             case .list:
                                 FavoritesSection(opened: $opened)
-                                ScenesSection()
-                                LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
-                                    ForEach(store.rooms) { room in
-                                        NavigationLink(value: room) {
-                                            RoomCard(room: room)
-                                        }
-                                        .buttonStyle(.pressable)
-                                    }
+                                RoomList()
+                                if store.currentUser?.isAdmin == true || store.isDemoHome {
+                                    Button("Add a Room", systemImage: "plus") { addsRoom = true }
+                                        .font(.roundedBody)
+                                        .padding(.leading, 16)
+                                        .padding(.vertical, 6)
                                 }
+                                if let error {
+                                    Text(error).font(.roundedFootnote).foregroundStyle(.orange).padding(.leading, 16)
+                                }
+                                ScenesSection()
                             case .plan:
                                 PlanTab(opened: $opened, isScanning: $isScanning)
                             }
@@ -54,48 +60,81 @@ struct RoomsView: View {
             }
             .sheet(item: $opened) { DeviceSheet(entityID: $0.id) }
             .fullScreenCover(isPresented: $isScanning) { ScanScreen() }
+            .alert("Add a Room", isPresented: $addsRoom) {
+                TextField("Name", text: $newRoom)
+                Button("Cancel", role: .cancel) { newRoom = "" }
+                Button("Add") {
+                    let name = newRoom
+                    newRoom = ""
+                    Task {
+                        do {
+                            try await store.createArea(named: name)
+                            error = nil
+                        } catch {
+                            self.error = String(localized: "Couldn’t add the room. It needs an administrator account.")
+                        }
+                    }
+                }
+            } message: {
+                Text("Maison adds it to your server, ready for its devices.")
+            }
             .onAppear {
                 // `-plan` opens the plan straight away, to check its design.
                 if UserDefaults.standard.bool(forKey: "plan") { mode = .plan }
+                #if DEBUG
+                // `-room bedroom` opens a room, to check its design.
+                if let id = UserDefaults.standard.string(forKey: "room"), let room = store.layout.areas.first(where: { $0.id == id }) {
+                    path = [room]
+                }
+                #endif
             }
         }
         .trackScreen(.rooms)
     }
 }
 
-private struct RoomCard: View {
+/// Every room in one card, as in the mock-up: in orange, those where a device asks for something.
+private struct RoomList: View {
     @Environment(HomeStore.self) private var store
-    let room: Area
 
     var body: some View {
-        let devices = store.devices(in: room)
-        let active = devices.filter { $0.isActive && $0.kind != .sensor && $0.kind != .binarySensor }
-        VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Image(systemName: room.symbol)
-                    .font(.system(size: 22, weight: .medium))
-                    .foregroundStyle(active.isEmpty ? Color.secondary : Color.orange)
-                Spacer()
-                if let temperature = store.averageValue(of: "temperature", in: room) {
-                    Text(EntityState.degrees(temperature))
-                        .font(.roundedSubheadlineEmphasized)
-                        .foregroundStyle(.secondary)
+        let areas = store.layout.areas
+        VStack(spacing: 0) {
+            ForEach(Array(areas.enumerated()), id: \.element.id) { index, room in
+                if index > 0 { Theme.separator.frame(height: 1).padding(.leading, 62) }
+                NavigationLink(value: room) {
+                    let count = store.devices(in: room).count
+                    let upkeep = store.maintenance(in: room).count
+                    HStack(spacing: 14) {
+                        Image(systemName: room.symbol)
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .frame(width: 34, height: 34)
+                            .background(room.color, in: .rect(cornerRadius: 9))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(room.name).font(.roundedBody).foregroundStyle(.primary)
+                            Text(caption(devices: count, upkeep: upkeep))
+                                .font(.roundedFootnote)
+                                .foregroundStyle(upkeep > 0 ? Color.orange : Color.secondary)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(.tertiary)
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 12)
+                    .contentShape(.rect)
                 }
-            }
-            VStack(alignment: .leading, spacing: 1) {
-                Text(room.name)
-                    .font(.roundedHeadline)
-                    .lineLimit(1)
-                Text(active.isEmpty ? String(localized: "All off") : String(localized: "\(active.count) on"))
-                    .font(.roundedFootnote)
-                    .foregroundStyle(active.isEmpty ? Color.secondary : Color.orange)
-                    .contentTransition(.numericText())
+                .buttonStyle(.plain)
             }
         }
-        .animation(.smooth, value: active.count)
-        .padding(14)
-        .frame(maxWidth: .infinity, minHeight: 110, alignment: .topLeading)
-        .cardStyle(radius: Theme.tileRadius)
+        .cardStyle()
+    }
+
+    private func caption(devices: Int, upkeep: Int) -> String {
+        let devicesText = devices == 0 ? String(localized: "No devices yet") : String(localized: "\(devices) devices")
+        return upkeep == 0 ? devicesText : String(localized: "\(devicesText), \(upkeep) upkeep")
     }
 }
 
@@ -112,6 +151,20 @@ extension Area {
         if ["jardin", "garden", "terrasse", "balcon"].contains(where: name.contains) { return "leaf.fill" }
         if ["garage"].contains(where: name.contains) { return "car.fill" }
         return "square.split.bottomrightquarter.fill"
+    }
+
+    /// The room's colour in lists, after its kind.
+    var color: Color {
+        switch symbol {
+        case "sofa.fill": .orange
+        case "bed.double.fill": .indigo
+        case "fork.knife": .yellow
+        case "shower.fill": .cyan
+        case "desktopcomputer": .teal
+        case "door.left.hand.closed": .blue
+        case "leaf.fill": .green
+        default: .gray
+        }
     }
 }
 

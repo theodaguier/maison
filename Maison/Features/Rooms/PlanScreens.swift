@@ -33,7 +33,7 @@ struct PlanTab: View {
                     NumberLabel(value: plan.surface.formatted(.number.precision(.fractionLength(0))), unit: "m²", size: .xLarge)
                     Spacer()
                     VStack(alignment: .trailing, spacing: 2) {
-                        Text("\(plan.rooms.count) rooms · \(plan.devices.count) devices placed")
+                        Text("\(plan.rooms.count) rooms, \(plan.devices.count) devices placed")
                             .font(.roundedSubheadlineEmphasized)
                             .foregroundStyle(.secondary)
                         Text(scannedText(plan))
@@ -214,7 +214,7 @@ struct ScanScreen: View {
                     Image(systemName: "figure.walk.motion")
                     VStack(alignment: .leading, spacing: 1) {
                         Text(scan.instruction).font(.roundedSubheadlineEmphasized)
-                        Text("\(scan.walls) walls · \(scan.doors) doors · \(scan.windows) windows detected")
+                        Text("\(scan.walls) walls, \(scan.doors) doors, \(scan.windows) windows detected")
                             .font(.roundedFootnote)
                             .foregroundStyle(.secondary)
                     }
@@ -437,7 +437,7 @@ struct PlanReview: View {
                         Spacer()
                         VStack(alignment: .trailing, spacing: 2) {
                             Text("\(plan.rooms.count) rooms found").font(.roundedSubheadlineEmphasized).foregroundStyle(.secondary)
-                            Text("\(plan.doors.count) doors · \(plan.windows.count) windows").font(.roundedFootnote).foregroundStyle(.tertiary)
+                            Text("\(plan.doors.count) doors, \(plan.windows.count) windows").font(.roundedFootnote).foregroundStyle(.tertiary)
                         }
                         .padding(.top, 10)
                     }
@@ -605,8 +605,8 @@ struct PlacementSheet: View {
 
     private func detail(for entity: EntityState) -> String {
         let room = store.area(of: entity)?.name ?? ""
-        if entity.entityID == selected, position != nil { return String(localized: "\(room) · position chosen") }
-        if plan.devices[entity.entityID] != nil { return String(localized: "\(room) · placed") }
+        if entity.entityID == selected, position != nil { return String(localized: "\(room), position chosen") }
+        if plan.devices[entity.entityID] != nil { return String(localized: "\(room), placed") }
         return room
     }
 

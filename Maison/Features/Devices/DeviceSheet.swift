@@ -451,7 +451,7 @@ private struct ClimateControls: View {
         let humidity = entity.attributes["current_humidity"]?.doubleValue
         let temperature = EntityState.degrees(current)
         if let humidity {
-            return String(localized: "It’s \(temperature) · \(humidity.formatted(.number.precision(.fractionLength(0)))) %")
+            return String(localized: "It’s \(temperature), \(humidity.formatted(.number.precision(.fractionLength(0)))) %")
         }
         return String(localized: "It’s \(temperature)")
     }

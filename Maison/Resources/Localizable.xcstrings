@@ -373,35 +373,35 @@
         }
       }
     },
-    "%@ · %@": {
+    "%@, %@": {
       "shouldTranslate": false
     },
-    "%@ · Apple Account": {
+    "%@, Apple Account": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ · Compte Apple"
+            "value": "%@, Compte Apple"
           }
         }
       }
     },
-    "%@ · placed": {
+    "%@, placed": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ · placé"
+            "value": "%@, placé"
           }
         }
       }
     },
-    "%@ · position chosen": {
+    "%@, position chosen": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ · position choisie"
+            "value": "%@, position choisie"
           }
         }
       }
@@ -418,6 +418,66 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$@ – %2$@°"
+          }
+        }
+      }
+    },
+    "%@, %lld upkeep": {
+      "localizations": {
+        "en": {
+          "substitutions": {
+            "count": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg upkeep"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg upkeeps"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %#@count@"
+          }
+        },
+        "fr": {
+          "substitutions": {
+            "count": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg entretien"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg entretiens"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %#@count@"
           }
         }
       }
@@ -487,6 +547,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld %% de confort : toutes les pièces sont restées dans votre plage."
+          }
+        }
+      }
+    },
+    "%lld %% left": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Encore %lld %%"
+          }
+        }
+      }
+    },
+    "%lld %% of its life left": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Encore %lld %%"
           }
         }
       }
@@ -733,12 +813,12 @@
         }
       }
     },
-    "%lld devices · %lld on": {
+    "%lld devices, %lld on": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%#@devices@ · %2$lld on"
+            "value": "%#@devices@, %2$lld on"
           },
           "substitutions": {
             "devices": {
@@ -766,7 +846,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%#@devices@ · %#@on@"
+            "value": "%#@devices@, %#@on@"
           },
           "substitutions": {
             "devices": {
@@ -813,12 +893,12 @@
         }
       }
     },
-    "%lld doors · %lld windows": {
+    "%lld doors, %lld windows": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld portes · %2$lld fenêtres"
+            "value": "%1$lld portes, %2$lld fenêtres"
           }
         }
       }
@@ -1143,46 +1223,6 @@
         }
       }
     },
-    "%lld on": {
-      "localizations": {
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld on"
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld on"
-                }
-              }
-            }
-          }
-        },
-        "fr": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld allumé"
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld allumés"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "%lld outage": {
       "localizations": {
         "en": {
@@ -1303,12 +1343,12 @@
         }
       }
     },
-    "%lld rooms · %lld devices placed": {
+    "%lld rooms, %lld devices placed": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld pièces · %2$lld appareils placés"
+            "value": "%1$lld pièces, %2$lld appareils placés"
           }
         }
       }
@@ -1433,12 +1473,12 @@
         }
       }
     },
-    "%lld walls · %lld doors · %lld windows detected": {
+    "%lld walls, %lld doors, %lld windows detected": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld murs · %2$lld portes · %3$lld fenêtres détectés"
+            "value": "%1$lld murs, %2$lld portes, %3$lld fenêtres détectés"
           }
         }
       }
@@ -1714,6 +1754,16 @@
         }
       }
     },
+    "Add a Room": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter une pièce"
+          }
+        }
+      }
+    },
     "Add a Trigger": {
       "localizations": {
         "fr": {
@@ -1904,6 +1954,16 @@
         }
       }
     },
+    "An administrator of your home adds them from Maison.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un administrateur de votre maison les ajoute depuis Maison."
+          }
+        }
+      }
+    },
     "Any change": {
       "localizations": {
         "fr": {
@@ -2074,12 +2134,12 @@
         }
       }
     },
-    "Automation · “%@”": {
+    "Automation “%@”": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Automatisation · « %@ »"
+            "value": "Automatisation « %@ »"
           }
         }
       }
@@ -2340,6 +2400,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Annuler l’invitation"
+          }
+        }
+      }
+    },
+    "Check the device": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifiez l’appareil"
           }
         }
       }
@@ -2740,6 +2810,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Impossible de charger le foyer"
+          }
+        }
+      }
+    },
+    "Couldn’t add the room. It needs an administrator account.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’ajouter la pièce. Il faut un compte administrateur."
           }
         }
       }
@@ -3744,12 +3824,12 @@
         }
       }
     },
-    "Home Assistant · %@": {
+    "Home Assistant, %@": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Home Assistant · %@"
+            "value": "Home Assistant, %@"
           }
         }
       }
@@ -4114,6 +4194,16 @@
         }
       }
     },
+    "It reports a problem": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il signale un problème"
+          }
+        }
+      }
+    },
     "It runs": {
       "localizations": {
         "fr": {
@@ -4134,12 +4224,12 @@
         }
       }
     },
-    "It’s %@ · %@ %%": {
+    "It’s %@, %@ %%": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Il fait %1$@ · %2$@ %%"
+            "value": "Il fait %1$@, %2$@ %%"
           }
         }
       }
@@ -4554,6 +4644,16 @@
         }
       }
     },
+    "Maison adds it to your server, ready for its devices.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maison l’ajoute à votre serveur, prête pour ses appareils."
+          }
+        }
+      }
+    },
     "Maison adds what your server needs by itself: devices it found on your network, and the check behind the Network score.": {
       "localizations": {
         "fr": {
@@ -4664,22 +4764,22 @@
         }
       }
     },
-    "Maison · %@ open too long": {
+    "Maison: %@ open too long": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Maison · %@ ouverte trop longtemps"
+            "value": "Maison : %@ ouverte trop longtemps"
           }
         }
       }
     },
-    "Maison · Turn off %@": {
+    "Maison: turn off %@": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Maison · Éteindre %@"
+            "value": "Maison : éteindre %@"
           }
         }
       }
@@ -5104,6 +5204,16 @@
         }
       }
     },
+    "No devices yet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas encore d’appareil"
+          }
+        }
+      }
+    },
     "No habit yet": {
       "localizations": {
         "fr": {
@@ -5394,12 +5504,12 @@
         }
       }
     },
-    "On · %@": {
+    "On, %@": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Allumé · %@"
+            "value": "Allumé, %@"
           }
         }
       }
@@ -6076,16 +6186,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pièces"
-          }
-        }
-      }
-    },
-    "Rooms will be imported from Home Assistant.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les pièces seront importées depuis Home Assistant."
           }
         }
       }
@@ -7010,12 +7110,12 @@
         }
       }
     },
-    "Tap to unlock · Face ID required": {
+    "Tap to unlock with Face ID": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Touchez pour déverrouiller · Face ID demandé"
+            "value": "Touchez pour déverrouiller avec Face ID"
           }
         }
       }
@@ -7080,12 +7180,32 @@
         }
       }
     },
+    "The battery is running low": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La pile est presque vide"
+          }
+        }
+      }
+    },
     "The camera isn’t available. Paste the link instead.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "L’appareil photo n’est pas disponible. Collez plutôt le lien."
+          }
+        }
+      }
+    },
+    "The filter needs cleaning": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le filtre est à nettoyer"
           }
         }
       }
@@ -9186,6 +9306,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$@ %2$@ de plus par jour"
+          }
+        }
+      }
+    },
+    "upkeep.done": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "C’est fait"
           }
         }
       }
