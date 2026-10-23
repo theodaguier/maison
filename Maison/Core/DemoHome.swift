@@ -492,3 +492,20 @@ enum DemoHome {
         ISO8601DateFormatter().string(from: date)
     }
 }
+
+extension DemoHome {
+    /// A few of the server's integrations, for the search.
+    static let integrationCatalog: [IntegrationDescription] = [
+        IntegrationDescription(domain: "matter", name: "Matter", iotClass: "local_push"),
+        IntegrationDescription(domain: "netatmo", name: "Netatmo", iotClass: "cloud_polling"),
+        IntegrationDescription(domain: "shelly", name: "Shelly", iotClass: "local_push"),
+        IntegrationDescription(domain: "speedtestdotcom", name: "Speedtest.net", iotClass: "cloud_polling"),
+        IntegrationDescription(domain: "tado", name: "tado°", iotClass: "cloud_polling"),
+        IntegrationDescription(domain: "zha", name: "Zigbee Home Automation", iotClass: "local_polling"),
+    ]
+
+    static let discoveredDevices = [
+        DiscoveredDevice(flowID: "demo-shelly", domain: "shelly", name: "Shelly Plug S"),
+        DiscoveredDevice(flowID: "demo-freebox", domain: "freebox", name: nil),
+    ]
+}

@@ -61,6 +61,32 @@
         }
       }
     },
+    "%@ and %lld more": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ and %2$lld more"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ et %2$lld autres"
+          }
+        }
+      }
+    },
+    "%@ asks you to sign in on its own site. Your password stays there: Maison never sees it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ vous demande de vous connecter sur son site. Votre mot de passe y reste : Maison ne le voit jamais."
+          }
+        }
+      }
+    },
     "%@ becomes %@": {
       "localizations": {
         "fr": {
@@ -1049,6 +1075,16 @@
         }
       }
     },
+    "%lld in place": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld en place"
+          }
+        }
+      }
+    },
     "%lld integrations linked to your devices": {
       "localizations": {
         "en": {
@@ -1085,6 +1121,16 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "%lld integrations, from your server.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld intégrations, celles de votre serveur."
           }
         }
       }
@@ -1405,6 +1451,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$lld pièces, %2$lld appareils placés"
+          }
+        }
+      }
+    },
+    "%lld sources of %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld sources of %2$lld"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld sources sur %2$lld"
           }
         }
       }
@@ -1800,6 +1862,16 @@
         }
       }
     },
+    "A window open while heating": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une fenêtre ouverte pendant le chauffage"
+          }
+        }
+      }
+    },
     "About %@ %@ more a year": {
       "localizations": {
         "fr": {
@@ -1860,6 +1932,26 @@
         }
       }
     },
+    "Add Another One": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En ajouter un autre"
+          }
+        }
+      }
+    },
+    "Add It Now": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’ajouter maintenant"
+          }
+        }
+      }
+    },
     "Add a Condition": {
       "localizations": {
         "fr": {
@@ -1876,6 +1968,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ajouter une pièce"
+          }
+        }
+      }
+    },
+    "Add a Source": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter une source"
           }
         }
       }
@@ -1916,6 +2018,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ajoutez votre prix du kWh pour voir le coût"
+          }
+        }
+      }
+    },
+    "Added by Maison, checked every minute": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouté par Maison, vérifié chaque minute"
+          }
+        }
+      }
+    },
+    "Added. Its devices appear in a few seconds.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouté. Ses appareils apparaissent dans quelques secondes."
+          }
+        }
+      }
+    },
+    "Adding a source needs an administrator of the household.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter une source demande un administrateur du foyer."
           }
         }
       }
@@ -1990,6 +2122,16 @@
         }
       }
     },
+    "Air quality": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Qualité de l’air"
+          }
+        }
+      }
+    },
     "Air, %@": {
       "localizations": {
         "fr": {
@@ -2030,6 +2172,16 @@
         }
       }
     },
+    "All Sources": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes les sources"
+          }
+        }
+      }
+    },
     "All lights are off.": {
       "localizations": {
         "fr": {
@@ -2060,12 +2212,32 @@
         }
       }
     },
+    "Already added": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Déjà ajoutée"
+          }
+        }
+      }
+    },
     "Also play in": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Écouter aussi dans"
+          }
+        }
+      }
+    },
+    "An administrator of the household can add it from their iPhone.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un administrateur du foyer peut l’ajouter depuis son iPhone."
           }
         }
       }
@@ -2156,6 +2328,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Arrivées et départs"
+          }
+        }
+      }
+    },
+    "Arrivals and departures of the household": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrivées et départs du foyer"
           }
         }
       }
@@ -2460,6 +2642,26 @@
         }
       }
     },
+    "Box or router": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Box ou routeur"
+          }
+        }
+      }
+    },
+    "Brand, device or service": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marque, appareil ou service"
+          }
+        }
+      }
+    },
     "Brightness": {
       "localizations": {
         "fr": {
@@ -2516,6 +2718,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Par « %@ »"
+          }
+        }
+      }
+    },
+    "CO₂, to know when to air": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le CO₂, pour savoir quand aérer"
           }
         }
       }
@@ -2580,12 +2792,32 @@
         }
       }
     },
+    "Change Your Tariff": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifier votre tarif"
+          }
+        }
+      }
+    },
     "Check the device": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Vérifiez l’appareil"
+          }
+        }
+      }
+    },
+    "Checked every minute": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifié chaque minute"
           }
         }
       }
@@ -2720,6 +2952,16 @@
         }
       }
     },
+    "Comfort, room by room": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le confort, pièce par pièce"
+          }
+        }
+      }
+    },
     "Comfort, weather": {
       "localizations": {
         "fr": {
@@ -2770,7 +3012,27 @@
         }
       }
     },
+    "Connected": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Branché"
+          }
+        }
+      }
+    },
     "Connected Devices": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appareils connectés"
+          }
+        }
+      }
+    },
+    "Connected devices": {
       "localizations": {
         "fr": {
           "stringUnit": {
@@ -3400,6 +3662,16 @@
         }
       }
     },
+    "Doors and locks": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Portes et serrures"
+          }
+        }
+      }
+    },
     "Dry": {
       "localizations": {
         "fr": {
@@ -3476,6 +3748,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Électricité du réseau"
+          }
+        }
+      }
+    },
+    "Electricity meter": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compteur électrique"
           }
         }
       }
@@ -3576,6 +3858,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Énergie : %lld %% sous votre habitude pour l’instant."
+          }
+        }
+      }
+    },
+    "Enter Your Tariff": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saisir votre tarif"
           }
         }
       }
@@ -3850,6 +4142,16 @@
         }
       }
     },
+    "Found by your server. Maison adds them without asking anything, except a code when the device shows one.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Repérés par votre serveur. Maison les ajoute sans rien vous demander, sauf un code si l’appareil en affiche un."
+          }
+        }
+      }
+    },
     "Found on Your Network": {
       "localizations": {
         "fr": {
@@ -3880,6 +4182,16 @@
         }
       }
     },
+    "From your grid operator, the day after": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Par le gestionnaire du réseau, le lendemain"
+          }
+        }
+      }
+    },
     "Frugal": {
       "localizations": {
         "fr": {
@@ -3906,6 +4218,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tout ouvert"
+          }
+        }
+      }
+    },
+    "Gas meter": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compteur de gaz"
           }
         }
       }
@@ -3986,6 +4308,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Chauffe"
+          }
+        }
+      }
+    },
+    "Heating and air conditioning": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chauffage et climatisation"
           }
         }
       }
@@ -4130,6 +4462,16 @@
         }
       }
     },
+    "Home battery": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Batterie domestique"
+          }
+        }
+      }
+    },
     "Hour": {
       "localizations": {
         "fr": {
@@ -4166,6 +4508,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Présence du foyer"
+          }
+        }
+      }
+    },
+    "How to Add One": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comment en ajouter un"
           }
         }
       }
@@ -4280,6 +4632,26 @@
         }
       }
     },
+    "In Place": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En place"
+          }
+        }
+      }
+    },
+    "In the server’s energy settings": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dans les réglages énergie du serveur"
+          }
+        }
+      }
+    },
     "In your own words, as you’d say it to someone. Maison shows you the rule before saving it.": {
       "localizations": {
         "fr": {
@@ -4326,6 +4698,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Box internet"
+          }
+        }
+      }
+    },
+    "Internet check": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Test de connexion"
           }
         }
       }
@@ -4570,12 +4952,32 @@
         }
       }
     },
+    "It’s already added.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "C’est déjà ajouté."
+          }
+        }
+      }
+    },
     "I’m adding you to %@, you’ll see, it’s simple.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Je t’ajoute à %@, tu verras, c’est simple."
+          }
+        }
+      }
+    },
+    "I’ve Signed In": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Je me suis connecté"
           }
         }
       }
@@ -4646,6 +5048,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Plan et réglages synchronisés par iCloud"
+          }
+        }
+      }
+    },
+    "Leak detectors": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Détecteurs de fuite"
           }
         }
       }
@@ -4830,6 +5242,26 @@
         }
       }
     },
+    "Litres used, and leaks": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les litres, et les fuites"
+          }
+        }
+      }
+    },
+    "Live, with a reader on the meter": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En direct, par un lecteur sur le compteur"
+          }
+        }
+      }
+    },
     "Living Room": {
       "localizations": {
         "fr": {
@@ -4950,6 +5382,16 @@
         }
       }
     },
+    "Look for Its Brand": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chercher sa marque"
+          }
+        }
+      }
+    },
     "Looking for your server…": {
       "localizations": {
         "fr": {
@@ -4996,6 +5438,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Maison ajoute elle-même ce dont votre serveur a besoin : les appareils trouvés sur votre réseau, et la vérification derrière le score Réseau."
+          }
+        }
+      }
+    },
+    "Maison already works with nothing more. Each source makes a score more accurate, and Maison sets it up by itself.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maison marche déjà sans rien de plus. Chaque source rend un score plus juste, et Maison l’installe et la règle elle-même."
           }
         }
       }
@@ -5660,6 +6112,16 @@
         }
       }
     },
+    "Not available here": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indisponible ici"
+          }
+        }
+      }
+    },
     "Not connected": {
       "localizations": {
         "fr": {
@@ -5736,6 +6198,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rien de partagé"
+          }
+        }
+      }
+    },
+    "Nothing to do in Home Assistant. What you enter is a starting point: a sensor replaces it as soon as one appears.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rien à faire dans Home Assistant. Ce que vous saisissez sert de point de départ : un capteur le remplace dès qu’il apparaît."
           }
         }
       }
@@ -5840,6 +6312,16 @@
         }
       }
     },
+    "On This iPhone": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur cet iPhone"
+          }
+        }
+      }
+    },
     "On Today": {
       "localizations": {
         "fr": {
@@ -5856,6 +6338,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Allumée depuis %@"
+          }
+        }
+      }
+    },
+    "On the Network": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur le réseau"
           }
         }
       }
@@ -5926,6 +6418,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Une lumière est allumée."
+          }
+        }
+      }
+    },
+    "One price": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prix unique"
           }
         }
       }
@@ -6020,6 +6522,16 @@
         }
       }
     },
+    "Open, closed, locked": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvertes, fermées, verrouillées"
+          }
+        }
+      }
+    },
     "Opened %lld times today": {
       "localizations": {
         "en": {
@@ -6102,6 +6614,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Coupure à %1$@, %2$@"
+          }
+        }
+      }
+    },
+    "Outside temperature and forecast": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Température dehors et prévisions"
+          }
+        }
+      }
+    },
+    "Outside, to know when to air": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dehors, pour savoir quand aérer"
           }
         }
       }
@@ -6276,6 +6808,26 @@
         }
       }
     },
+    "Plug it in and connect it to your Wi-Fi: Maison finds it on the network and adds it by itself. If it needs an account, look for its brand.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Branchez-le et reliez-le à votre Wi-Fi : Maison le trouve sur le réseau et l’ajoute toute seule. S’il demande un compte, cherchez sa marque."
+          }
+        }
+      }
+    },
+    "Plugs that measure": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prises qui mesurent"
+          }
+        }
+      }
+    },
     "Port": {
       "localizations": {
         "fr": {
@@ -6302,6 +6854,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Alimentation"
+          }
+        }
+      }
+    },
+    "Presence": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Présence"
           }
         }
       }
@@ -6786,6 +7348,16 @@
         }
       }
     },
+    "Safety": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sécurité"
+          }
+        }
+      }
+    },
     "Same as yesterday at this time": {
       "localizations": {
         "fr": {
@@ -6976,6 +7548,16 @@
         }
       }
     },
+    "Seen by the box": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vus par la box"
+          }
+        }
+      }
+    },
     "Send a notification": {
       "localizations": {
         "fr": {
@@ -7102,6 +7684,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Réglée par vous"
+          }
+        }
+      }
+    },
+    "Set on the server": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réglé sur le serveur"
           }
         }
       }
@@ -7276,6 +7868,16 @@
         }
       }
     },
+    "Signal of the devices, room by room": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le signal des appareils, pièce par pièce"
+          }
+        }
+      }
+    },
     "Signed in": {
       "localizations": {
         "fr": {
@@ -7316,12 +7918,42 @@
         }
       }
     },
+    "Smoke and carbon monoxide": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fumée et monoxyde de carbone"
+          }
+        }
+      }
+    },
+    "Smoke detectors": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Détecteurs de fumée"
+          }
+        }
+      }
+    },
     "So the home reacts when you leave or come back.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Pour que la maison réagisse quand vous partez ou rentrez."
+          }
+        }
+      }
+    },
+    "Solar panels": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Panneaux solaires"
           }
         }
       }
@@ -7726,6 +8358,16 @@
         }
       }
     },
+    "The gas used each day": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le gaz consommé chaque jour"
+          }
+        }
+      }
+    },
     "The home card tells how your day went, written on this iPhone by Apple Intelligence. Nothing leaves the iPhone. Takes effect next time the app opens.": {
       "localizations": {
         "fr": {
@@ -7836,6 +8478,16 @@
         }
       }
     },
+    "The prices on your bill. A bill or a contract read by Maison will replace them.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les prix de votre facture. Une facture ou un contrat lu par Maison les remplacera."
+          }
+        }
+      }
+    },
     "The rooms couldn’t be put together. Scan again, keeping some overlap between rooms.": {
       "localizations": {
         "fr": {
@@ -7862,6 +8514,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Le score compare aujourd’hui avec les mêmes heures de vos jours précédents. Il apparaît après trois jours de mesures."
+          }
+        }
+      }
+    },
+    "The set temperature, room by room": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La consigne, pièce par pièce"
           }
         }
       }
@@ -7902,6 +8564,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Alors"
+          }
+        }
+      }
+    },
+    "Thermometers": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thermomètres"
           }
         }
       }
@@ -8026,6 +8698,16 @@
         }
       }
     },
+    "This step asks for a setting Maison can’t show yet.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette étape demande un réglage que Maison ne sait pas encore afficher."
+          }
+        }
+      }
+    },
     "This trigger was set up in Home Assistant. Maison keeps it as it is.": {
       "localizations": {
         "fr": {
@@ -8042,6 +8724,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Débit"
+          }
+        }
+      }
+    },
+    "Throughput and connected devices": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Débit et appareils connectés"
           }
         }
       }
@@ -8116,6 +8808,16 @@
         }
       }
     },
+    "To turn kWh into money": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour convertir les kWh en euros"
+          }
+        }
+      }
+    },
     "Today": {
       "localizations": {
         "fr": {
@@ -8152,6 +8854,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Trop froid"
+          }
+        }
+      }
+    },
+    "Too dry or too damp": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trop sec ou trop humide"
           }
         }
       }
@@ -8412,6 +9124,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Inchangé"
+          }
+        }
+      }
+    },
+    "Under the sink, behind the washing machine": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sous l’évier, derrière la machine"
           }
         }
       }
@@ -8706,6 +9428,16 @@
         }
       }
     },
+    "Water meter": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compteur d’eau"
+          }
+        }
+      }
+    },
     "Water today": {
       "localizations": {
         "fr": {
@@ -8722,6 +9454,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Eau hier"
+          }
+        }
+      }
+    },
+    "Weather": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Météo"
           }
         }
       }
@@ -8756,12 +9498,52 @@
         }
       }
     },
+    "What Maison Measures": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce que Maison mesure"
+          }
+        }
+      }
+    },
     "What Maison knows": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Ce que Maison sait"
+          }
+        }
+      }
+    },
+    "What each device uses": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce que consomme chaque appareil"
+          }
+        }
+      }
+    },
+    "What it stores and gives back": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce qu’elle stocke et restitue"
+          }
+        }
+      }
+    },
+    "What they produce": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce qu’ils produisent"
           }
         }
       }
@@ -8896,12 +9678,42 @@
         }
       }
     },
+    "Wi-Fi signal": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Signal Wi-Fi"
+          }
+        }
+      }
+    },
     "Window": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Fenêtre"
+          }
+        }
+      }
+    },
+    "Windows and shutters": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fenêtres et volets"
+          }
+        }
+      }
+    },
+    "With an Account": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avec un compte"
           }
         }
       }
@@ -9156,6 +9968,16 @@
         }
       }
     },
+    "Your consumption, measured": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre consommation, mesurée"
+          }
+        }
+      }
+    },
     "Your iPhone tells your server when you leave or come home, for rules like “When everyone leaves”. Nothing else leaves it.": {
       "localizations": {
         "fr": {
@@ -9206,12 +10028,52 @@
         }
       }
     },
+    "Your server couldn’t add it (%@).": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre serveur n’a pas pu l’ajouter (%@)."
+          }
+        }
+      }
+    },
+    "Your server didn’t answer. Try again in a moment.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre serveur n’a pas répondu. Réessayez dans un instant."
+          }
+        }
+      }
+    },
     "Your server has no remote access yet, so Maison only reaches it at home. When Home Assistant Cloud is signed in, Maison turns its remote access on by itself.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Votre serveur n’a pas encore d’accès à distance : Maison ne le joint qu’à la maison. Quand Home Assistant Cloud est connecté, Maison active elle-même son accès à distance."
+          }
+        }
+      }
+    },
+    "Your server is setting it up…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre serveur l’installe…"
+          }
+        }
+      }
+    },
+    "Your server’s integrations, set up by Maison.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les intégrations de votre serveur, installées par Maison."
           }
         }
       }

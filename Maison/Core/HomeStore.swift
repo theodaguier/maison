@@ -38,10 +38,10 @@ final class HomeStore {
 
     @ObservationIgnored private let credentialStore: any CredentialStorage
     @ObservationIgnored private var credentials: Credentials?
-    @ObservationIgnored private var connection: HomeAssistantConnection?
+    @ObservationIgnored private(set) var connection: HomeAssistantConnection?
     @ObservationIgnored private let connector: ServerConnector
     /// The address the current connection goes through; REST calls use it too.
-    @ObservationIgnored private var activeURL: URL?
+    @ObservationIgnored private(set) var activeURL: URL?
     @ObservationIgnored private var updatesTask: Task<Void, Never>?
     @ObservationIgnored private var retryTask: Task<Void, Never>?
     /// `source_connected` is sent once per sign-in, not again when a lost connection comes back.

@@ -723,7 +723,7 @@ enum MeterProposalSetting {
 
 /// The way without hardware: the grid operator already has the meter's readings, and hands them over
 /// once the person approves Maison on its site. They arrive the day after.
-private struct GridLinkCard: View {
+struct GridLinkCard: View {
     @Environment(HomeStore.self) private var store
     @Environment(\.webAuthenticationSession) private var webAuthenticationSession
     let gridOperator: GridOperator
@@ -795,7 +795,7 @@ private struct GridLinkCard: View {
 
 /// No meter reaches the server: what reading it brings, and the way that fits the home's country.
 /// Once the reader is on the Wi-Fi, Home Assistant finds it and Maison adds it; nothing to set up.
-private struct MeterProposal: View {
+struct MeterProposal: View {
     let reading: MeterReading
     /// Shown under the grid operator's card: the reader is then the way to measure live.
     var isAlternative = false

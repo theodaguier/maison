@@ -54,7 +54,7 @@ struct ConfigFlowClient: Sendable {
         try await request("POST", path, body: body)
     }
 
-    private func request(_ method: String, _ path: String, body: JSONValue? = nil) async throws -> JSONValue {
+    func request(_ method: String, _ path: String, body: JSONValue? = nil) async throws -> JSONValue {
         var request = URLRequest(url: serverURL.appending(path: path))
         request.httpMethod = method
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
