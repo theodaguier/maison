@@ -47,8 +47,26 @@ struct SettingsView: View {
                     if store.serverURL != nil {
                         NavigationLink { ProfilePage() } label: { ProfileCard() }
                             .buttonStyle(.plain)
-                        NavigationLink { ServerPage() } label: { ServerCard(showsArrow: true) }
-                            .buttonStyle(.plain)
+                        SettingsGroup("Sources") {
+                            NavigationLink { ServerPage() } label: {
+                                SettingsRow(title: "Home Assistant", detail: homeAssistantDetail, showsChevron: true) {
+                                    HomeAssistantTile(size: 30)
+                                }
+                            }
+                            SettingsDivider()
+                            NavigationLink { IPhoneSourcePage() } label: {
+                                SettingsRow(title: "iPhone", detail: iPhoneDetail, showsChevron: true) {
+                                    Image(systemName: "apple.logo")
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundStyle(.primary)
+                                        .frame(width: 30, height: 30)
+                                        .background(Theme.card, in: .rect(cornerRadius: 8))
+                                        .overlay { RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.cardBorder, lineWidth: 1) }
+                                }
+                            }
+                        }
+                        .buttonStyle(.plain)
+                        .task { await store.measureLatency() }
                     }
                     SettingsGroup("Household") {
                         HouseholdSection()
@@ -65,32 +83,8 @@ struct SettingsView: View {
                                 SettingsRow(symbol: "wifi", color: .teal, title: "Local Network",
                                             value: store.serverURL?.host() ?? "", showsChevron: true)
                             }
-                            SettingsDivider()
-                            PresenceRow()
-                            SettingsDivider()
-                            NavigationLink { PermissionsPage() } label: {
-                                SettingsRow(title: "Home Assistant Permissions",
-                                            value: store.currentUser?.isAdmin == true ? String(localized: "Full") : String(localized: "Standard"),
-                                            showsChevron: true) {
-                                    HomeAssistantTile(size: 30)
-                                }
-                            }
                         }
                         .buttonStyle(.plain)
-                        if !store.integrationSummaries.isEmpty {
-                            SettingsGroup("Integrations") {
-                                ForEach(Array(store.integrationSummaries.prefix(8).enumerated()), id: \.element.domain) { index, item in
-                                    if index > 0 { SettingsDivider() }
-                                    NavigationLink { IntegrationPage(integration: item) } label: {
-                                        SettingsRow(title: LocalizedStringKey(stringLiteral: item.title), detail: store.integrationDetail(item),
-                                                    showsChevron: true) {
-                                            IntegrationLogo(domain: item.domain)
-                                        }
-                                    }
-                                }
-                            }
-                            .buttonStyle(.plain)
-                        }
                     }
                     SettingsGroup("Appearance") {
                         HStack(spacing: 12) {
@@ -164,6 +158,24 @@ struct SettingsView: View {
         }
         .trackScreen(.settings)
     }
+
+    /// "Connected locally, 34 ms".
+    private var homeAssistantDetail: String {
+        guard store.phase == .connected else { return String(localized: "Not connected") }
+        let local = store.serverURL?.isLocalNetwork == true
+        guard let latency = store.latencies.last else {
+            return local ? String(localized: "Connected locally") : String(localized: "Connected remotely")
+        }
+        let milliseconds = Int(latency.milliseconds)
+        return local ? String(localized: "Connected locally, \(milliseconds) ms") : String(localized: "Connected remotely, \(milliseconds) ms")
+    }
+
+    /// What the iPhone gives the home.
+    private var iPhoneDetail: String {
+        if store.presence.isEnabled { return String(localized: "Location") }
+        if store.isTrackedByHomeAssistant { return String(localized: "Location, through the Home Assistant app") }
+        return String(localized: "Nothing shared")
+    }
 }
 
 /// The "Day Summary" switch, on by default; the home screen reads it before writing the summary.
@@ -213,7 +225,7 @@ struct SettingsDivider: View {
 }
 
 /// Whether Maison tells Home Assistant when you leave or come home; switched off here as well as turned on.
-private struct PresenceRow: View {
+struct PresenceRow: View {
     @Environment(HomeStore.self) private var store
     @State private var error: String?
 
@@ -402,8 +414,8 @@ struct ServerCard: View {
 
     private var footer: String {
         store.household.status == .ready && store.household.household != nil
-            ? String(localized: "Home Assistant \(store.serverVersion ?? "") · synced with iCloud")
-            : String(localized: "Home Assistant \(store.serverVersion ?? "") · \(store.serverURL?.host() ?? "")")
+            ? String(localized: "Home Assistant \(store.serverVersion ?? ""), synced with iCloud")
+            : String(localized: "Home Assistant \(store.serverVersion ?? ""), \(store.serverURL?.host() ?? "")")
     }
 
     private var connectionText: String {

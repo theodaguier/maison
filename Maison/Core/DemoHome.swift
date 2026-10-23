@@ -28,7 +28,7 @@ enum DemoHome {
         let placement: [String: String] = [
             "light.lampadaire": "living_room", "light.bandeau_led": "living_room", "light.plafonnier": "living_room",
             "climate.thermostat": "living_room", "media_player.sonos": "living_room", "media_player.fire_tv": "living_room",
-            "cover.volets_salon": "living_room", "sensor.salon_temperature": "living_room", "sensor.salon_humidity": "living_room",
+            "cover.volets_salon": "living_room", "sensor.salon_temperature": "living_room", "sensor.salon_humidity": "living_room", "sensor.salon_co2": "living_room",
             "binary_sensor.salon_motion": "living_room",
             "climate.climatiseur": "bedroom", "sensor.chambre_temperature": "bedroom",
             "switch.prise_cafe": "kitchen", "sensor.prise_cafe_power": "kitchen",
@@ -131,6 +131,27 @@ enum DemoHome {
             EntityState(entityID: "sensor.internet_round_trip_time_maximum", state: "21", attributes: [
                 "friendly_name": "Internet temps de réponse maximum", "unit_of_measurement": "ms", "state_class": "measurement",
             ]),
+            EntityState(entityID: "weather.forecast_maison", state: "partlycloudy", attributes: [
+                "friendly_name": "Météo", "temperature": 14, "humidity": 62,
+            ]),
+            EntityState(entityID: "sensor.salon_co2", state: "1140", attributes: [
+                "friendly_name": "Salon CO₂", "device_class": "carbon_dioxide", "unit_of_measurement": "ppm",
+            ]),
+            EntityState(entityID: "sensor.chauffe_eau_energy", state: "412.6", attributes: [
+                "friendly_name": "Chauffe-eau", "device_class": "energy", "unit_of_measurement": "kWh", "state_class": "total_increasing",
+            ]),
+            EntityState(entityID: "sensor.compteur_eau", state: "182.4", attributes: [
+                "friendly_name": "Compteur d’eau", "device_class": "water", "unit_of_measurement": "L", "state_class": "total_increasing",
+            ]),
+            EntityState(entityID: "sensor.box_download", state: "348", attributes: [
+                "friendly_name": "Box débit descendant", "device_class": "data_rate", "unit_of_measurement": "Mbit/s",
+            ]),
+            EntityState(entityID: "sensor.box_upload", state: "92", attributes: [
+                "friendly_name": "Box débit montant", "device_class": "data_rate", "unit_of_measurement": "Mbit/s",
+            ]),
+            EntityState(entityID: "device_tracker.iphone_theo_box", state: "home", attributes: ["friendly_name": "iPhone de Théo", "source_type": "router"]),
+            EntityState(entityID: "device_tracker.macbook_box", state: "home", attributes: ["friendly_name": "MacBook", "source_type": "router"]),
+            EntityState(entityID: "device_tracker.tv_box", state: "not_home", attributes: ["friendly_name": "TV", "source_type": "router"]),
             EntityState(entityID: "sensor.salon_humidity", state: "48", attributes: [
                 "friendly_name": "Salon humidité", "device_class": "humidity", "unit_of_measurement": "%",
             ]),
@@ -331,6 +352,8 @@ enum DemoHome {
                 let evening = date >= today && Calendar.current.component(.hour, from: date) == 21 ? 14.0 : 0
                 return StateChange(state: String(format: "%.1f", 15 + wobble + evening), date: date)
             }
+        case "sensor.box_download":
+            return hourly(since: start) { hour, _ in hour >= 20 && hour < 23 ? 210 : 340 + 10 * sin(hour) }
         case "sensor.sdb_temperature":
             let values: [(Double, Double)] = [(-24, 22.6), (-21, 22.2), (-18, 22.1), (-16, 22.1), (-14, 23.9), (-12.5, 23), (-11, 22.7), (-9, 22.9), (-7, 23.2), (-5, 23.1), (-3.5, 23.5), (-2.4, 24.6), (-1.6, 23.6), (-0.8, 23.2), (-0.2, 23.1)]
             return values.map { StateChange(state: String($0.1), date: Date.now.addingTimeInterval($0.0 * 3600)) }
@@ -372,6 +395,15 @@ enum DemoHome {
     }
 
     static func statistics(of entityID: String, since start: Date, period: String) -> [StatisticPoint] {
+        if entityID == "sensor.chauffe_eau_energy" || entityID == "sensor.compteur_eau", period == "hour" {
+            let first = (start.timeIntervalSince1970 / 3600).rounded(.down) * 3600
+            return stride(from: first, to: Date.now.timeIntervalSince1970 - 3600, by: 3600).map { time in
+                let date = Date(timeIntervalSince1970: time)
+                let hour = Calendar.current.component(.hour, from: date)
+                let value = entityID == "sensor.chauffe_eau_energy" ? (hour == 19 ? 1.2 : hour == 20 || hour == 6 ? 0.4 : 0) : ([7, 8, 19, 20].contains(hour) ? 18.0 : 1.5)
+                return StatisticPoint(start: date, mean: nil, min: nil, max: nil, change: value)
+            }
+        }
         if entityID == "sensor.energy_today", period == "hour" {
             let first = (start.timeIntervalSince1970 / 3600).rounded(.down) * 3600
             return stride(from: first, to: Date.now.timeIntervalSince1970 - 3600, by: 3600).map { time in

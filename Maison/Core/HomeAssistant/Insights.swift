@@ -94,6 +94,20 @@ extension HomeAssistantConnection {
             .compactMap { $0["stat_energy_from"]?.stringValue }
     }
 
+    /// The price set for grid electricity in the Energy dashboard: a fixed number, or an entity whose
+    /// state is the price (a tariff that changes).
+    func gridEnergyPrice() async throws -> (fixed: Double?, entityID: String?) {
+        let prefs = try await send(["type": "energy/get_prefs"])
+        let flows = (prefs["energy_sources"]?.arrayValue ?? [])
+            .filter { $0["type"]?.stringValue == "grid" }
+            .flatMap { $0["flow_from"]?.arrayValue ?? [] }
+        for flow in flows {
+            if let fixed = flow["number_energy_price"]?.doubleValue { return (fixed, nil) }
+            if let entity = flow["entity_energy_price"]?.stringValue { return (nil, entity) }
+        }
+        return (nil, nil)
+    }
+
     /// Automations that mention the entity, as entity ids (`automation.trop_chaud`).
     func automations(using entityID: String) async throws -> [String] {
         let result = try await send([

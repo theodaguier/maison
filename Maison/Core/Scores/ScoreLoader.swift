@@ -112,7 +112,9 @@ extension HomeStore {
         var series: [(id: String, byHour: [Date: Double])] = []
         for meter in meters.ids {
             var byHour: [Date: Double] = [:]
-            for point in await statistics(of: meter, since: Calendar.current.startOfDay(for: weekAgo), period: "hour") {
+            // A week for the habit, and the whole month for its cost.
+            let monthStart = Calendar.current.dateInterval(of: .month, for: now)?.start ?? weekAgo
+            for point in await statistics(of: meter, since: min(Calendar.current.startOfDay(for: weekAgo), monthStart), period: "hour") {
                 if let change = point.change { byHour[point.start, default: 0] += max(0, change) }
             }
             series.append((meter, byHour))

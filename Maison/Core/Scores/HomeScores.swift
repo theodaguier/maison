@@ -38,6 +38,20 @@ struct ComfortScore: Sendable, Equatable {
         let percent: Int
         /// The longest stretch outside the range, if any lasted 15 minutes or more.
         let excursion: Excursion?
+        /// The readings over the window, oldest first, for the room's small chart.
+        var readings: [(date: Date, value: Double)] = []
+
+        static func == (lhs: Room, rhs: Room) -> Bool {
+            lhs.id == rhs.id && lhs.percent == rhs.percent && lhs.excursion == rhs.excursion
+                && lhs.readings.map(\.date) == rhs.readings.map(\.date) && lhs.readings.map(\.value) == rhs.readings.map(\.value)
+        }
+
+        /// The reading closest to the middle of the excursion, if any.
+        var excursionValue: Double? {
+            guard let excursion else { return nil }
+            let middle = excursion.interval.start.addingTimeInterval(excursion.interval.duration / 2)
+            return readings.min { abs($0.date.timeIntervalSince(middle)) < abs($1.date.timeIntervalSince(middle)) }?.value
+        }
     }
 
     enum Side: Sendable, Equatable { case tooWarm, tooCold }
@@ -75,7 +89,8 @@ struct ComfortScore: Sendable, Equatable {
                 id: room.id,
                 name: room.name,
                 percent: Int((100 * roomInside / roomCovered).rounded()),
-                excursion: longestExcursion(segments, range: range)
+                excursion: longestExcursion(segments, range: range),
+                readings: segments.map { (date: $0.interval.start, value: $0.value) }
             ))
         }
         guard covered > 0 else { return nil }
@@ -126,6 +141,8 @@ struct EnergyScore: Sendable, Equatable {
     let unit: String
     /// The last 24 hours, oldest first, each hour's energy in `unit`.
     let lastDay: [(start: Date, value: Double)]
+    /// Every hour read, for the cost of the month.
+    var history: [(start: Date, value: Double)] = []
 
     /// `nil` while there is no habit to compare with.
     var percent: Int? {
@@ -166,7 +183,7 @@ struct EnergyScore: Sendable, Equatable {
         }
         let usual = previous.count >= minimumDays ? median(previous) : nil
         let lastDay = hourly.filter { $0.start >= asOf.addingTimeInterval(-86_400) && $0.start < asOf }.sorted { $0.start < $1.start }
-        return EnergyScore(today: today, day: midnight, asOf: asOf, usual: usual, unit: unit, lastDay: lastDay)
+        return EnergyScore(today: today, day: midnight, asOf: asOf, usual: usual, unit: unit, lastDay: lastDay, history: hourly)
     }
 
     static func == (lhs: EnergyScore, rhs: EnergyScore) -> Bool {

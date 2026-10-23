@@ -354,6 +354,13 @@ final class HomeStore {
         if changed { await connect() }
     }
 
+    /// The kWh price set in Home Assistant's Energy dashboard, if any.
+    func serverEnergyPrice() async -> Double? {
+        guard let connection, let price = try? await connection.gridEnergyPrice() else { return nil }
+        if let fixed = price.fixed, fixed > 0 { return fixed }
+        return price.entityID.flatMap { states[$0]?.numericState }
+    }
+
     static let gridStatisticID = "maison:grid_consumption"
 
     /// Brings the grid operator's readings since the last import into the server's statistics. They

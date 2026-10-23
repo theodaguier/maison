@@ -1,6 +1,7 @@
 import AuthenticationServices
 import Charts
 import SwiftUI
+import UserNotifications
 
 /// The three V1 scores, in the order of the home screen.
 enum ScoreKind: String, CaseIterable, Identifiable {
@@ -384,9 +385,17 @@ private struct ComfortFiche: View {
     @State private var tab: Tab = .rooms
     @State private var editsRange = false
 
-    enum Tab: Hashable { case rooms, temperature, humidity }
+    enum Tab: Hashable { case rooms, temperature, humidity, air }
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            scoreSection
+            ComfortExtras(score: score)
+        }
+    }
+
+    @ViewBuilder
+    private var scoreSection: some View {
         if let score {
             VStack(alignment: .leading, spacing: 18) {
                 let (status, color) = health(score.percent)
@@ -399,7 +408,7 @@ private struct ComfortFiche: View {
                     statusColor: color,
                     detail: "\(degrees(score.range.lowerBound)) – \(degrees(score.range.upperBound))°"
                 )
-                PillPicker(options: [(.rooms, "Rooms", nil), (.temperature, "Temperature", nil), (.humidity, "Humidity", nil)], selection: $tab)
+                PillPicker(options: tabs, selection: $tab)
                 switch tab {
                 case .rooms:
                     VStack(spacing: 20) {
@@ -409,6 +418,8 @@ private struct ComfortFiche: View {
                     RoomValues(deviceClass: "temperature", unit: "°", range: score.range)
                 case .humidity:
                     RoomValues(deviceClass: "humidity", unit: " %", range: 40...60)
+                case .air:
+                    RoomValues(deviceClass: "carbon_dioxide", unit: " ppm", range: 0...1000)
                 }
                 RangeRow(range: score.range, origin: score.rangeOrigin) { editsRange = true }
             }
@@ -431,6 +442,13 @@ private struct ComfortFiche: View {
             }
             .sheet(isPresented: $editsRange) { ComfortRangeEditor(range: 19...22) }
         }
+    }
+
+    /// Air appears only when a room measures CO₂.
+    private var tabs: [(value: Tab, title: LocalizedStringKey, symbol: String?)] {
+        var tabs: [(value: Tab, title: LocalizedStringKey, symbol: String?)] = [(.rooms, "Rooms", nil), (.temperature, "Temperature", nil), (.humidity, "Humidity", nil)]
+        if !store.roomCarbonDioxide.isEmpty { tabs.append((.air, "Air", nil)) }
+        return tabs
     }
 }
 
@@ -587,6 +605,11 @@ private struct ComfortRangeEditor: View {
 private struct EnergyFiche: View {
     @Environment(HomeStore.self) private var store
     let score: EnergyScore?
+    @State private var tab: Tab = .electricity
+    @State private var extras = EnergyExtrasData()
+    @State private var editsPrice = false
+
+    enum Tab: Hashable { case electricity, water, cost, devices }
 
     var body: some View {
         if let score {
@@ -600,15 +623,42 @@ private struct EnergyFiche: View {
                     statusColor: status.1,
                     detail: detail
                 )
-                if !score.lastDay.isEmpty {
-                    EnergyChart(hours: score.lastDay, unit: score.unit)
+                if tabs.count > 1 {
+                    PillPicker(options: tabs, selection: $tab)
                 }
+                switch tab {
+                case .electricity:
+                    if !score.lastDay.isEmpty {
+                        EnergyChart(hours: score.lastDay, unit: score.unit)
+                    }
+                case .water:
+                    if let water = extras.water {
+                        StatTile(symbol: "drop.fill", title: Calendar.current.isDateInToday(score.day) ? String(localized: "Water today") : String(localized: "Water yesterday"),
+                                 value: water.value.formatted(.number.precision(.fractionLength(0...1))), unit: water.unit)
+                    }
+                case .cost:
+                    if let price = extras.price, !score.lastDay.isEmpty {
+                        EnergyChart(hours: score.lastDay.map { (start: $0.start, value: $0.value * price.perKilowattHour) }, unit: price.currency)
+                    }
+                case .devices:
+                    DeviceEnergyList(devices: extras.devices, unit: score.unit)
+                }
+                if let top = extras.devices.first {
+                    TopDeviceCard(device: top, unit: score.unit, isToday: Calendar.current.isDateInToday(score.day))
+                }
+                CostTiles(cost: extras.cost, price: extras.price, isToday: Calendar.current.isDateInToday(score.day)) { editsPrice = true }
                 if score.usual == nil {
                     MissingScore(
                         symbol: "calendar.badge.clock",
                         title: "Learning Your Habit",
                         message: "The score compares today with the same hours of your previous days. It appears after three days of readings."
                     )
+                }
+            }
+            .task(id: score.asOf) { extras = await EnergyExtrasData.load(store: store, score: score) }
+            .sheet(isPresented: $editsPrice) {
+                EnergyPriceEditor(price: extras.price?.perKilowattHour) {
+                    Task { extras = await EnergyExtrasData.load(store: store, score: score) }
                 }
             }
         } else if let link = GridLink.load() {
@@ -627,6 +677,15 @@ private struct EnergyFiche: View {
             }
             .onAppear { MeterProposalSetting.markSeen() }
         }
+    }
+
+    /// Only the tabs that have something to show.
+    private var tabs: [(value: Tab, title: LocalizedStringKey, symbol: String?)] {
+        var tabs: [(value: Tab, title: LocalizedStringKey, symbol: String?)] = [(.electricity, "Electricity", nil)]
+        if extras.water != nil { tabs.append((.water, "Water", nil)) }
+        if extras.price != nil { tabs.append((.cost, "Cost", nil)) }
+        if !extras.devices.isEmpty { tabs.append((.devices, "By Device", nil)) }
+        return tabs
     }
 
     private var status: (String, Color) {
@@ -849,6 +908,10 @@ private struct NetworkFiche: View {
     @Environment(HomeStore.self) private var store
     let score: NetworkScore?
     let hasSource: Bool
+    @State private var tab: Tab = .internet
+    @State private var router = RouterReadings()
+
+    enum Tab: Hashable { case internet, throughput, devices }
 
     var body: some View {
         if let score {
@@ -865,8 +928,20 @@ private struct NetworkFiche: View {
                         ? String(localized: "No outage")
                         : String(localized: "\(score.outages.count) outage")
                 )
-                if !score.latency.isEmpty {
-                    LatencyChart(score: score)
+                if tabs.count > 1 {
+                    PillPicker(options: tabs, selection: $tab)
+                }
+                switch tab {
+                case .internet:
+                    if !score.latency.isEmpty {
+                        LatencyChart(score: score)
+                    }
+                case .throughput:
+                    ThroughputChart(points: router.download, unit: router.downloadUnit ?? "")
+                case .devices:
+                    if let count = router.connectedDevices {
+                        StatTile(symbol: "laptopcomputer.and.iphone", title: String(localized: "Connected Devices"), value: "\(count)", unit: String(localized: "connected"))
+                    }
                 }
                 if let added = InternetCheckSetting.addedAt, Date.now.timeIntervalSince(added) < 7 * 86_400 {
                     Label(
@@ -876,23 +951,33 @@ private struct NetworkFiche: View {
                     .font(.roundedFootnote)
                     .foregroundStyle(.secondary)
                 }
+                if let download = router.download.last {
+                    HStack(spacing: 12) {
+                        StatTile(symbol: "arrow.down.circle.fill", title: String(localized: "Internet Box"),
+                                 value: download.value.formatted(.number.precision(.fractionLength(0...1))), unit: router.downloadUnit ?? "")
+                        if let count = router.connectedDevices {
+                            StatTile(symbol: "laptopcomputer.and.iphone", title: String(localized: "Devices"), value: "\(count)", unit: String(localized: "connected"))
+                        }
+                    }
+                }
                 HStack(spacing: 12) {
                     StatTile(
                         symbol: "checkmark.circle.fill",
-                        title: "Available",
+                        title: String(localized: "Available"),
                         value: (score.availability * 100).formatted(.number.precision(.fractionLength(0...1))),
                         unit: "%"
                     )
                     if let last = score.latency.last {
                         StatTile(
                             symbol: "stopwatch.fill",
-                            title: "Response",
+                            title: String(localized: "Response"),
                             value: last.milliseconds.formatted(.number.precision(.fractionLength(0))),
                             unit: "ms"
                         )
                     }
                 }
             }
+            .task { router = await store.routerReadings(since: .now.addingTimeInterval(-86_400)) }
         } else if hasSource {
             MissingScore(
                 symbol: "wifi",
@@ -912,6 +997,16 @@ private struct NetworkFiche: View {
                 message: "Maison is setting up an internet check on your server. If it can't, it tries again tomorrow."
             )
         }
+    }
+}
+
+private extension NetworkFiche {
+    /// Only the tabs that have something to show.
+    var tabs: [(value: Tab, title: LocalizedStringKey, symbol: String?)] {
+        var tabs: [(value: Tab, title: LocalizedStringKey, symbol: String?)] = [(.internet, "Internet", nil)]
+        if !router.download.isEmpty { tabs.append((.throughput, "Throughput", nil)) }
+        if router.connectedDevices != nil { tabs.append((.devices, "Devices", nil)) }
+        return tabs
     }
 }
 
@@ -964,7 +1059,7 @@ private struct LatencyChart: View {
 
 private struct StatTile: View {
     let symbol: String
-    let title: LocalizedStringKey
+    let title: String
     let value: String
     let unit: String
 
@@ -979,5 +1074,333 @@ private struct StatTile: View {
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .cardStyle()
+    }
+}
+
+// MARK: - Comfort extras
+
+/// What the Comfort fiche shows besides the score, with or without one: when to air, the room that
+/// left its range, the air and the weather. With no sensor at all, this is still there.
+private struct ComfortExtras: View {
+    @Environment(HomeStore.self) private var store
+    let score: ComfortScore?
+
+    var body: some View {
+        let outdoor = store.outdoorWeather
+        let carbonDioxide = store.roomCarbonDioxide
+        VStack(alignment: .leading, spacing: 14) {
+            if let advice = AiringAdvice.compute(outdoor: outdoor, carbonDioxide: carbonDioxide) {
+                AiringCard(advice: advice)
+            }
+            if let room = score?.rooms.first(where: { $0.excursion != nil }), let range = score?.range {
+                RoomExcursionCard(room: room, range: range)
+            }
+            let worstAir = carbonDioxide.max { $0.ppm < $1.ppm }
+            if worstAir != nil || outdoor != nil {
+                HStack(spacing: 12) {
+                    if let worstAir {
+                        StatTile(symbol: "aqi.medium", title: String(localized: "Air, \(worstAir.room)"),
+                                 value: worstAir.ppm.formatted(.number.precision(.fractionLength(0))), unit: "ppm")
+                    }
+                    if let outdoor {
+                        StatTile(symbol: "cloud.sun.fill", title: String(localized: "Outside, weather"),
+                                 value: degrees(outdoor.temperature), unit: "°")
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// "Air for 10 minutes now", and a reminder in an hour when now isn't convenient.
+private struct AiringCard: View {
+    let advice: AiringAdvice
+    @State private var reminded = false
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 14) {
+            Image(systemName: "fan.fill")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 40, height: 40)
+                .background(.orange, in: .rect(cornerRadius: 11))
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Comfort, weather").font(.roundedFootnoteEmphasized).foregroundStyle(.secondary)
+                Text("Air for 10 minutes now").font(.roundedHeadline)
+                Text(detail).font(.roundedFootnote).foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 0)
+            Button(reminded ? String(localized: "Reminded") : String(localized: "Remind Me")) {
+                Task { reminded = await Self.remind() }
+            }
+            .font(.roundedSubheadlineEmphasized)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(Color.blue.opacity(0.12), in: .capsule)
+            .foregroundStyle(.blue)
+            .buttonStyle(.plain)
+            .disabled(reminded)
+        }
+        .padding(16)
+        .cardStyle()
+    }
+
+    private var detail: String {
+        let outside = degrees(advice.outdoor.temperature)
+        switch advice.reason {
+        case .carbonDioxide(let room, _): return String(localized: "\(outside)° outside, the CO₂ is rising in \(room)")
+        case .mildOutside: return String(localized: "\(outside)° and dry outside")
+        }
+    }
+
+    /// A local notification in an hour; nothing leaves the iPhone.
+    private static func remind() async -> Bool {
+        let center = UNUserNotificationCenter.current()
+        guard (try? await center.requestAuthorization(options: [.alert, .sound])) == true else { return false }
+        let content = UNMutableNotificationContent()
+        content.title = String(localized: "Time to air")
+        content.body = String(localized: "Open the windows for 10 minutes.")
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 3600, repeats: false)
+        return (try? await center.add(UNNotificationRequest(identifier: "airing", content: content, trigger: trigger))) != nil
+    }
+}
+
+/// The room that left its range, its temperature then, and its last day.
+private struct RoomExcursionCard: View {
+    let room: ComfortScore.Room
+    let range: ClosedRange<Double>
+
+    var body: some View {
+        let excursion = room.excursion!
+        VStack(alignment: .leading, spacing: 10) {
+            Label(room.name, systemImage: Area(id: room.id, name: room.name).symbol)
+                .labelStyle(.compact)
+                .font(.roundedSubheadlineEmphasized)
+                .foregroundStyle(.secondary)
+            HStack(alignment: .bottom) {
+                VStack(alignment: .leading, spacing: 4) {
+                    NumberLabel(value: room.excursionValue.map(degrees) ?? "–", unit: String(localized: "° around \(hourText(excursion.interval.start))"))
+                    Label(excursion.side == .tooWarm ? String(localized: "Too warm") : String(localized: "Too cold"),
+                          systemImage: "exclamationmark.triangle")
+                        .labelStyle(.compact)
+                        .font(.roundedSubheadlineEmphasized)
+                        .foregroundStyle(.orange)
+                }
+                Spacer(minLength: 12)
+                Chart {
+                    RectangleMark(yStart: .value("Low", range.lowerBound), yEnd: .value("High", range.upperBound))
+                        .foregroundStyle(Color.green.opacity(0.10))
+                    ForEach(room.readings, id: \.date) { reading in
+                        LineMark(x: .value("Time", reading.date), y: .value("Temperature", reading.value))
+                            .foregroundStyle(Color.orange)
+                            .interpolationMethod(.stepEnd)
+                    }
+                }
+                .chartXAxis(.hidden)
+                .chartYAxis(.hidden)
+                .frame(width: 150, height: 56)
+            }
+        }
+        .padding(16)
+        .cardStyle()
+    }
+}
+
+// MARK: - Energy extras
+
+/// What the Energy fiche reads besides the score: price and cost, devices, water.
+private struct EnergyExtrasData: Equatable {
+    var price: EnergyPrice?
+    var cost: EnergyCost?
+    var devices: [DeviceEnergy] = []
+    var water: (value: Double, unit: String)?
+
+    static func == (lhs: EnergyExtrasData, rhs: EnergyExtrasData) -> Bool {
+        lhs.price == rhs.price && lhs.cost == rhs.cost && lhs.devices == rhs.devices
+            && lhs.water?.value == rhs.water?.value && lhs.water?.unit == rhs.water?.unit
+    }
+
+    @MainActor
+    static func load(store: HomeStore, score: EnergyScore) async -> EnergyExtrasData {
+        var data = EnergyExtrasData()
+        data.price = await store.energyPrice()
+        if let price = data.price {
+            data.cost = EnergyCost.compute(hourly: score.history, price: price.perKilowattHour, day: score.day, asOf: score.asOf)
+        }
+        let meters = await store.electricityMeters().ids
+        data.devices = await store.deviceEnergy(day: score.day, asOf: score.asOf, excluding: meters)
+        data.water = await store.waterUsed(since: score.day)
+        return data
+    }
+}
+
+private struct DeviceEnergyList: View {
+    let devices: [DeviceEnergy]
+    let unit: String
+
+    var body: some View {
+        let peak = max(devices.first?.kilowattHours ?? 1, 0.001)
+        VStack(spacing: 18) {
+            ForEach(devices) { device in
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text(device.name).font(.roundedHeadline)
+                        Spacer()
+                        Text("\(device.kilowattHours.formatted(.number.precision(.fractionLength(0...1)))) \(unit)")
+                            .font(.roundedFootnote)
+                            .foregroundStyle(.secondary)
+                    }
+                    GeometryReader { proxy in
+                        ZStack(alignment: .leading) {
+                            Capsule().fill(Theme.gaugeTrack)
+                            Capsule().fill(Color.yellow).frame(width: proxy.size.width * device.kilowattHours / peak)
+                        }
+                    }
+                    .frame(height: 8)
+                }
+            }
+        }
+    }
+}
+
+/// The device that used the most, as in the mock-up's water heater card.
+private struct TopDeviceCard: View {
+    let device: DeviceEnergy
+    let unit: String
+    let isToday: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label(device.name, systemImage: "bolt.fill")
+                .labelStyle(.compact)
+                .font(.roundedSubheadlineEmphasized)
+                .foregroundStyle(.secondary)
+            NumberLabel(value: device.kilowattHours.formatted(.number.precision(.fractionLength(0...1))),
+                        unit: isToday ? String(localized: "\(unit) today") : String(localized: "\(unit) yesterday"))
+            OriginTag(origin: .measured)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cardStyle()
+    }
+}
+
+/// The day's cost and the month at the same pace, or what's missing to show them.
+private struct CostTiles: View {
+    let cost: EnergyCost?
+    let price: EnergyPrice?
+    let isToday: Bool
+    let addPrice: () -> Void
+
+    var body: some View {
+        if let cost, let price {
+            HStack(spacing: 12) {
+                StatTile(symbol: "number", title: isToday ? String(localized: "Estimated cost") : String(localized: "Yesterday’s cost"),
+                         value: cost.day.formatted(.number.precision(.fractionLength(2))), unit: price.currency.currencySymbol)
+                if let month = cost.monthProjection {
+                    StatTile(symbol: "calendar", title: String(localized: "Month, estimated"),
+                             value: month.formatted(.number.precision(.fractionLength(0))), unit: price.currency.currencySymbol)
+                }
+            }
+        } else {
+            Button(action: addPrice) {
+                HStack(spacing: 14) {
+                    Image(systemName: "number")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(width: 40, height: 40)
+                        .background(.yellow, in: .rect(cornerRadius: 11))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Cost of the day").font(.roundedFootnoteEmphasized).foregroundStyle(.secondary)
+                        Text("Add your kWh price to see the cost").font(.roundedHeadline).multilineTextAlignment(.leading)
+                    }
+                    Spacer(minLength: 0)
+                    Text("Add")
+                        .font(.roundedSubheadlineEmphasized)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 7)
+                        .background(Color.blue.opacity(0.12), in: .capsule)
+                        .foregroundStyle(.blue)
+                }
+                .padding(16)
+                .cardStyle()
+            }
+            .buttonStyle(.pressable)
+        }
+    }
+}
+
+private struct EnergyPriceEditor: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var price: Double?
+    let saved: () -> Void
+
+    init(price: Double?, saved: @escaping () -> Void) {
+        _price = State(initialValue: price)
+        self.saved = saved
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("Price per kWh", value: $price, format: .number.precision(.fractionLength(0...4)))
+                        .keyboardType(.decimalPad)
+                } footer: {
+                    Text("The price on your bill, taxes included. Maison multiplies your consumption by it.")
+                }
+            }
+            .navigationTitle("Your kWh Price")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel", systemImage: "xmark") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save", systemImage: "checkmark") {
+                        EnergyPriceSetting.set(price)
+                        saved()
+                        dismiss()
+                    }
+                    .disabled((price ?? 0) <= 0)
+                }
+            }
+        }
+        .presentationDetents([.medium])
+    }
+}
+
+// MARK: - Network extras
+
+private struct ThroughputChart: View {
+    let points: [(date: Date, value: Double)]
+    let unit: String
+
+    var body: some View {
+        Chart {
+            ForEach(points, id: \.date) { point in
+                LineMark(x: .value("Time", point.date), y: .value("Throughput", point.value))
+                    .foregroundStyle(Color.cyan)
+                    .interpolationMethod(.monotone)
+            }
+        }
+        .chartXAxis {
+            AxisMarks(values: .stride(by: .hour, count: 6)) { value in
+                AxisValueLabel { value.as(Date.self).map { Text(hourText($0)) } }
+            }
+        }
+        .chartYAxis {
+            AxisMarks { _ in AxisGridLine() }
+        }
+        .frame(height: 200)
+        .accessibilityLabel("Internet throughput over the last 24 hours, in \(unit)")
+    }
+}
+
+private extension String {
+    /// "EUR" → "€".
+    var currencySymbol: String {
+        Locale.current.currencySymbol.flatMap { Locale.current.currency?.identifier == self ? $0 : nil }
+            ?? Locale(identifier: "fr_FR").currencySymbol.flatMap { self == "EUR" ? $0 : nil } ?? self
     }
 }
