@@ -25,9 +25,19 @@ enum ComfortRangeSetting {
         return lower...upper
     }
 
+    /// Where the score starts until three days of readings teach the household's own range.
+    static let starting: ClosedRange<Double> = 19...22
+
     static func set(_ range: ClosedRange<Double>, in defaults: UserDefaults = .standard) {
         defaults.set(range.lowerBound, forKey: lowerKey)
         defaults.set(range.upperBound, forKey: upperKey)
+    }
+
+    /// The range Comfort scores against: the one entered, else the one learned, else the starting one.
+    static func resolve(entered: ClosedRange<Double>?, hourlyMeans: [Double]) -> (range: ClosedRange<Double>, origin: ValueOrigin, isStarting: Bool) {
+        if let entered { return (entered, .entered, false) }
+        if let learned = learned(from: hourlyMeans) { return (learned, .estimated, false) }
+        return (starting, .estimated, true)
     }
 
     /// The 10th to 90th percentile of the previous week's hourly means, to the half degree.
@@ -47,6 +57,14 @@ extension HomeStore {
         return rooms.compactMap { area in
             sensors.first { self.area(of: $0)?.id == area.id }.map { (area, $0) }
         }
+    }
+
+    /// The thermometers Comfort counts: one per room, then each one not in a room yet, under its own name.
+    var comfortSensors: [(id: String, name: String, sensor: EntityState)] {
+        let placed = roomTemperatureSensors
+        let placedIDs = Set(placed.map(\.sensor.entityID))
+        let unplaced = indoorTemperatureSensors.filter { area(of: $0) == nil && !placedIDs.contains($0.entityID) }
+        return placed.map { ($0.area.id, $0.area.name, $0.sensor) } + unplaced.sortedByName().map { ($0.entityID, $0.name, $0) }
     }
 
     /// The internet check Home Assistant's Ping integration provides, and its average round trip.
@@ -79,17 +97,16 @@ extension HomeStore {
     }
 
     private func comfortScore(window: DateInterval, weekAgo: Date) async -> ComfortScore? {
-        let sensors = roomTemperatureSensors
+        let sensors = comfortSensors
         guard !sensors.isEmpty else { return nil }
-        var range: ClosedRange<Double>
-        var origin: ValueOrigin
+        let resolved: (range: ClosedRange<Double>, origin: ValueOrigin, isStarting: Bool)
         if isDemoHome {
-            (range, origin) = (20...24, .entered)
+            resolved = (20...24, .entered, false)
         } else if let entered = ComfortRangeSetting.range() {
-            (range, origin) = (entered, .entered)
+            resolved = ComfortRangeSetting.resolve(entered: entered, hourlyMeans: [])
         } else {
             var means: [Double] = []
-            for (_, sensor) in sensors {
+            for (_, _, sensor) in sensors {
                 let points = await statistics(of: sensor.entityID, since: weekAgo, period: "hour")
                 var values = points.filter { $0.start < window.start }.compactMap(\.mean)
                 if values.isEmpty {
@@ -100,14 +117,21 @@ extension HomeStore {
                 }
                 means += values
             }
-            guard let learned = ComfortRangeSetting.learned(from: means) else { return nil }
-            (range, origin) = (learned, .estimated)
+            // Without three days to learn from, a usual range gives a score from the first day.
+            resolved = ComfortRangeSetting.resolve(entered: nil, hourlyMeans: means)
         }
         var rooms: [(id: String, name: String, series: TimeSeries)] = []
-        for (area, sensor) in sensors {
-            rooms.append((area.id, area.name, TimeSeries(changes: await changes(of: sensor.entityID, since: window.start))))
+        for (id, name, sensor) in sensors {
+            var series = await changes(of: sensor.entityID, since: window.start)
+            // A sensor that hasn't changed since it was added has no history yet: its current reading counts.
+            if series.isEmpty, sensor.numericState != nil {
+                series = [StateChange(state: sensor.state, date: max(sensor.lastChanged ?? window.start, window.start))]
+            }
+            rooms.append((id, name, TimeSeries(changes: series)))
         }
-        return ComfortScore.compute(rooms: rooms, range: range, rangeOrigin: origin, window: window)
+        var score = ComfortScore.compute(rooms: rooms, range: resolved.range, rangeOrigin: resolved.origin, window: window)
+        score?.rangeIsStarting = resolved.isStarting
+        return score
     }
 
     private func energyScore(now: Date, weekAgo: Date) async -> EnergyScore? {

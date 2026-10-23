@@ -1876,6 +1876,16 @@
         }
       }
     },
+    "A usual range, until Maison learns yours" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une plage courante, le temps que Maison apprenne la vôtre"
+          }
+        }
+      }
+    },
     "About %@ %@ more a year": {
       "localizations": {
         "fr": {
@@ -5056,16 +5066,6 @@
         }
       }
     },
-    "Learning Your Range": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Maison apprend votre plage"
-          }
-        }
-      }
-    },
     "Leave Household": {
       "localizations": {
         "fr": {
@@ -5472,16 +5472,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Maison installe une vérification d’internet sur votre serveur. Si elle n’y arrive pas, elle réessaie demain."
-          }
-        }
-      }
-    },
-    "Maison needs three days of readings to learn the temperatures you live in. You can set your range now instead.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Maison a besoin de trois jours de mesures pour apprendre les températures où vous vivez. Vous pouvez aussi régler votre plage dès maintenant."
           }
         }
       }
@@ -9312,6 +9302,16 @@
         }
       }
     },
+    "Waiting for a Reading" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En attente d’un relevé"
+          }
+        }
+      }
+    },
     "Waiting for an Administrator": {
       "localizations": {
         "fr": {
@@ -10018,6 +10018,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Votre serveur l’installe…"
+          }
+        }
+      }
+    },
+    "Your thermometers haven’t sent a temperature in the last 24 hours. The score appears with the next one. You can set your range now." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vos thermomètres n’ont envoyé aucune température depuis 24 heures. Le score apparaît avec le prochain relevé. Vous pouvez régler votre plage dès maintenant."
           }
         }
       }

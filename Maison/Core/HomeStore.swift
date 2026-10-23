@@ -348,12 +348,14 @@ final class HomeStore {
 
     /// Everything Maison sets up on the server by itself, so the person never has to open Home Assistant:
     /// devices it found, integrations that failed, remote access, the internet check. Administrators only.
-    func setUpServer(now: Date = .now) async {
-        guard !isDemo, phase == .connected, let connection else { return }
+    /// `true` when something changed on the server, and the devices were read again.
+    @discardableResult
+    func setUpServer(now: Date = .now) async -> Bool {
+        guard !isDemo, phase == .connected, let connection else { return false }
         // The account is read after connecting, in the background: ask for it if it isn't there yet.
         var user = currentUser
         if user == nil { user = try? await connection.currentUser() }
-        guard user?.isAdmin == true, let credentials = try? await freshCredentials() else { return }
+        guard user?.isAdmin == true, let credentials = try? await freshCredentials() else { return false }
         let flows = ConfigFlowClient(serverURL: activeURL ?? credentials.serverURL, accessToken: credentials.accessToken)
         var changed = await adoptDiscoveredDevices(flows: flows, connection: connection)
         changed = await repairIntegrations(flows: flows, now: now) || changed
@@ -366,6 +368,7 @@ final class HomeStore {
         await syncGridConsumption(now: now)
         // New integrations bring entities and registry entries: reconnecting reads them.
         if changed { await connect() }
+        return changed
     }
 
     /// The kWh price set in Home Assistant's Energy dashboard, if any.
