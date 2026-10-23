@@ -58,6 +58,8 @@ struct ConfigFlowClient: Sendable {
     func request(_ method: String, _ path: String, body: JSONValue? = nil) async throws -> JSONValue {
         var request = URLRequest(url: serverURL.appending(path: path))
         request.httpMethod = method
+        // A step can wait for the person at the device (a button to press on a box) before it answers.
+        request.timeoutInterval = 120
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
         if let body {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")

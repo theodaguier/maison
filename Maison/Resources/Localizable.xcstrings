@@ -9568,6 +9568,16 @@
         }
       }
     },
+    "Waiting for the device… Do it on the device now.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En attente de l’appareil… Faites-le maintenant sur l’appareil."
+          }
+        }
+      }
+    },
     "Waiting for them to accept the invitation in iCloud. Once they do, they sign in to Home Assistant with their own account.": {
       "localizations": {
         "fr": {

@@ -713,7 +713,15 @@ struct IntegrationFlowSheet: View {
             }
             if form.fields.isEmpty {
                 if let hint = wording.hint(for: form) { Text(verbatim: hint) }
-                Button("Add") { Task { await submit(form) } }.disabled(isWorking)
+                if isWorking {
+                    // The server waits for the device (its button, its screen) before it answers.
+                    HStack(spacing: 10) {
+                        ProgressView()
+                        Text("Waiting for the device… Do it on the device now.").foregroundStyle(.secondary)
+                    }
+                } else {
+                    Button("Add") { Task { await submit(form) } }
+                }
             }
         } header: {
             if let title = wording.title(step: form.stepID) { Text(title) }
