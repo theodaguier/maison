@@ -10,7 +10,6 @@ extension SourceSection {
         case .energy: "Energy"
         case .comfort: "Comfort"
         case .network: "Network"
-        case .safety: "Safety"
         case .iPhone: "On This iPhone"
         }
     }
@@ -20,7 +19,6 @@ extension SourceSection {
         case .energy: .orange
         case .comfort: .teal
         case .network: .blue
-        case .safety: .red
         case .iPhone: .indigo
         }
     }
@@ -30,7 +28,6 @@ extension SourceSection {
         case .energy: "bolt.fill"
         case .comfort: "thermometer.medium"
         case .network: "wifi"
-        case .safety: "exclamationmark.shield.fill"
         case .iPhone: "iphone"
         }
     }

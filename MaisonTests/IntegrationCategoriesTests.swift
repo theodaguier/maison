@@ -24,8 +24,8 @@ struct IntegrationCategoriesTests {
     @Test func aSourceOnlyOffersWhatMeasuresIt() throws {
         let freebox = IntegrationDescription(domain: "freebox", name: "Freebox", iotClass: "local_polling")
         let met = IntegrationDescription(domain: "met", name: "Met.no", iotClass: "cloud_polling")
-        // The box has an alarm, in the alarms' category, but no smoke sensor.
-        #expect(IntegrationDescription.serving(try #require(DataSource.needs["smoke"]), in: [freebox, met, plug, calendar]).isEmpty)
+        // The box is in several categories (an alarm, presence) but measures no air.
+        #expect(IntegrationDescription.serving(try #require(DataSource.needs["carbonDioxide"]), in: [freebox, met, plug, calendar]).isEmpty)
         #expect(IntegrationDescription.serving(try #require(DataSource.needs["router"]), in: [freebox, met, plug, calendar]).map(\.domain) == ["freebox"])
         #expect(IntegrationDescription.serving(try #require(DataSource.needs["weather"]), in: [freebox, met, ping]).map(\.domain) == ["met"])
         // The internet check is Maison's own: no list of computer monitors.

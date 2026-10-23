@@ -149,8 +149,9 @@ struct SourcesTests {
         #expect(byID["water"]?.isInPlace == true)
         #expect(byID["internet"]?.isInPlace == true)
         #expect(byID["presence"]?.state == .missing)
-        // A capability, never a brand, and every section has rows.
+        // A capability, never a brand, and only what something in the app uses.
         #expect(Set(sources.map(\.section)) == Set(SourceSection.allCases))
+        #expect(!sources.contains { ["solar", "gas", "smoke", "leak", "signal"].contains($0.id) })
 
         let coverage = HomeStore.coverage(of: sources)
         #expect(coverage.map(\.section) == [.comfort, .energy, .network])
