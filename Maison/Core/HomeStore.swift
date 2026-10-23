@@ -362,6 +362,7 @@ final class HomeStore {
             changed = true
         }
         changed = await ensureInternetResponseTime(connection: connection) || changed
+        changed = await ensureWeather(flows: flows, now: now) || changed
         await syncGridConsumption(now: now)
         // New integrations bring entities and registry entries: reconnecting reads them.
         if changed { await connect() }
@@ -448,6 +449,21 @@ final class HomeStore {
         defaults.set(now, forKey: InternetCheckSetting.attemptedKey)
         guard case .created? = try? await flows.create("ping", answers: ["host": .string(InternetCheckSetting.host)]) else { return false }
         defaults.set(now, forKey: InternetCheckSetting.addedKey)
+        return true
+    }
+
+    /// Adds a weather service when the server has none, as Home Assistant does when it is set up: the
+    /// most used one that asks nothing (it reads the home's location from the server). Once a day at most.
+    private func ensureWeather(flows: ConfigFlowClient, now: Date) async -> Bool {
+        let key = "weatherAttemptedAt"
+        guard !states.values.contains(where: { $0.domain == "weather" }) else { return false }
+        if let attempted = UserDefaults.standard.object(forKey: key) as? Date, now.timeIntervalSince(attempted) < 86_400 { return false }
+        UserDefaults.standard.set(now, forKey: key)
+        let installed = Set(integrations.map(\.domain))
+        let candidates = IntegrationDescription.serving(["weather_alerts.forecasts"], in: await integrationCatalog())
+            .filter { !installed.contains($0.domain) }
+        guard let added = await flows.addFirstAskingNothing(Array(candidates.prefix(3))) else { return false }
+        ServerSetupLog.recordAdded(added.domain)
         return true
     }
 

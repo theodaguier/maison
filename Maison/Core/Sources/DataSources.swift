@@ -20,6 +20,34 @@ struct DataSource: Identifiable, Hashable, Sendable {
     /// The entities that provide it, for its page.
     var entityIDs: [String] = []
 
+    /// Home Assistant categories of the integrations that can provide it (`computers_network.monitoring`),
+    /// so its page offers those, not a calendar.
+    var categories: [String] { Self.categories[id] ?? [] }
+
+    static let categories: [String: [String]] = [
+        "meter": ["energy.meters_monitoring"],
+        "tariff": ["energy.energy_prices"],
+        "plugs": ["plugs_switches", "energy.meters_monitoring"],
+        "solar": ["energy.solar_batteries"],
+        "battery": ["energy.solar_batteries", "energy.ev_charging", "energy.backup_power"],
+        "gas": ["energy.meters_monitoring"],
+        "water": ["water.meters_leak_detection"],
+        "temperature": ["sensors.temperature_humidity", "climate.thermostats_heating"],
+        "humidity": ["sensors.temperature_humidity", "climate.air_purifiers_humidifiers"],
+        "carbonDioxide": ["sensors.air_quality"],
+        "heating": ["climate.thermostats_heating", "climate.heat_pumps_air_conditioning"],
+        "windows": ["blinds_curtains"],
+        "weather": ["weather_alerts.forecasts"],
+        "internet": ["computers_network.monitoring"],
+        "router": ["computers_network.routers_network"],
+        "connected": ["computers_network.routers_network"],
+        "signal": ["computers_network.routers_network"],
+        "leak": ["water.meters_leak_detection"],
+        "smoke": ["security_safety.smoke_co_alarms", "security_safety.alarm_systems"],
+        "doors": ["security_safety.locks_access", "security_safety.alarm_systems"],
+        "presence": ["presence_location.phones_companion_apps", "presence_location.trackers"],
+    ]
+
     enum State: Hashable, Sendable {
         /// Measured by a device or a service; the value says how many or how.
         case inPlace(String)

@@ -239,40 +239,118 @@ struct IntegrationSearchField: View {
     }
 }
 
-/// The server's integrations matching the search, by how they're added.
-private struct IntegrationResults: View {
+extension IntegrationGroup {
+    var title: LocalizedStringKey {
+        switch self {
+        case .energy: "Energy"
+        case .comfort: "Comfort"
+        case .network: "Network"
+        case .safety: "Safety"
+        case .presence: "Presence"
+        case .hubs: "Hubs and Protocols"
+        case .other: "Other"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .energy: "bolt.fill"
+        case .comfort: "thermometer.medium"
+        case .network: "wifi"
+        case .safety: "exclamationmark.shield.fill"
+        case .presence: "location.fill"
+        case .hubs: "point.3.connected.trianglepath.dotted"
+        case .other: "square.grid.2x2.fill"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .energy: .orange
+        case .comfort: .teal
+        case .network: .blue
+        case .safety: .red
+        case .presence: .indigo
+        case .hubs: .purple
+        case .other: .gray
+        }
+    }
+
+    /// What it brings to the home, under its title.
+    var detail: LocalizedStringKey {
+        switch self {
+        case .energy: "Meters, plugs, solar, prices"
+        case .comfort: "Heating, sensors, weather"
+        case .network: "Box, router, connection"
+        case .safety: "Alarms, detectors, locks"
+        case .presence: "Who is home"
+        case .hubs: "Zigbee, Matter, Z-Wave: devices of every kind"
+        case .other: "Lights, media, services: not used by the scores"
+        }
+    }
+}
+
+/// Integrations by the part of the home they serve, the most used first.
+private struct IntegrationList: View {
     @Environment(HomeStore.self) private var store
+    let integrations: [IntegrationDescription]
+    let add: (FlowTarget) -> Void
+    /// The groups to show, in order; each integration shows in the first it belongs to.
+    var groups: [IntegrationGroup] = IntegrationGroup.allCases
+    var limit = 12
+
+    var body: some View {
+        let sorted = integrations.sorted { $0.installs > $1.installs }
+        ForEach(groups, id: \.self) { group in
+            let items = sorted.filter { ($0.groups.first { groups.contains($0) }) == group }
+            if !items.isEmpty {
+                SettingsGroup(group.title) {
+                    ForEach(Array(items.prefix(limit).enumerated()), id: \.element.id) { index, item in
+                        if index > 0 { SettingsDivider() }
+                        IntegrationRow(item: item, installed: store.integrations.contains { $0.domain == item.domain }) {
+                            add(FlowTarget(domain: item.domain, name: item.name))
+                        }
+                    }
+                }
+                if items.count > limit {
+                    Text("And \(items.count - limit) more: search for their name.")
+                        .font(.roundedFootnote)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
+}
+
+private struct IntegrationRow: View {
+    let item: IntegrationDescription
+    let installed: Bool
+    let add: () -> Void
+
+    var body: some View {
+        Button(action: add) {
+            SettingsRow(title: LocalizedStringKey(item.name),
+                        detail: installed ? String(localized: "Already added") : item.isCloud ? String(localized: "With an account") : String(localized: "On the network"),
+                        showsChevron: true) {
+                IntegrationLogoView(domain: item.domain)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// The server's integrations matching the search, by the part of the home they serve.
+private struct IntegrationResults: View {
     let query: String
     let catalog: [IntegrationDescription]
     let add: (FlowTarget) -> Void
 
     var body: some View {
-        let results = Array(IntegrationDescription.search(query, in: catalog).prefix(40))
+        let results = IntegrationDescription.search(query, in: catalog)
         if results.isEmpty {
             ContentUnavailableView.search(text: query)
         } else {
-            let groups: [(LocalizedStringKey, [IntegrationDescription])] = [
-                ("On the Network", results.filter { !$0.isCloud }),
-                ("With an Account", results.filter(\.isCloud)),
-            ]
-            ForEach(groups.filter { !$0.1.isEmpty }, id: \.1.first?.domain) { title, items in
-                SettingsGroup(title) {
-                    ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                        if index > 0 { SettingsDivider() }
-                        let installed = store.integrations.contains { $0.domain == item.domain }
-                        Button { add(FlowTarget(domain: item.domain, name: item.name)) } label: {
-                            SettingsRow(title: LocalizedStringKey(item.name), detail: installed ? String(localized: "Already added") : nil,
-                                        showsChevron: true) {
-                                IntegrationLogoView(domain: item.domain)
-                            }
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-            }
-            Text("Your server’s integrations, set up by Maison.")
-                .font(.roundedFootnote)
-                .foregroundStyle(.secondary)
+            IntegrationList(integrations: results, add: add)
         }
     }
 }
@@ -297,6 +375,8 @@ struct SourceDetailPage: View {
     let source: DataSource
     @State private var editsTariff = false
     @State private var searches = false
+    @State private var isAdding = false
+    @State private var autoResult: String?
 
     var body: some View {
         ScrollView {
@@ -324,7 +404,13 @@ struct SourceDetailPage: View {
         .background(Theme.background)
         .navigationTitle(source.title)
         .sheet(isPresented: $editsTariff) { EnergyTariffEditor(tariff: EnergyTariff.load()) {} }
-        .navigationDestination(isPresented: $searches) { IntegrationSearchPage() }
+        .navigationDestination(isPresented: $searches) {
+            IntegrationSearchPage(categories: source.categories.isEmpty ? nil : source.categories, title: source.title)
+        }
+        #if DEBUG
+        // `-chooseIntegration YES` opens the integrations for the source, to check them.
+        .onAppear { if UserDefaults.standard.bool(forKey: "chooseIntegration") { searches = true } }
+        #endif
     }
 
     @ViewBuilder private var setup: some View {
@@ -357,20 +443,40 @@ struct SourceDetailPage: View {
                 Label(source.isInPlace ? "Add Another One" : "How to Add One", systemImage: "sparkles")
                     .labelStyle(.compact)
                     .font(.roundedHeadline)
-                Text("Plug it in and connect it to your Wi-Fi: Maison finds it on the network and adds it by itself. If it needs an account, look for its brand.")
+                Text("Plug it in and connect it to your Wi-Fi: Maison finds it on the network and adds it by itself. Otherwise, Maison can add the most used service that asks nothing, or you pick one.")
                     .font(.roundedSubheadline)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-                WideButton(title: "Look for Its Brand", style: .secondary) { searches = true }
+                if let autoResult {
+                    Text(autoResult).font(.roundedSubheadline).foregroundStyle(.secondary)
+                }
+                if store.isAdministrator, !source.categories.isEmpty {
+                    WideButton(title: isAdding ? "Adding…" : "Add Automatically", style: .primary) {
+                        Task { await addAutomatically() }
+                    }
+                    .disabled(isAdding)
+                }
+                WideButton(title: "Choose an Integration", style: .secondary) { searches = true }
             }
             .padding(16)
             .cardStyle()
         }
     }
+
+    private func addAutomatically() async {
+        isAdding = true
+        defer { isAdding = false }
+        autoResult = await store.addAutomatically(source.categories).map { String(localized: "Maison added \($0). Its devices appear in a few seconds.") }
+            ?? String(localized: "Every integration for this needs an answer from you: choose one below.")
+    }
 }
 
+/// The server's integrations: those for one source when `categories` is set, otherwise all of them by
+/// part of the home.
 struct IntegrationSearchPage: View {
     @Environment(HomeStore.self) private var store
+    var categories: [String]?
+    var title: String?
     @State private var catalog: [IntegrationDescription] = []
     @State private var query = ""
     @State private var adding: FlowTarget?
@@ -379,7 +485,30 @@ struct IntegrationSearchPage: View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
                 IntegrationSearchField(query: $query)
-                if query.isEmpty {
+                if let categories {
+                    let serving = IntegrationDescription.serving(categories, in: catalog)
+                    let hubs = IntegrationDescription.serving(IntegrationGroup.prefixes[.hubs] ?? [], in: catalog)
+                    let shown = query.isEmpty ? serving : IntegrationDescription.search(query, in: serving + hubs)
+                    IntegrationList(integrations: shown, add: { adding = $0 }, groups: IntegrationGroup.allCases.filter { $0 != .hubs })
+                    if query.isEmpty, !hubs.isEmpty {
+                        IntegrationList(integrations: hubs, add: { adding = $0 }, groups: [.hubs], limit: 6)
+                        Text("A hub brings devices of every brand that speak its language.")
+                            .font(.roundedFootnote)
+                            .foregroundStyle(.secondary)
+                    }
+                } else if query.isEmpty {
+                    SettingsGroup {
+                        ForEach(Array(IntegrationGroup.allCases.enumerated()), id: \.element) { index, group in
+                            if index > 0 { SettingsDivider() }
+                            NavigationLink { IntegrationGroupPage(group: group, catalog: catalog) } label: {
+                                SettingsRow(title: group.title, detail: nil,
+                                            value: "\(catalog.count { $0.groups.first == group })", showsChevron: true) {
+                                    SettingsIcon(symbol: group.symbol, color: group.color)
+                                }
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
                     Text("\(catalog.count) integrations, from your server.")
                         .font(.roundedFootnote)
                         .foregroundStyle(.secondary)
@@ -391,9 +520,30 @@ struct IntegrationSearchPage: View {
             .padding(.bottom, 24)
         }
         .background(Theme.background)
-        .navigationTitle("Add a Source")
+        .navigationTitle(title ?? String(localized: "Add a Source"))
         .sheet(item: $adding) { IntegrationFlowSheet(target: $0) }
         .task { catalog = await store.integrationCatalog() }
+    }
+}
+
+/// Every integration of one part of the home, the most used first.
+private struct IntegrationGroupPage: View {
+    let group: IntegrationGroup
+    let catalog: [IntegrationDescription]
+    @State private var adding: FlowTarget?
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
+                Text(group.detail).font(.roundedSubheadline).foregroundStyle(.secondary)
+                IntegrationList(integrations: catalog.filter { $0.groups.first == group }, add: { adding = $0 }, groups: [group], limit: 200)
+            }
+            .padding(.horizontal, Theme.screenPadding)
+            .padding(.bottom, 24)
+        }
+        .background(Theme.background)
+        .navigationTitle(group.title)
+        .sheet(item: $adding) { IntegrationFlowSheet(target: $0) }
     }
 }
 
@@ -584,6 +734,12 @@ struct IntegrationFlowSheet: View {
     }
 
     private func apply(_ next: FlowStep) async {
+        // A step that asks nothing (a confirmation, defaults the server knows) is answered by Maison.
+        if case .form(let form) = next, form.asksNothing, let driver,
+           let answered = try? await driver.answerWhatAsksNothing(next), answered != next {
+            await apply(answered)
+            return
+        }
         if case .form(let form) = next {
             // Defaults show in the fields, and stay the answer unless changed.
             for field in form.fields where answers[field.name] == nil { answers[field.name] = field.defaultValue }

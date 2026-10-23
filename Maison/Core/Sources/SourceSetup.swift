@@ -40,6 +40,18 @@ extension HomeStore {
         await connect()
     }
 
+    /// Adds, without asking anything, the most used integration that provides what `categories` describe
+    /// and needs no answer from the person. Returns its name, or `nil` when every one needs the person.
+    func addAutomatically(_ categories: [String]) async -> String? {
+        if isDemoHome { return IntegrationDescription.serving(categories, in: DemoHome.integrationCatalog).first?.name }
+        guard let driver = await flowDriver() else { return nil }
+        let installed = Set(integrations.map(\.domain))
+        let candidates = IntegrationDescription.serving(categories, in: await integrationCatalog()).filter { !installed.contains($0.domain) }
+        guard let added = await driver.addFirstAskingNothing(Array(candidates.prefix(4))) else { return nil }
+        await integrationAdded(added.domain)
+        return added.name
+    }
+
     /// Adds the internet check now rather than at the next daily try.
     func addInternetCheck() async {
         UserDefaults.standard.removeObject(forKey: InternetCheckSetting.attemptedKey)

@@ -496,11 +496,23 @@ enum DemoHome {
 extension DemoHome {
     /// A few of the server's integrations, for the search.
     static let integrationCatalog: [IntegrationDescription] = [
+        IntegrationDescription(domain: "airthings", name: "Airthings", iotClass: "cloud_polling"),
+        IntegrationDescription(domain: "aranet", name: "Aranet", iotClass: "local_push"),
+        IntegrationDescription(domain: "awair", name: "Awair", iotClass: "local_polling"),
+        IntegrationDescription(domain: "enphase_envoy", name: "Enphase Envoy", iotClass: "local_polling"),
+        IntegrationDescription(domain: "fritz", name: "AVM FRITZ!Box Tools", iotClass: "local_polling"),
+        IntegrationDescription(domain: "google", name: "Google Calendar", iotClass: "cloud_polling"),
         IntegrationDescription(domain: "matter", name: "Matter", iotClass: "local_push"),
+        IntegrationDescription(domain: "met", name: "Meteorologisk institutt (Met.no)", iotClass: "cloud_polling"),
+        IntegrationDescription(domain: "meteo_france", name: "Météo-France", iotClass: "cloud_polling"),
         IntegrationDescription(domain: "netatmo", name: "Netatmo", iotClass: "cloud_polling"),
+        IntegrationDescription(domain: "netgear", name: "NETGEAR", iotClass: "local_polling"),
+        IntegrationDescription(domain: "nut", name: "Network UPS Tools (NUT)", iotClass: "local_polling"),
+        IntegrationDescription(domain: "ping", name: "Ping (ICMP)", iotClass: "local_polling"),
         IntegrationDescription(domain: "shelly", name: "Shelly", iotClass: "local_push"),
-        IntegrationDescription(domain: "speedtestdotcom", name: "Speedtest.net", iotClass: "cloud_polling"),
         IntegrationDescription(domain: "tado", name: "tado°", iotClass: "cloud_polling"),
+        IntegrationDescription(domain: "tplink", name: "TP-Link Smart Home", iotClass: "local_polling"),
+        IntegrationDescription(domain: "upnp", name: "UPnP/IGD", iotClass: "local_polling"),
         IntegrationDescription(domain: "zha", name: "Zigbee Home Automation", iotClass: "local_polling"),
     ]
 

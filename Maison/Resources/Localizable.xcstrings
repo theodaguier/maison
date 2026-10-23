@@ -1802,6 +1802,16 @@
         }
       }
     },
+    "A hub brings devices of every brand that speak its language.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une passerelle apporte les appareils de toutes les marques qui parlent sa langue."
+          }
+        }
+      }
+    },
     "A measurement crosses a value": {
       "localizations": {
         "fr": {
@@ -1942,6 +1952,16 @@
         }
       }
     },
+    "Add Automatically": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter automatiquement"
+          }
+        }
+      }
+    },
     "Add It Now": {
       "localizations": {
         "fr": {
@@ -2052,6 +2072,16 @@
         }
       }
     },
+    "Adding…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajout en cours…"
+          }
+        }
+      }
+    },
     "Address": {
       "localizations": {
         "fr": {
@@ -2138,6 +2168,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Air, %@"
+          }
+        }
+      }
+    },
+    "Alarms, detectors, locks": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alarmes, détecteurs, serrures"
           }
         }
       }
@@ -2248,6 +2288,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Un administrateur de votre maison les ajoute depuis Maison."
+          }
+        }
+      }
+    },
+    "And %lld more: search for their name.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Et %lld autres : cherchez leur nom."
           }
         }
       }
@@ -2652,6 +2702,16 @@
         }
       }
     },
+    "Box, router, connection": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Box, routeur, connexion"
+          }
+        }
+      }
+    },
     "Brand, device or service": {
       "localizations": {
         "fr": {
@@ -2838,6 +2898,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choisir un serveur"
+          }
+        }
+      }
+    },
+    "Choose an Integration": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisir une intégration"
           }
         }
       }
@@ -4002,6 +4072,16 @@
         }
       }
     },
+    "Every integration for this needs an answer from you: choose one below.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chaque intégration pour cela demande une réponse de votre part : choisissez-en une ci-dessous."
+          }
+        }
+      }
+    },
     "Everyone leaves": {
       "localizations": {
         "fr": {
@@ -4332,6 +4412,16 @@
         }
       }
     },
+    "Heating, sensors, weather": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chauffage, capteurs, météo"
+          }
+        }
+      }
+    },
     "High": {
       "localizations": {
         "fr": {
@@ -4528,6 +4618,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Comment vous utilisez Maison. Jamais votre maison."
+          }
+        }
+      }
+    },
+    "Hubs and Protocols": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Passerelles et protocoles"
           }
         }
       }
@@ -5192,6 +5292,16 @@
         }
       }
     },
+    "Lights, media, services: not used by the scores": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lumières, médias, services : pas utilisés par les scores"
+          }
+        }
+      }
+    },
     "Lights, plugs, fans and speakers. Devices set to “Never Turn Off” stay on.": {
       "localizations": {
         "fr": {
@@ -5382,16 +5492,6 @@
         }
       }
     },
-    "Look for Its Brand": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Chercher sa marque"
-          }
-        }
-      }
-    },
     "Looking for your server…": {
       "localizations": {
         "fr": {
@@ -5418,6 +5518,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mail"
+          }
+        }
+      }
+    },
+    "Maison added %@. Its devices appear in a few seconds.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maison a ajouté %@. Ses appareils apparaissent dans quelques secondes."
           }
         }
       }
@@ -5658,6 +5768,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Messages"
+          }
+        }
+      }
+    },
+    "Meters, plugs, solar, prices": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compteurs, prises, solaire, prix"
           }
         }
       }
@@ -6342,7 +6462,7 @@
         }
       }
     },
-    "On the Network": {
+    "On the network": {
       "localizations": {
         "fr": {
           "stringUnit": {
@@ -6808,12 +6928,12 @@
         }
       }
     },
-    "Plug it in and connect it to your Wi-Fi: Maison finds it on the network and adds it by itself. If it needs an account, look for its brand.": {
+    "Plug it in and connect it to your Wi-Fi: Maison finds it on the network and adds it by itself. Otherwise, Maison can add the most used service that asks nothing, or you pick one.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Branchez-le et reliez-le à votre Wi-Fi : Maison le trouve sur le réseau et l’ajoute toute seule. S’il demande un compte, cherchez sa marque."
+            "value": "Branchez-le et reliez-le à votre Wi-Fi : Maison le trouve sur le réseau et l’ajoute toute seule. Sinon, Maison peut ajouter le service le plus utilisé qui ne demande rien, ou vous en choisissez un."
           }
         }
       }
@@ -9658,6 +9778,16 @@
         }
       }
     },
+    "Who is home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Qui est à la maison"
+          }
+        }
+      }
+    },
     "Why": {
       "localizations": {
         "fr": {
@@ -9708,7 +9838,7 @@
         }
       }
     },
-    "With an Account": {
+    "With an account": {
       "localizations": {
         "fr": {
           "stringUnit": {
@@ -10068,16 +10198,6 @@
         }
       }
     },
-    "Your server’s integrations, set up by Maison.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les intégrations de votre serveur, installées par Maison."
-          }
-        }
-      }
-    },
     "You’ll be able to": {
       "localizations": {
         "fr": {
@@ -10124,6 +10244,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vous êtes invité à rejoindre « %@ »"
+          }
+        }
+      }
+    },
+    "Zigbee, Matter, Z-Wave: devices of every kind": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zigbee, Matter, Z-Wave : des appareils de toutes sortes"
           }
         }
       }
