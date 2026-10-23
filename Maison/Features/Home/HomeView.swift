@@ -104,8 +104,11 @@ private struct HomeDashboard: View {
             .animation(.smooth, value: layout)
             .padding(.horizontal, Theme.screenPadding)
             .padding(.bottom, 24)
+            // Exactly the screen's width: a card wider than it with real data must not let the page slide sideways.
+            .containerRelativeFrame(.horizontal)
             .background(alignment: .top) { illustration.offset(y: -topInset) }
         }
+        .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
         .onScrollGeometryChange(for: CGFloat.self, of: { $0.contentInsets.top }) { _, inset in
             topInset = inset
         }
