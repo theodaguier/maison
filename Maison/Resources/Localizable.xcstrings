@@ -6492,16 +6492,6 @@
         }
       }
     },
-    "On the network": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sur le réseau"
-          }
-        }
-      }
-    },
     "On weekdays": {
       "localizations": {
         "fr": {
@@ -9914,16 +9904,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Fenêtres et volets"
-          }
-        }
-      }
-    },
-    "With an account": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Avec un compte"
           }
         }
       }

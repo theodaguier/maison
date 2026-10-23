@@ -332,7 +332,8 @@ private struct IntegrationRow: View {
     var body: some View {
         Button(action: add) {
             SettingsRow(title: LocalizedStringKey(item.name),
-                        detail: installed ? String(localized: "Already added") : item.isCloud ? String(localized: "With an account") : String(localized: "On the network"),
+                        // Only what is sure: the catalog doesn't say whether an integration needs an account.
+                        detail: installed ? String(localized: "Already added") : nil,
                         showsChevron: true) {
                 IntegrationLogoView(domain: item.domain)
             }
