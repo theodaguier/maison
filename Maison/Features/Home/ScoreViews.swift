@@ -321,7 +321,7 @@ struct OriginTag: View {
 }
 
 /// The top of a fiche: the score, where it comes from, and what it means.
-private struct FicheHeader: View {
+struct FicheHeader: View {
     let value: String
     let unit: String
     let origin: ValueOrigin

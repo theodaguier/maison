@@ -31,6 +31,7 @@ struct RoomView: View {
                 ForEach(store.maintenance(in: room).filter { !done.contains($0.id) }) { item in
                     MaintenanceCard(item: item) { done.insert(item.id) }
                 }
+                RoomHousekeepingSection(room: room)
                 ForEach(RoomCategory.allCases, id: \.self) { category in
                     let members = devices.filter { category.contains($0) }
                     if !members.isEmpty {

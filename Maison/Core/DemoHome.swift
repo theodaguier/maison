@@ -24,10 +24,11 @@ enum DemoHome {
             Area(id: "hallway", name: "Couloir"),
             Area(id: "office", name: "Bureau"),
             Area(id: "bathroom", name: "Salle de bain"),
+            Area(id: "back_room", name: "Arrière"),
         ]
         let placement: [String: String] = [
             "light.lampadaire": "living_room", "light.bandeau_led": "living_room", "light.plafonnier": "living_room",
-            "climate.thermostat": "living_room", "media_player.sonos": "living_room", "media_player.fire_tv": "living_room",
+            "climate.thermostat": "living_room", "media_player.sonos": "living_room", "media_player.fire_tv": "living_room", "vacuum.robot": "living_room",
             "cover.volets_salon": "living_room", "sensor.salon_temperature": "living_room", "sensor.salon_humidity": "living_room", "sensor.salon_co2": "living_room",
             "binary_sensor.salon_motion": "living_room",
             "climate.climatiseur": "bedroom", "sensor.chambre_temperature": "bedroom",
@@ -95,6 +96,9 @@ enum DemoHome {
             ]),
             EntityState(entityID: "media_player.sonos_cuisine", state: "paused", attributes: [
                 "friendly_name": "Sonos cuisine", "device_class": "speaker", "volume_level": 0.3, "group_members": ["media_player.sonos_cuisine"],
+            ]),
+            EntityState(entityID: "vacuum.robot", state: "docked", attributes: [
+                "friendly_name": "Robot aspirateur", "battery_level": 100,
             ]),
             EntityState(entityID: "fan.ventilateur", state: "on", attributes: [
                 "friendly_name": "Ventilateur", "percentage": 60, "percentage_step": 10, "oscillating": true,
@@ -242,6 +246,10 @@ enum DemoHome {
             let position = data["position"]?.doubleValue ?? 0
             state = position > 0 ? "open" : "closed"
             attributes["current_position"] = .number(position)
+        case "start":
+            state = "cleaning"
+        case "return_to_base":
+            state = "returning"
         case "media_play_pause":
             state = state == "playing" ? "paused" : "playing"
         case "media_play":
@@ -276,6 +284,20 @@ enum DemoHome {
     // MARK: Plan
 
     /// The apartment of the mock-ups: six rooms, about 73 m².
+    /// What was done in each room: the bathroom is late, the living room comes back in a few days.
+    static var housekeepingLog: HousekeepingLog {
+        func daysAgo(_ days: Double) -> Date { .now.addingTimeInterval(-days * 86_400) }
+        var log = HousekeepingLog()
+        for chore in [Chore.sink, .shower, .toilet, .towels] { log.markDone(chore, in: "bathroom", at: daysAgo(9)) }
+        log.markDone(.vacuum, in: "living_room", at: daysAgo(4))
+        log.markDone(.dust, in: "living_room", at: daysAgo(12))
+        log.markDone(.floors, in: "kitchen", at: daysAgo(1))
+        log.markDone(.worktop, in: "kitchen", at: daysAgo(0.2))
+        log.markDone(.sheets, in: "bedroom", at: daysAgo(3))
+        log.markDone(.vacuum, in: "bedroom", at: daysAgo(5))
+        return log
+    }
+
     static let plan: FloorPlan = {
         typealias P = FloorPlan.Point
         func rect(_ x0: Double, _ y0: Double, _ x1: Double, _ y1: Double) -> [P] {

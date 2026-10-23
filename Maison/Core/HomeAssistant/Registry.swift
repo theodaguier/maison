@@ -4,10 +4,13 @@ import Foundation
 struct Area: Sendable, Hashable, Identifiable, Decodable {
     let id: String
     let name: String
+    /// The room's icon in Home Assistant ("mdi:sofa"), which says what it is for.
+    var icon: String?
 
     private enum CodingKeys: String, CodingKey {
         case id = "area_id"
         case name
+        case icon
     }
 }
 
