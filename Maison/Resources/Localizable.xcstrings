@@ -3102,16 +3102,6 @@
         }
       }
     },
-    "Connected devices": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Appareils connectés"
-          }
-        }
-      }
-    },
     "Connected locally": {
       "localizations": {
         "fr": {
@@ -7718,16 +7708,6 @@
         }
       }
     },
-    "Seen by the box": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vus par la box"
-          }
-        }
-      }
-    },
     "Send a notification": {
       "localizations": {
         "fr": {
@@ -8034,16 +8014,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Se déconnecter de Home Assistant ?"
-          }
-        }
-      }
-    },
-    "Signal of the devices, room by room": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Le signal des appareils, pièce par pièce"
           }
         }
       }
@@ -8954,6 +8924,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Débit et appareils connectés"
+          }
+        }
+      }
+    },
+    "Throughput, and %lld devices connected": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Débit, et %lld appareils connectés"
           }
         }
       }
@@ -9914,16 +9894,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Wi-Fi"
-          }
-        }
-      }
-    },
-    "Wi-Fi signal": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Signal Wi-Fi"
           }
         }
       }

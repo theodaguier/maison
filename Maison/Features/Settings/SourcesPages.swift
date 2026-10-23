@@ -393,8 +393,12 @@ struct SourceDetailPage: View {
                     SettingsGroup("In Place") {
                         ForEach(Array(entities.enumerated()), id: \.element.entityID) { index, entity in
                             if index > 0 { SettingsDivider() }
-                            SettingsRow(title: LocalizedStringKey(entity.name), detail: store.area(of: entity)?.name, value: entity.stateLabel) {
-                                SettingsIcon(symbol: entity.symbolName, color: source.section.color)
+                            // The integration that measures it, with its logo, and the value as a person reads it.
+                            let platform = store.layout.platformByEntity[entity.entityID]
+                            let provider = platform.flatMap { domain in catalog.first { $0.domain == domain }?.name }
+                            SettingsRow(title: LocalizedStringKey(provider ?? entity.name), detail: provider == nil ? store.area(of: entity)?.name : entity.name,
+                                        value: reading(entity)) {
+                                if let platform { IntegrationLogoView(domain: platform) } else { SettingsIcon(symbol: source.symbol, color: source.section.color) }
                             }
                         }
                     }
@@ -446,7 +450,10 @@ struct SourceDetailPage: View {
                 }
             }
         }
-        let others = serving.filter { item in !found.contains { $0.domain == item.domain } }.prefix(5)
+        // An integration already added is never offered again: it gives all it can.
+        let installed = Set(store.integrations.map(\.domain))
+        // Once the source is there, other brands stay one tap away instead of a list.
+        let others = source.isInPlace ? [] : Array(serving.filter { item in !installed.contains(item.domain) && !found.contains { $0.domain == item.domain } }.prefix(5))
         SettingsGroup(found.isEmpty && !source.isInPlace ? "Choose Yours" : "Or Another Way") {
             ownWays
             // A divider between rows only: none above the first when Maison has no way of its own.
@@ -463,9 +470,19 @@ struct SourceDetailPage: View {
             }
             .buttonStyle(.plain)
         }
-        Text("A device connected to your Wi-Fi shows up here by itself.")
-            .font(.roundedFootnote)
-            .foregroundStyle(.secondary)
+        if !source.isInPlace, source.setup == .device, source.id != "weather" {
+            Text("A device connected to your Wi-Fi shows up here by itself.")
+                .font(.roundedFootnote)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    /// "12°" for the weather, the state as the app says it otherwise.
+    private func reading(_ entity: EntityState) -> String {
+        if entity.domain == "weather", let temperature = entity.attributes["temperature"]?.doubleValue {
+            return EntityState.degrees(temperature)
+        }
+        return entity.stateLabel
     }
 
     /// Maison's own way to get the source, first in the list; nothing for a plain device.

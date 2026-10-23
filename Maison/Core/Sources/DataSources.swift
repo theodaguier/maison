@@ -40,8 +40,6 @@ struct DataSource: Identifiable, Hashable, Sendable {
         "weather": ["weather_alerts.forecasts"],
         "internet": ["computers_network.monitoring"],
         "router": ["computers_network.routers_network"],
-        "connected": ["computers_network.routers_network"],
-        "signal": ["computers_network.routers_network"],
         "leak": ["water.meters_leak_detection"],
         "smoke": ["security_safety.smoke_co_alarms", "security_safety.alarm_systems"],
         "doors": ["security_safety.locks_access", "security_safety.alarm_systems"],
@@ -177,13 +175,15 @@ extension HomeStore {
             entityIDs: [internet?.connectivity.entityID, internet?.latency?.entityID].compactMap(\.self)
         ))
         let rates = measuring(["data_rate"], domains: ["sensor"])
-        add("router", .network, "wifi.router.fill", String(localized: "Box or router"), String(localized: "Throughput and connected devices"),
-            entities: rates, places: false)
-        let trackers = states.values.filter { $0.domain == "device_tracker" && $0.attributes["source_type"]?.stringValue == "router" }.sortedByName()
-        add("connected", .network, "laptopcomputer.and.iphone", String(localized: "Connected devices"), String(localized: "Seen by the box"),
-            entities: trackers, places: false)
-        add("signal", .network, "wifi", String(localized: "Wi-Fi signal"), String(localized: "Signal of the devices, room by room"),
-            entities: measuring(["signal_strength"], domains: ["sensor"]))
+        // One box gives both, so it's one source, added once.
+        let trackers = states.values.filter { $0.domain == "device_tracker" && $0.attributes["source_type"]?.stringValue == "router" }
+        let connected = trackers.count { $0.state == "home" }
+        sources.append(DataSource(
+            id: "router", section: .network, symbol: "wifi.router.fill", title: String(localized: "Box or router"),
+            detail: trackers.isEmpty ? String(localized: "Throughput and connected devices") : String(localized: "Throughput, and \(connected) devices connected"),
+            state: rates.isEmpty && trackers.isEmpty ? .missing : .inPlace(String(localized: "Connected")), setup: .device,
+            entityIDs: rates.map(\.entityID)
+        ))
 
         // Safety
         add("leak", .safety, "drop.triangle.fill", String(localized: "Leak detectors"), String(localized: "Under the sink, behind the washing machine"),

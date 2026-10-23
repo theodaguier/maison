@@ -161,6 +161,14 @@ struct SourcesTests {
     }
 
     @MainActor
+    @Test func theBoxIsOneSourceAddedOnce() {
+        let sources = DemoHome.store().dataSources(SourceFacts())
+        let network = sources.filter { $0.section == .network }.map(\.id)
+        #expect(network == ["internet", "router"])
+        #expect(sources.first { $0.id == "router" }?.isInPlace == true)
+    }
+
+    @MainActor
     @Test func aMeterMakesEnergyMeasured() {
         let store = DemoHome.store()
         var facts = SourceFacts()
