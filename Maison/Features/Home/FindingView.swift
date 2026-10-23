@@ -118,6 +118,7 @@ struct FindingView: View {
         defer { isSaving = false }
         do {
             try await store.save(rule)
+            ProposedRules.add(rule.id)
             FindingFeedback.ignore(finding.id)
             ruleCreated(rule)
             dismiss()
@@ -270,6 +271,7 @@ struct RuleCreatedBanner: View {
                 close()
             }
             Button("Undo") {
+                ProposedRules.remove(rule.id)
                 Task { try? await store.delete(rule) }
                 close()
             }
