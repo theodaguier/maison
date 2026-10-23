@@ -702,9 +702,16 @@ extension HomeStore {
         return layout.areas.first { $0.id == id }
     }
 
-    /// Marks a chore done in a room, and keeps it.
-    func markDone(_ chore: Chore, in area: Area, at date: Date = .now) {
-        housekeepingLog.markDone(chore, in: area.id, at: date)
+    /// Marks a chore done in a room, and keeps it. Returns when it was done before, for Undo.
+    @discardableResult
+    func markDone(_ chore: Chore, in area: Area, at date: Date = .now) -> Date? {
+        let previous = housekeepingLog.markDone(chore, in: area.id, at: date)
+        housekeepingLog.save(to: housekeepingDefaults)
+        return previous
+    }
+
+    func undoDone(_ chore: Chore, in area: Area, previous: Date?) {
+        housekeepingLog.restore(chore, in: area.id, to: previous)
         housekeepingLog.save(to: housekeepingDefaults)
     }
 

@@ -124,6 +124,22 @@ struct HousekeepingStoreTests {
         #expect(shower.origin == .entered)
     }
 
+    @Test func doneShowsAsDoneTodayAndUndoPutsItBack() throws {
+        let store = DemoHome.store()
+        let bathroom = try #require(store.layout.areas.first { $0.id == "bathroom" })
+        let before = try #require(store.chores(in: bathroom).first { $0.chore == .sink })
+        #expect(!before.isDoneToday)
+
+        let previous = store.markDone(.sink, in: bathroom)
+        #expect(previous == before.lastDone)
+        #expect(store.chores(in: bathroom).first { $0.chore == .sink }?.isDoneToday == true)
+
+        store.undoDone(.sink, in: bathroom, previous: previous)
+        let after = try #require(store.chores(in: bathroom).first { $0.chore == .sink })
+        #expect(after.lastDone == before.lastDone)
+        #expect(after.isLate())
+    }
+
     @Test func theDemoRobotIsFoundAndStarts() async throws {
         let store = DemoHome.store()
         let robot = try #require(store.robotVacuum)

@@ -188,8 +188,15 @@ struct HousekeepingLog: Codable, Equatable, Sendable {
         kinds = try container.decodeIfPresent([String: RoomKind].self, forKey: .kinds) ?? [:]
     }
 
-    mutating func markDone(_ chore: Chore, in roomID: String, at date: Date = .now) {
-        done["\(roomID)/\(chore.rawValue)"] = date
+    /// Notes the chore done and returns when it was done before, to undo it.
+    @discardableResult
+    mutating func markDone(_ chore: Chore, in roomID: String, at date: Date = .now) -> Date? {
+        done.updateValue(date, forKey: "\(roomID)/\(chore.rawValue)")
+    }
+
+    /// Puts back what was there before "Done".
+    mutating func restore(_ chore: Chore, in roomID: String, to previous: Date?) {
+        done["\(roomID)/\(chore.rawValue)"] = previous
     }
 
     mutating func noteSeen(_ roomIDs: [String], at date: Date = .now) {

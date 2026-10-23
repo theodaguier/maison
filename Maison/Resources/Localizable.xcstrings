@@ -3366,6 +3366,16 @@
         }
       }
     },
+    "Done Today": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fait"
+          }
+        }
+      }
+    },
     "Doormat": {
       "localizations": {
         "fr": {
@@ -5602,6 +5612,16 @@
         }
       }
     },
+    "Next one %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La prochaine %@"
+          }
+        }
+      }
+    },
     "Next Room": {
       "localizations": {
         "fr": {
@@ -5868,6 +5888,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "noté %@"
+          }
+        }
+      }
+    },
+    "Noted: %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "C’est noté : %@"
           }
         }
       }

@@ -83,6 +83,9 @@ extension ChoreStatus {
     }
 
     var isUrgent: Bool { daysLeft() <= 0 }
+
+    /// Marked done today by someone: the card says so instead of offering "Done" again.
+    var isDoneToday: Bool { origin == .entered && Calendar.current.isDateInToday(lastDone) }
 }
 
 /// A room's chore: its rhythm, when it comes back, and "Done".
@@ -92,9 +95,12 @@ struct ChoreCard: View {
     let room: Area
     /// The room's name above the chore, when the card is outside its room.
     var showsRoom = false
+    /// Called after "Done", with what Undo needs.
+    var onDone: (ChoreDone) -> Void = { _ in }
 
     var body: some View {
         let kind = store.roomKind(room)
+        let doneToday = status.isDoneToday
         HStack(spacing: 14) {
             Image(systemName: "bubbles.and.sparkles.fill")
                 .font(.system(size: 17, weight: .semibold))
@@ -106,23 +112,73 @@ struct ChoreCard: View {
                     .font(.roundedFootnoteEmphasized)
                     .foregroundStyle(.secondary)
                 Text(status.chore.title).font(.roundedHeadline)
-                Text("\(status.dueText), \(status.lastDoneText)")
+                Text(doneToday ? String(localized: "Next one \(status.dueText.lowercased())") : "\(status.dueText), \(status.lastDoneText)")
                     .font(.roundedFootnote)
                     .foregroundStyle(status.isUrgent ? Color.orange : Color.secondary)
             }
             Spacer(minLength: 0)
-            Button(String(localized: "upkeep.done", defaultValue: "Done")) {
-                withAnimation(.smooth) { store.markDone(status.chore, in: room) }
+            if doneToday {
+                Label("Done Today", systemImage: "checkmark.circle.fill")
+                    .font(.roundedSubheadlineEmphasized)
+                    .foregroundStyle(.green)
+                    .transition(.opacity.combined(with: .scale(0.9)))
+            } else {
+                Button(String(localized: "upkeep.done", defaultValue: "Done")) {
+                    withAnimation(.smooth) {
+                        let previous = store.markDone(status.chore, in: room)
+                        onDone(ChoreDone(chore: status.chore, room: room, previous: previous))
+                    }
+                }
+                .font(.roundedSubheadlineEmphasized)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 7)
+                .background(kind.color.opacity(0.14), in: .capsule)
+                .foregroundStyle(kind.color == .yellow ? Color.orange : kind.color)
+                .buttonStyle(.plain)
+                .sensoryFeedback(.success, trigger: doneToday)
             }
-            .font(.roundedSubheadlineEmphasized)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 7)
-            .background(kind.color.opacity(0.14), in: .capsule)
-            .foregroundStyle(kind.color == .yellow ? Color.orange : kind.color)
-            .buttonStyle(.plain)
         }
         .padding(16)
         .cardStyle()
+    }
+}
+
+/// A chore just marked done, and what it was before, for Undo.
+struct ChoreDone: Identifiable, Equatable {
+    let id = UUID()
+    let chore: Chore
+    let room: Area
+    let previous: Date?
+}
+
+/// "Noted: Shower", with Undo, at the bottom of the screen.
+struct ChoreDoneBanner: View {
+    @Environment(HomeStore.self) private var store
+    let done: ChoreDone
+    let close: () -> Void
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+            Text("Noted: \(done.chore.title)")
+                .lineLimit(1)
+                .foregroundStyle(.white)
+            Spacer(minLength: 4)
+            Button("Undo") {
+                store.undoDone(done.chore, in: done.room, previous: done.previous)
+                close()
+            }
+        }
+        .font(.roundedSubheadlineEmphasized)
+        .tint(.blue)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(Color(white: 0.12), in: .capsule)
+        .padding(.horizontal, Theme.screenPadding)
+        .task(id: done.id) {
+            try? await Task.sleep(for: .seconds(5))
+            close()
+        }
     }
 }
 
@@ -130,6 +186,7 @@ struct ChoreCard: View {
 struct RoomHousekeepingSection: View {
     @Environment(HomeStore.self) private var store
     let room: Area
+    var onDone: (ChoreDone) -> Void = { _ in }
 
     var body: some View {
         let kind = store.roomKind(room)
@@ -156,7 +213,10 @@ struct RoomHousekeepingSection: View {
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 4)
             VStack(spacing: 8) {
-                ForEach(store.chores(in: room)) { ChoreCard(status: $0, room: room) }
+                // In the type's order, so a chore marked done stays where it was.
+                let order = kind.chores.map(\.chore)
+                let chores = store.chores(in: room).sorted { order.firstIndex(of: $0.chore) ?? 0 < order.firstIndex(of: $1.chore) ?? 0 }
+                ForEach(chores) { ChoreCard(status: $0, room: room, onDone: onDone) }
             }
         }
     }
@@ -334,6 +394,7 @@ struct RoomKindPicker: View {
 struct HousekeepingSheet: View {
     @Environment(HomeStore.self) private var store
     @Environment(\.dismiss) private var dismiss
+    @State private var done: ChoreDone?
 
     var body: some View {
         NavigationStack {
@@ -347,6 +408,14 @@ struct HousekeepingSheet: View {
             .navigationTitle("Housekeeping")
             .navigationBarTitleDisplayMode(.inline)
             .background(Theme.background)
+            .overlay(alignment: .bottom) {
+                if let done {
+                    ChoreDoneBanner(done: done) { withAnimation(.smooth) { self.done = nil } }
+                        .padding(.bottom, 12)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+            }
+            .animation(.smooth, value: done?.id)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Close", systemImage: "xmark") { dismiss() }
@@ -381,9 +450,9 @@ struct HousekeepingSheet: View {
         }
         .padding(.top, 4)
         if let measured = all.first(where: { $0.reason != nil }), let room = area(measured.roomID) {
-            MeasuredChoreCard(status: measured, room: room)
+            MeasuredChoreCard(status: measured, room: room) { done = $0 }
         } else if let first = late.first, let room = area(first.roomID) {
-            ChoreCard(status: first, room: room, showsRoom: true)
+            ChoreCard(status: first, room: room, showsRoom: true) { done = $0 }
         }
         if let robot = store.robotVacuum {
             RobotCard(robot: robot)
@@ -429,6 +498,7 @@ private struct MeasuredChoreCard: View {
     @Environment(HomeStore.self) private var store
     let status: ChoreStatus
     let room: Area
+    let onDone: (ChoreDone) -> Void
 
     var body: some View {
         HStack(spacing: 12) {
@@ -444,7 +514,10 @@ private struct MeasuredChoreCard: View {
             }
             Spacer(minLength: 0)
             Button(String(localized: "upkeep.done", defaultValue: "Done")) {
-                withAnimation(.smooth) { store.markDone(status.chore, in: room) }
+                withAnimation(.smooth) {
+                    let previous = store.markDone(status.chore, in: room)
+                    onDone(ChoreDone(chore: status.chore, room: room, previous: previous))
+                }
             }
             .font(.roundedFootnoteEmphasized)
             .padding(.horizontal, 11)
