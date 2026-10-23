@@ -3070,6 +3070,16 @@
         }
       }
     },
+    "Create a Rule": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Créer une règle"
+          }
+        }
+      }
+    },
     "Create and edit rules": {
       "localizations": {
         "fr": {
@@ -3316,6 +3326,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Appareils"
+          }
+        }
+      }
+    },
+    "Devices and rooms": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appareils et pièces"
           }
         }
       }
@@ -6336,6 +6356,16 @@
         }
       }
     },
+    "Quick Actions": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actions rapides"
+          }
+        }
+      }
+    },
     "Ran %@": {
       "localizations": {
         "fr": {
@@ -6676,6 +6706,16 @@
         }
       }
     },
+    "Run a Scene": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lancer une scène"
+          }
+        }
+      }
+    },
     "Run by the home": {
       "localizations": {
         "fr": {
@@ -6882,6 +6922,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Scripts"
+          }
+        }
+      }
+    },
+    "Search": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rechercher"
           }
         }
       }
@@ -7606,6 +7656,16 @@
         }
       }
     },
+    "Test the Internet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tester internet"
+          }
+        }
+      }
+    },
     "The address you use to open Home Assistant in a browser at home.": {
       "localizations": {
         "fr": {
@@ -7682,6 +7742,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Le foyer, le plan et les favoris restent dans iCloud."
+          }
+        }
+      }
+    },
+    "The internet answers": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Internet répond"
+          }
+        }
+      }
+    },
+    "The internet answers in %lld ms": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Internet répond en %lld ms"
+          }
+        }
+      }
+    },
+    "The internet doesn’t answer": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Internet ne répond pas"
           }
         }
       }
