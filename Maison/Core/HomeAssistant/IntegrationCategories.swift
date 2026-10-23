@@ -73,7 +73,10 @@ extension FlowStep.Form {
     /// Every field has its answer already (a default, a constant) or can stay empty: the step asks
     /// nothing, so Maison answers it alone.
     var asksNothing: Bool {
-        errors.isEmpty && fields.allSatisfy { field in
+        // A step with no field at all is a confirmation only when it says so: "link" or "pair" waits for a
+        // button pressed on the device (a box, a bridge), which only the person can do.
+        if fields.isEmpty { return errors.isEmpty && stepID.contains("confirm") }
+        return errors.isEmpty && fields.allSatisfy { field in
             switch field.kind {
             case .constant: true
             case .unsupported: !field.isRequired || field.defaultValue != nil

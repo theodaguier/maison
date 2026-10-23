@@ -38,7 +38,11 @@ struct IntegrationCategoriesTests {
         let host = FlowField(name: "host", kind: .text(isSecret: false), isRequired: true, defaultValue: nil)
         let empty = FlowField(name: "host", kind: .text(isSecret: false), isRequired: true, defaultValue: "")
 
-        #expect(form([]).asksNothing)
+        func step(_ id: String) -> FlowStep.Form { FlowStep.Form(flowID: "f", stepID: id, fields: [], errors: [:], placeholders: [:]) }
+        #expect(step("discovery_confirm").asksNothing)
+        // Pressing the button on the box or the bridge is the person's to do.
+        #expect(!step("link").asksNothing)
+        #expect(!step("pair").asksNothing)
         #expect(form([located, name, optional]).asksNothing)
         #expect(form([located, name, optional]).defaultAnswers == ["latitude": 48.85, "name": "Maison"])
         #expect(!form([located, host]).asksNothing)
@@ -62,6 +66,14 @@ struct IntegrationCategoriesTests {
         #expect(added?.domain == "met")
         #expect(await driver.cancelled == ["a"])
         #expect(await driver.submitted == [["b": ["name": "Maison"]]])
+    }
+
+    @Test func leavesABoxThatWaitsForItsButton() async throws {
+        let http = ScriptedHTTPClient { _ in (200, #"{"type": "form", "flow_id": "fbx", "step_id": "link", "data_schema": []}"#) }
+        let outcome = try await ConfigFlowClient(serverURL: URL(string: "http://homeassistant.local:8123")!, accessToken: "token", client: http)
+            .confirmIfNothingToAsk(flowID: "fbx")
+        #expect(outcome == nil)
+        #expect(http.sent.map(\.httpMethod) == ["GET"])
     }
 
     @Test func confirmsAFoundDeviceWhoseFieldsHaveDefaults() async throws {

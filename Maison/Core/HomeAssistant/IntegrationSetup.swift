@@ -234,7 +234,8 @@ struct DemoFlowDriver: FlowDriver {
     }
 
     func current(_ flowID: String) async throws -> FlowStep {
-        .form(.init(flowID: flowID, stepID: "confirm", fields: [], errors: [:], placeholders: [:]))
+        // A box waits for its button; other found devices only for a confirmation.
+        .form(.init(flowID: flowID, stepID: flowID.contains("freebox") ? "link" : "confirm", fields: [], errors: [:], placeholders: [:]))
     }
 
     func submit(_ flowID: String, answers: [String: JSONValue]) async throws -> FlowStep {

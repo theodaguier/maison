@@ -101,7 +101,9 @@ struct AllSourcesPage: View {
             #if DEBUG
             if let id = UserDefaults.standard.string(forKey: "source") { opened = sources.first { $0.id == id } }
             // `-addIntegration shelly` opens the steps to add it.
-            if let domain = UserDefaults.standard.string(forKey: "addIntegration") { adding = FlowTarget(domain: domain, name: domain.capitalized) }
+            if let domain = UserDefaults.standard.string(forKey: "addIntegration") {
+                adding = FlowTarget(domain: domain, name: domain.capitalized, flowID: discovered.first { $0.domain == domain }?.flowID)
+            }
             #endif
         }
         .refreshable { await load() }

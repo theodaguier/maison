@@ -28,6 +28,13 @@ extension HomeStore {
     /// The flow's words in the iPhone's language, which the server translates.
     func flowWording(domain: String) async -> FlowWording {
         let language = Locale.current.language.languageCode?.identifier ?? "en"
+        if isDemoHome {
+            // What the server says for a box that waits for its button, in the sample home.
+            let link = language == "fr"
+                ? "Appuyez sur Ajouter, puis touchez la flèche droite de l’écran de la box pour autoriser votre serveur."
+                : "Tap Add, then touch the right arrow on the box’s screen to authorise your server."
+            return FlowWording(domain: domain, resources: ["component.\(domain).config.step.link.description": link])
+        }
         guard !isDemoHome, let connection, let resources = try? await connection.flowTranslations(domain: domain, language: language)
         else { return FlowWording(domain: domain, resources: [:]) }
         return FlowWording(domain: domain, resources: resources)
