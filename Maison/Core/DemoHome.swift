@@ -42,6 +42,7 @@ enum DemoHome {
         layout.areas = areas
         layout.areaByEntity = placement
         layout.deviceByEntity = [
+            "switch.chauffe_eau": "water_heater_plug", "sensor.chauffe_eau_energy": "water_heater_plug",
             "switch.prise_cafe": "plug", "sensor.prise_cafe_power": "plug",
             "lock.porte_entree": "lock", "sensor.porte_entree_battery": "lock",
             "sensor.sdb_temperature": "bathroom_sensor", "sensor.sdb_humidity": "bathroom_sensor", "sensor.sdb_battery": "bathroom_sensor",
@@ -140,6 +141,7 @@ enum DemoHome {
             EntityState(entityID: "sensor.chauffe_eau_energy", state: "412.6", attributes: [
                 "friendly_name": "Chauffe-eau", "device_class": "energy", "unit_of_measurement": "kWh", "state_class": "total_increasing",
             ]),
+            EntityState(entityID: "switch.chauffe_eau", state: "on", attributes: ["friendly_name": "Chauffe-eau"]),
             EntityState(entityID: "sensor.compteur_eau", state: "182.4", attributes: [
                 "friendly_name": "Compteur d’eau", "device_class": "water", "unit_of_measurement": "L", "state_class": "total_increasing",
             ]),
@@ -393,6 +395,9 @@ enum DemoHome {
         let isToday = calendar.isDateInToday(date)
         return (base + heater) * (isToday ? 0.82 : 1 + 0.06 * sin(date.timeIntervalSince1970 / 90_000))
     }
+
+    /// Peak and off-peak hours, as on a French bill.
+    static let tariff = EnergyTariff(price: 0.27, offPeak: EnergyTariff.OffPeak(price: 0.2068, startHour: 22, endHour: 6))
 
     static func statistics(of entityID: String, since start: Date, period: String) -> [StatisticPoint] {
         if entityID == "sensor.chauffe_eau_energy" || entityID == "sensor.compteur_eau", period == "hour" {

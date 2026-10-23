@@ -118,6 +118,8 @@ struct Attention: Equatable {
     let kind: ScoreKind
     let title: String
     let detail: String
+    /// Set when the card opens a finding rather than the score's fiche.
+    var findingID: String?
 
     static func pick(from scores: HomeScores?, meterProposalSeen: Bool = MeterProposalSetting.wasSeen) -> Attention? {
         guard let scores else { return nil }
@@ -126,6 +128,14 @@ struct Attention: Equatable {
                 kind: .network,
                 title: String(localized: "The internet dropped at \(outage.start.formatted(date: .omitted, time: .shortened))"),
                 detail: String(localized: "Cut for \(Self.minutes(outage.duration))")
+            )
+        }
+        if let finding = scores.findings.first {
+            return Attention(
+                kind: .energy,
+                title: finding.title,
+                detail: String(localized: "About \(finding.yearlyValue.formatted(.number.precision(.fractionLength(0)))) \(finding.currency.currencySymbol) more a year"),
+                findingID: finding.id
             )
         }
         if let room = scores.comfort?.rooms.first(where: { $0.excursion != nil }), let excursion = room.excursion {
@@ -657,7 +667,7 @@ private struct EnergyFiche: View {
             }
             .task(id: score.asOf) { extras = await EnergyExtrasData.load(store: store, score: score) }
             .sheet(isPresented: $editsPrice) {
-                EnergyPriceEditor(price: extras.price?.perKilowattHour) {
+                EnergyTariffEditor(tariff: EnergyTariff.load()) {
                     Task { extras = await EnergyExtrasData.load(store: store, score: score) }
                 }
             }
@@ -1225,7 +1235,7 @@ private struct EnergyExtrasData: Equatable {
         var data = EnergyExtrasData()
         data.price = await store.energyPrice()
         if let price = data.price {
-            data.cost = EnergyCost.compute(hourly: score.history, price: price.perKilowattHour, day: score.day, asOf: score.asOf)
+            data.cost = EnergyCost.compute(hourly: score.history, price: price.price(atHour:), day: score.day, asOf: score.asOf)
         }
         let meters = await store.electricityMeters().ids
         data.devices = await store.deviceEnergy(day: score.day, asOf: score.asOf, excluding: meters)
@@ -1330,46 +1340,6 @@ private struct CostTiles: View {
     }
 }
 
-private struct EnergyPriceEditor: View {
-    @Environment(\.dismiss) private var dismiss
-    @State private var price: Double?
-    let saved: () -> Void
-
-    init(price: Double?, saved: @escaping () -> Void) {
-        _price = State(initialValue: price)
-        self.saved = saved
-    }
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    TextField("Price per kWh", value: $price, format: .number.precision(.fractionLength(0...4)))
-                        .keyboardType(.decimalPad)
-                } footer: {
-                    Text("The price on your bill, taxes included. Maison multiplies your consumption by it.")
-                }
-            }
-            .navigationTitle("Your kWh Price")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel", systemImage: "xmark") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save", systemImage: "checkmark") {
-                        EnergyPriceSetting.set(price)
-                        saved()
-                        dismiss()
-                    }
-                    .disabled((price ?? 0) <= 0)
-                }
-            }
-        }
-        .presentationDetents([.medium])
-    }
-}
-
 // MARK: - Network extras
 
 private struct ThroughputChart: View {
@@ -1394,13 +1364,5 @@ private struct ThroughputChart: View {
         }
         .frame(height: 200)
         .accessibilityLabel("Internet throughput over the last 24 hours, in \(unit)")
-    }
-}
-
-private extension String {
-    /// "EUR" → "€".
-    var currencySymbol: String {
-        Locale.current.currencySymbol.flatMap { Locale.current.currency?.identifier == self ? $0 : nil }
-            ?? Locale(identifier: "fr_FR").currencySymbol.flatMap { self == "EUR" ? $0 : nil } ?? self
     }
 }

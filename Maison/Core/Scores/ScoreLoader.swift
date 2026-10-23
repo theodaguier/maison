@@ -9,6 +9,8 @@ struct HomeScores: Sendable, Equatable {
     var hasNetworkSource = false
     /// An electricity meter reaches the server, even if it has no habit to compare with yet.
     var hasElectricityMeter = false
+    /// What Maison noticed, most valuable first.
+    var findings: [Finding] = []
     var computedAt: Date
 }
 
@@ -63,6 +65,7 @@ extension HomeStore {
         async let comfort = comfortScore(window: window, weekAgo: weekAgo)
         async let energy = energyScore(now: now, weekAgo: weekAgo)
         async let meters = electricityMeters()
+        async let findings = findings(now: now)
         async let network = networkScore(window: window, weekAgo: weekAgo)
         return await HomeScores(
             comfort: comfort,
@@ -70,6 +73,7 @@ extension HomeStore {
             network: network,
             hasNetworkSource: internetSources != nil,
             hasElectricityMeter: !meters.ids.isEmpty,
+            findings: findings,
             computedAt: now
         )
     }
