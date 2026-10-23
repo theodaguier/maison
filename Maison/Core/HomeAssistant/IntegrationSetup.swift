@@ -343,6 +343,7 @@ struct FlowWording: Sendable {
         var text = text
         let rewrites: [(String, String)] = [
             (#"!\[[^\]]*\]\([^)]*\)"#, ""),
+            (#"(?i)\*\*\s*(submit|soumettre|valider|envoyer)\s*\*\*"#, String(localized: "“Add”")),
             (#"\[([^\]]*)\]\([^)]*\)"#, "$1"),
             (#"[*_`]{1,2}([^*_`]+)[*_`]{1,2}"#, "$1"),
             (#"Home Assistant"#, String(localized: "your server")),

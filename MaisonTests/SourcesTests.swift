@@ -104,6 +104,12 @@ struct SourcesTests {
         #expect(wording.hint(for: confirm) == nil)
     }
 
+    @Test func namesTheServersBoldButtonAsMaisonsAdd() {
+        let plain = FlowWording.plain("Select **Submit**, then touch the right arrow on the router to register Freebox with Home Assistant.") ?? ""
+        #expect(!plain.contains("Submit"))
+        #expect(plain.contains(String(localized: "“Add”")))
+    }
+
     @Test func dropsALongExplanation() {
         let long = String(repeating: "This integration needs a long explanation about many things ", count: 4) + "."
         #expect(FlowWording.plain(long) == nil)
