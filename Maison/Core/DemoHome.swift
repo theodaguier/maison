@@ -501,6 +501,7 @@ extension DemoHome {
         IntegrationDescription(domain: "awair", name: "Awair", iotClass: "local_polling"),
         IntegrationDescription(domain: "enphase_envoy", name: "Enphase Envoy", iotClass: "local_polling"),
         IntegrationDescription(domain: "fritz", name: "AVM FRITZ!Box Tools", iotClass: "local_polling"),
+        IntegrationDescription(domain: "freebox", name: "Freebox", iotClass: "local_polling"),
         IntegrationDescription(domain: "google", name: "Google Calendar", iotClass: "cloud_polling"),
         IntegrationDescription(domain: "matter", name: "Matter", iotClass: "local_push"),
         IntegrationDescription(domain: "met", name: "Meteorologisk institutt (Met.no)", iotClass: "cloud_polling"),

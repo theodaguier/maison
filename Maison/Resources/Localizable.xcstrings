@@ -1752,6 +1752,16 @@
         }
       }
     },
+    "A Reader on the Meter": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un lecteur sur le compteur"
+          }
+        }
+      }
+    },
     "A Wi-Fi measuring clamp": {
       "localizations": {
         "fr": {
@@ -1788,6 +1798,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Un appareil change d’état"
+          }
+        }
+      }
+    },
+    "A device connected to your Wi-Fi shows up here by itself.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un appareil relié à votre Wi-Fi apparaît ici tout seul."
           }
         }
       }
@@ -1942,36 +1962,6 @@
         }
       }
     },
-    "Add Another One": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "En ajouter un autre"
-          }
-        }
-      }
-    },
-    "Add Automatically": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ajouter automatiquement"
-          }
-        }
-      }
-    },
-    "Add It Now": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "L’ajouter maintenant"
-          }
-        }
-      }
-    },
     "Add a Condition": {
       "localizations": {
         "fr": {
@@ -2022,6 +2012,16 @@
         }
       }
     },
+    "Add the Internet Check": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter le test de connexion"
+          }
+        }
+      }
+    },
     "Add to Favorites": {
       "localizations": {
         "fr": {
@@ -2068,16 +2068,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ajouter une source demande un administrateur du foyer."
-          }
-        }
-      }
-    },
-    "Adding…": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ajout en cours…"
           }
         }
       }
@@ -2272,12 +2262,12 @@
         }
       }
     },
-    "An administrator of the household can add it from their iPhone.": {
+    "An administrator can add it": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un administrateur du foyer peut l’ajouter depuis son iPhone."
+            "value": "Un administrateur peut l’ajouter"
           }
         }
       }
@@ -2298,6 +2288,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Et %lld autres : cherchez leur nom."
+          }
+        }
+      }
+    },
+    "Another Brand": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une autre marque"
           }
         }
       }
@@ -2892,22 +2892,22 @@
         }
       }
     },
+    "Choose Yours": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez le vôtre"
+          }
+        }
+      }
+    },
     "Choose a Server": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Choisir un serveur"
-          }
-        }
-      }
-    },
-    "Choose an Integration": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Choisir une intégration"
           }
         }
       }
@@ -4212,6 +4212,16 @@
         }
       }
     },
+    "Found at Home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trouvé chez vous"
+          }
+        }
+      }
+    },
     "Found by your server. Maison adds them without asking anything, except a code when the device shows one.": {
       "localizations": {
         "fr": {
@@ -4592,16 +4602,6 @@
         }
       }
     },
-    "How to Add One": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Comment en ajouter un"
-          }
-        }
-      }
-    },
     "How you use Maison. Never your home.": {
       "localizations": {
         "fr": {
@@ -4788,6 +4788,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Box internet"
+          }
+        }
+      }
+    },
+    "Internet Check": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Test de connexion"
           }
         }
       }
@@ -5312,6 +5322,16 @@
         }
       }
     },
+    "Link %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Relier %@"
+          }
+        }
+      }
+    },
     "Link My %@ Account": {
       "localizations": {
         "fr": {
@@ -5358,6 +5378,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Les litres, et les fuites"
+          }
+        }
+      }
+    },
+    "Live, connected to your Wi-Fi": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En direct, relié à votre Wi-Fi"
           }
         }
       }
@@ -5518,16 +5548,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mail"
-          }
-        }
-      }
-    },
-    "Maison added %@. Its devices appear in a few seconds.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Maison a ajouté %@. Ses appareils apparaissent dans quelques secondes."
           }
         }
       }
@@ -6312,16 +6332,6 @@
         }
       }
     },
-    "Nothing can be added without you here. Tap Choose an Integration.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rien ne peut s’ajouter sans vous ici. Touchez « Choisir une intégration »."
-          }
-        }
-      }
-    },
     "Nothing is saved until you confirm. Then the rule runs on your server, like the others.": {
       "localizations": {
         "fr": {
@@ -6348,6 +6358,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rien à faire dans Home Assistant. Ce que vous saisissez sert de point de départ : un capteur le remplace dès qu’il apparaît."
+          }
+        }
+      }
+    },
+    "Nothing to install, nothing to answer": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rien à installer, rien à répondre"
           }
         }
       }
@@ -6722,6 +6742,16 @@
         }
       }
     },
+    "Or Another Way": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ou autrement"
+          }
+        }
+      }
+    },
     "Oscillation": {
       "localizations": {
         "fr": {
@@ -6944,16 +6974,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Lecture en cours"
-          }
-        }
-      }
-    },
-    "Plug it in and connect it to your Wi-Fi: Maison finds it on the network and adds it by itself. Otherwise, Maison can add the most used service that asks nothing, or you pick one.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Branchez-le et reliez-le à votre Wi-Fi : Maison le trouve sur le réseau et l’ajoute toute seule. Sinon, Maison peut ajouter le service le plus utilisé qui ne demande rien, ou vous en choisissez un."
           }
         }
       }
@@ -8648,22 +8668,22 @@
         }
       }
     },
+    "The prices on your bill": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les prix de votre facture"
+          }
+        }
+      }
+    },
     "The prices on your bill, taxes included.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Les prix de votre facture, taxes comprises."
-          }
-        }
-      }
-    },
-    "The prices on your bill. A bill or a contract read by Maison will replace them.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les prix de votre facture. Une facture ou un contrat lu par Maison les remplacera."
           }
         }
       }
@@ -9944,6 +9964,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sans matériel"
+          }
+        }
+      }
+    },
+    "Without hardware, the day after": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sans matériel, le lendemain"
           }
         }
       }

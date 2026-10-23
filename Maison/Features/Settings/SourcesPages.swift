@@ -377,8 +377,9 @@ struct SourceDetailPage: View {
     let source: DataSource
     @State private var editsTariff = false
     @State private var searches = false
-    @State private var isAdding = false
-    @State private var autoResult: String?
+    @State private var catalog: [IntegrationDescription] = []
+    @State private var discovered: [DiscoveredDevice] = []
+    @State private var adding: FlowTarget?
 
     var body: some View {
         ScrollView {
@@ -400,12 +401,18 @@ struct SourceDetailPage: View {
                 }
                 setup
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, Theme.screenPadding)
             .padding(.bottom, 24)
         }
         .background(Theme.background)
         .navigationTitle(source.title)
         .sheet(isPresented: $editsTariff) { EnergyTariffEditor(tariff: EnergyTariff.load()) {} }
+        .sheet(item: $adding, onDismiss: { Task { discovered = await store.discoveredDevices() } }) { IntegrationFlowSheet(target: $0) }
+        .task(id: source.id) {
+            catalog = await store.integrationCatalog()
+            discovered = await store.discoveredDevices()
+        }
         .navigationDestination(isPresented: $searches) {
             IntegrationSearchPage(categories: source.categories.isEmpty ? nil : source.categories, title: source.title)
         }
@@ -415,66 +422,117 @@ struct SourceDetailPage: View {
         #endif
     }
 
+    /// The same on every source: what the server found for it, then Maison's own way when it has one,
+    /// the integrations most homes use for it, and any other brand.
     @ViewBuilder private var setup: some View {
-        switch source.setup {
-        case .meter:
-            if !source.isInPlace {
-                let gridOperator = MaisonRelay.url == nil ? nil : GridOperator.supported(in: store.serverConfig?.country)
-                if let gridOperator { GridLinkCard(gridOperator: gridOperator) }
-                MeterProposal(reading: .forCountry(store.serverConfig?.country), isAlternative: gridOperator != nil)
-            }
-        case .tariff:
-            WideButton(title: source.isInPlace ? "Change Your Tariff" : "Enter Your Tariff", style: .primary) { editsTariff = true }
-            Text("The prices on your bill. A bill or a contract read by Maison will replace them.")
-                .font(.roundedFootnote)
-                .foregroundStyle(.secondary)
-        case .internetCheck:
-            if !source.isInPlace {
-                if store.isAdministrator {
-                    WideButton(title: "Add It Now", style: .primary) { Task { await store.addInternetCheck() } }
-                } else {
-                    Text("An administrator of the household can add it from their iPhone.")
-                        .font(.roundedSubheadline)
-                        .foregroundStyle(.secondary)
-                }
-            }
-        case .presence:
-            SettingsGroup { PresenceRow() }
-        case .device:
-            VStack(alignment: .leading, spacing: 12) {
-                Label(source.isInPlace ? "Add Another One" : "How to Add One", systemImage: "sparkles")
-                    .labelStyle(.compact)
-                    .font(.roundedHeadline)
-                Text("Plug it in and connect it to your Wi-Fi: Maison finds it on the network and adds it by itself. Otherwise, Maison can add the most used service that asks nothing, or you pick one.")
-                    .font(.roundedSubheadline)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                if let autoResult {
-                    Text(autoResult).font(.roundedSubheadline).foregroundStyle(.secondary)
-                }
-                if store.isAdministrator, !source.categories.isEmpty {
-                    WideButton(title: isAdding ? "Adding…" : "Add Automatically", style: .primary) {
-                        Task { await addAutomatically() }
+        let serving = IntegrationDescription.serving(source.categories, in: catalog)
+        let found = discovered.filter { device in serving.contains { $0.domain == device.domain } }
+        if !found.isEmpty {
+            SettingsGroup("Found at Home") {
+                ForEach(Array(found.enumerated()), id: \.element.id) { index, device in
+                    if index > 0 { SettingsDivider() }
+                    let name = device.name ?? serving.first { $0.domain == device.domain }?.name ?? device.domain
+                    Button { adding = FlowTarget(domain: device.domain, name: name, flowID: device.flowID) } label: {
+                        HStack(spacing: 12) {
+                            IntegrationLogoView(domain: device.domain)
+                            Text(name).font(.roundedBody).foregroundStyle(.primary).lineLimit(1)
+                            Spacer(minLength: 8)
+                            Text("Add").font(.roundedSubheadlineEmphasized).foregroundStyle(.blue)
+                        }
+                        .padding(.vertical, 10)
+                        .contentShape(.rect)
                     }
-                    .disabled(isAdding)
+                    .buttonStyle(.plain)
                 }
-                WideButton(title: "Choose an Integration", style: .secondary) { searches = true }
             }
-            .padding(16)
-            .cardStyle()
         }
+        let others = serving.filter { item in !found.contains { $0.domain == item.domain } }.prefix(5)
+        SettingsGroup(found.isEmpty && !source.isInPlace ? "Choose Yours" : "Or Another Way") {
+            ownWays
+            ForEach(Array(others), id: \.id) { item in
+                SettingsDivider()
+                Button { adding = FlowTarget(domain: item.domain, name: item.name) } label: {
+                    SettingsRow(title: LocalizedStringKey(item.name), showsChevron: true) { IntegrationLogoView(domain: item.domain) }
+                }
+                .buttonStyle(.plain)
+            }
+            SettingsDivider()
+            Button { searches = true } label: {
+                SettingsRow(symbol: "magnifyingglass", color: .gray, title: "Another Brand", showsChevron: true)
+            }
+            .buttonStyle(.plain)
+        }
+        Text("A device connected to your Wi-Fi shows up here by itself.")
+            .font(.roundedFootnote)
+            .foregroundStyle(.secondary)
     }
 
-    private func addAutomatically() async {
-        isAdding = true
-        defer { isAdding = false }
-        autoResult = await store.addAutomatically(source.categories).map { String(localized: "Maison added \($0). Its devices appear in a few seconds.") }
-            ?? String(localized: "Nothing can be added without you here. Tap Choose an Integration.")
+    /// Maison's own way to get the source, first in the list; nothing for a plain device.
+    @ViewBuilder private var ownWays: some View {
+        switch source.setup {
+        case .meter:
+            let gridOperator = MaisonRelay.url == nil ? nil : GridOperator.supported(in: store.serverConfig?.country)
+            if let gridOperator {
+                NavigationLink { MeterWayPage(gridOperator: gridOperator) } label: {
+                    SettingsRow(symbol: "bolt.horizontal.fill", color: .yellow, title: LocalizedStringKey("Link \(gridOperator.name)"),
+                                detail: String(localized: "Without hardware, the day after"), showsChevron: true)
+                }
+                .buttonStyle(.plain)
+                SettingsDivider()
+            }
+            NavigationLink { MeterWayPage(gridOperator: nil) } label: {
+                SettingsRow(symbol: "cable.connector", color: .orange, title: "A Reader on the Meter",
+                            detail: String(localized: "Live, connected to your Wi-Fi"), showsChevron: true)
+            }
+            .buttonStyle(.plain)
+        case .tariff:
+            Button { editsTariff = true } label: {
+                SettingsRow(symbol: "pencil", color: .blue, title: source.isInPlace ? "Change Your Tariff" : "Enter Your Tariff",
+                            detail: String(localized: "The prices on your bill"), showsChevron: true)
+            }
+            .buttonStyle(.plain)
+        case .internetCheck:
+            if store.isAdministrator, !source.isInPlace {
+                Button { Task { await store.addInternetCheck() } } label: {
+                    SettingsRow(symbol: "network", color: .blue, title: "Add the Internet Check",
+                                detail: String(localized: "Nothing to install, nothing to answer"), showsChevron: true)
+                }
+                .buttonStyle(.plain)
+            } else {
+                SettingsRow(symbol: "network", color: .blue, title: "Internet Check",
+                            detail: source.isInPlace ? String(localized: "Checked every minute") : String(localized: "An administrator can add it"))
+            }
+        case .presence:
+            PresenceRow()
+        case .device:
+            EmptyView()
+        }
     }
 }
 
-/// The server's integrations: those for one source when `categories` is set, otherwise all of them by
-/// part of the home.
+/// One way to get the meter's readings, on its own page.
+private struct MeterWayPage: View {
+    @Environment(HomeStore.self) private var store
+    let gridOperator: GridOperator?
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
+                if let gridOperator {
+                    GridLinkCard(gridOperator: gridOperator)
+                } else {
+                    MeterProposal(reading: .forCountry(store.serverConfig?.country))
+                }
+            }
+            .padding(.horizontal, Theme.screenPadding)
+            .padding(.bottom, 24)
+        }
+        .background(Theme.background)
+        .navigationTitle(gridOperator.map { String(localized: "Link \($0.name)") } ?? String(localized: "A Reader on the Meter"))
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
 struct IntegrationSearchPage: View {
     @Environment(HomeStore.self) private var store
     var categories: [String]?
