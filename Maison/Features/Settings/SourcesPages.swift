@@ -449,14 +449,15 @@ struct SourceDetailPage: View {
         let others = serving.filter { item in !found.contains { $0.domain == item.domain } }.prefix(5)
         SettingsGroup(found.isEmpty && !source.isInPlace ? "Choose Yours" : "Or Another Way") {
             ownWays
-            ForEach(Array(others), id: \.id) { item in
-                SettingsDivider()
+            // A divider between rows only: none above the first when Maison has no way of its own.
+            ForEach(Array(others.enumerated()), id: \.element.id) { index, item in
+                if index > 0 || source.setup != .device { SettingsDivider() }
                 Button { adding = FlowTarget(domain: item.domain, name: item.name) } label: {
                     SettingsRow(title: LocalizedStringKey(item.name), showsChevron: true) { IntegrationLogoView(domain: item.domain) }
                 }
                 .buttonStyle(.plain)
             }
-            SettingsDivider()
+            if !others.isEmpty || source.setup != .device { SettingsDivider() }
             Button { searches = true } label: {
                 SettingsRow(symbol: "magnifyingglass", color: .gray, title: "Another Brand", showsChevron: true)
             }
