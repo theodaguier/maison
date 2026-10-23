@@ -417,6 +417,28 @@ final class HomeStore {
         return added
     }
 
+    /// "Add a Device" from the +: confirms right away what Home Assistant found on the network, and
+    /// says what still waits for a code. `nil` without an administrator's account.
+    func addFoundDevices() async -> (added: [String], waiting: [String])? {
+        if isDemo { return ([], []) }
+        guard phase == .connected, let connection else { return nil }
+        var user = currentUser
+        if user == nil { user = try? await connection.currentUser() }
+        guard user?.isAdmin == true, let credentials = try? await freshCredentials() else { return nil }
+        let flows = ConfigFlowClient(serverURL: activeURL ?? credentials.serverURL, accessToken: credentials.accessToken)
+        var added: [String] = [], waiting: [String] = []
+        for flow in (try? await connection.discoveredFlows()) ?? [] {
+            if case .created? = try? await flows.confirmIfNothingToAsk(flowID: flow.flowID) {
+                ServerSetupLog.recordAdded(flow.handler)
+                added.append(flow.handler)
+            } else {
+                waiting.append(flow.handler)
+            }
+        }
+        if !added.isEmpty { await connect() }
+        return (added, waiting)
+    }
+
     /// Reloads integrations that failed to start, once a day each, as one would from their menu.
     private func repairIntegrations(flows: ConfigFlowClient, now: Date) async -> Bool {
         var reloaded = false
