@@ -269,7 +269,9 @@ extension HomeAssistantConnection {
     }
 }
 
-/// The words of a flow, from its translations, with the field's own name when there is none.
+/// The words of a flow. Home Assistant's are written for its own screens ("Submit", "Home Assistant",
+/// markdown images, error codes): Maison says the common cases itself, and keeps of the server's words
+/// only a short sentence, cleaned, when it tells something about the device.
 struct FlowWording: Sendable {
     let domain: String
     let resources: [String: String]
@@ -278,25 +280,80 @@ struct FlowWording: Sendable {
         resources["component.\(domain).config.\(key)"].flatMap { $0.isEmpty ? nil : $0 }
     }
 
-    func title(step: String) -> String? { text("step.\(step).title") }
-    func description(step: String, placeholders: [String: String]) -> String? {
-        text("step.\(step).description").map { Self.fill($0, placeholders) }
-    }
+    func title(step: String) -> String? { text("step.\(step).title").flatMap { Self.plain($0, limit: 40) } }
 
     func label(field: String, step: String) -> String {
-        text("step.\(step).data.\(field)") ?? field.replacingOccurrences(of: "_", with: " ").capitalized
+        text("step.\(step).data.\(field)").flatMap { Self.plain($0, limit: 40) } ?? field.replacingOccurrences(of: "_", with: " ").capitalized
     }
 
-    func help(field: String, step: String) -> String? { text("step.\(step).data_description.\(field)") }
+    func help(field: String, step: String) -> String? {
+        text("step.\(step).data_description.\(field)").flatMap { Self.plain($0, limit: 120) }
+    }
+
     func menuOption(_ option: String, step: String) -> String {
-        text("step.\(step).menu_options.\(option)") ?? option.replacingOccurrences(of: "_", with: " ").capitalized
+        text("step.\(step).menu_options.\(option)").flatMap { Self.plain($0, limit: 60) } ?? option.replacingOccurrences(of: "_", with: " ").capitalized
     }
 
-    func error(_ key: String) -> String? { text("error.\(key)") }
-    func abort(_ reason: String) -> String? { text("abort.\(reason)") }
+    /// What to do on this step, in one or two short sentences.
+    func hint(for form: FlowStep.Form) -> String? {
+        let server = text("step.\(form.stepID).description").flatMap { Self.plain(Self.fill($0, form.placeholders)) }
+        guard form.fields.isEmpty, !form.stepID.contains("confirm") else { return server }
+        // A step with nothing to fill waits for the device: its button, or a prompt on its screen.
+        return server ?? String(localized: "Press the button on the device, or accept on its screen, then tap Add.")
+    }
 
-    /// "{name}" replaced by its value; markdown links kept as their text.
+    func error(_ key: String) -> String {
+        switch key {
+        case "cannot_connect", "invalid_host", "timeout_connect", "timeout":
+            String(localized: "The device doesn’t answer. Check that it’s on and on the same network, then try again.")
+        case "invalid_auth", "auth_failed", "invalid_credentials":
+            String(localized: "The username or password was refused.")
+        case "register_failed", "linking", "not_authorized", "unauthorized", "pairing_failed":
+            String(localized: "The device didn’t authorise your server. Press its button, then tap Add again.")
+        default:
+            text("error.\(key)").flatMap { Self.plain($0) } ?? String(localized: "That didn’t work. Try again.")
+        }
+    }
+
+    func abort(_ reason: String) -> String {
+        switch reason {
+        case "already_configured", "already_in_progress", "single_instance_allowed", "reauth_successful":
+            String(localized: "It’s already added.")
+        case "no_devices_found", "not_found":
+            String(localized: "No device was found on the network. Check that it’s on, then try again.")
+        case "cannot_connect", "timeout_connect":
+            String(localized: "The device doesn’t answer. Check that it’s on and on the same network, then try again.")
+        case "missing_credentials", "missing_configuration", "oauth_error", "oauth_unauthorized", "authorize_url_timeout":
+            String(localized: "It needs an account link your server doesn’t have yet, so it can’t be added from Maison for now.")
+        case "not_supported", "not_supported_device", "unsupported_device":
+            String(localized: "This device isn’t supported.")
+        default:
+            text("abort.\(reason)").flatMap { Self.plain($0) } ?? String(localized: "Your server couldn’t add it.")
+        }
+    }
+
+    /// "{name}" replaced by its value.
     static func fill(_ text: String, _ placeholders: [String: String]) -> String {
         placeholders.reduce(text) { $0.replacingOccurrences(of: "{\($1.key)}", with: $1.value) }
+    }
+
+    /// Markdown images dropped, links and emphasis kept as their text, "Home Assistant" as the server and
+    /// its "Submit" as Maison's "Add"; the first sentence, or `nil` when it's longer than `limit`.
+    static func plain(_ text: String, limit: Int = 160) -> String? {
+        var text = text
+        let rewrites: [(String, String)] = [
+            (#"!\[[^\]]*\]\([^)]*\)"#, ""),
+            (#"\[([^\]]*)\]\([^)]*\)"#, "$1"),
+            (#"[*_`]{1,2}([^*_`]+)[*_`]{1,2}"#, "$1"),
+            (#"Home Assistant"#, String(localized: "your server")),
+            (#"(?i)["“«]\s*(submit|soumettre|valider|envoyer)\s*["”»]"#, String(localized: "“Add”")),
+            (#"\s+"#, " "),
+        ]
+        for (pattern, template) in rewrites {
+            text = text.replacingOccurrences(of: pattern, with: template, options: .regularExpression)
+        }
+        text = text.trimmingCharacters(in: .whitespaces)
+        if let end = text.range(of: #"[.!?](\s|$)"#, options: .regularExpression) { text = String(text[..<end.upperBound]).trimmingCharacters(in: .whitespaces) }
+        return text.isEmpty || text.count > limit ? nil : text
     }
 }

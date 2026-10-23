@@ -469,7 +469,7 @@ struct SourceDetailPage: View {
         isAdding = true
         defer { isAdding = false }
         autoResult = await store.addAutomatically(source.categories).map { String(localized: "Maison added \($0). Its devices appear in a few seconds.") }
-            ?? String(localized: "Every integration for this needs an answer from you: choose one below.")
+            ?? String(localized: "Nothing can be added without you here. Tap Choose an Integration.")
     }
 }
 
@@ -650,19 +650,18 @@ struct IntegrationFlowSheet: View {
             ForEach(form.fields) { field in
                 FlowFieldRow(field: field, label: wording.label(field: field.name, step: form.stepID),
                              help: wording.help(field: field.name, step: form.stepID), answers: $answers,
-                             error: form.errors[field.name].map { wording.error($0) ?? $0 })
+                             error: form.errors[field.name].map(wording.error))
             }
             if form.fields.isEmpty {
+                if let hint = wording.hint(for: form) { Text(verbatim: hint) }
                 Button("Add") { Task { await submit(form) } }.disabled(isWorking)
             }
         } header: {
             if let title = wording.title(step: form.stepID) { Text(title) }
         } footer: {
             VStack(alignment: .leading, spacing: 6) {
-                if let description = wording.description(step: form.stepID, placeholders: form.placeholders) {
-                    Text(LocalizedStringKey(description))
-                }
-                if let base = form.errors["base"] { Text(wording.error(base) ?? base).foregroundStyle(.orange) }
+                if !form.fields.isEmpty, let hint = wording.hint(for: form) { Text(verbatim: hint) }
+                if let base = form.errors["base"] { Text(verbatim: wording.error(base)).foregroundStyle(.orange) }
                 if form.hasUnsupportedRequirement {
                     Text("This step asks for a setting Maison can’t show yet.").foregroundStyle(.orange)
                 }
@@ -670,10 +669,7 @@ struct IntegrationFlowSheet: View {
         }
     }
 
-    private func abortText(_ reason: String) -> String {
-        if reason == "already_configured" || reason == "single_instance_allowed" { return String(localized: "It’s already added.") }
-        return wording.abort(reason) ?? String(localized: "Your server couldn’t add it (\(reason)).")
-    }
+    private func abortText(_ reason: String) -> String { wording.abort(reason) }
 
     private func isComplete(_ form: FlowStep.Form) -> Bool {
         form.fields.allSatisfy { field in
@@ -768,7 +764,7 @@ private struct FlowFieldRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             input
-            if let help { Text(LocalizedStringKey(help)).font(.roundedFootnote).foregroundStyle(.secondary) }
+            if let help { Text(verbatim: help).font(.roundedFootnote).foregroundStyle(.secondary) }
             if let error { Text(error).font(.roundedFootnote).foregroundStyle(.orange) }
         }
     }

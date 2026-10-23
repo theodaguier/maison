@@ -74,17 +74,39 @@ struct SourcesTests {
         #expect(FlowStep.parse(["type": "abort", "reason": "missing_credentials"]) == .aborted(reason: "missing_credentials"))
     }
 
-    @Test func wordsAFlowFromItsTranslations() {
-        let wording = FlowWording(domain: "shelly", resources: [
-            "component.shelly.config.step.user.data.host": "Hôte",
-            "component.shelly.config.step.user.description": "Avant de configurer {name}, appuyez sur le bouton.",
-            "component.shelly.config.abort.missing_credentials": "Identifiants manquants",
+    @Test func saysTheServersWordsPlainly() {
+        let wording = FlowWording(domain: "freebox", resources: [
+            "component.freebox.config.step.link.description":
+                "Click \"Submit\", then touch the right arrow on the router to register Freebox with Home Assistant.\n\n![Location of button on the router](/static/images/config_freebox.png)",
+            "component.freebox.config.step.user.data.host": "Host",
+            "component.freebox.config.error.weird": "Something **odd** happened, see [the docs](https://example.com).",
         ])
-        #expect(wording.label(field: "host", step: "user") == "Hôte")
+        let link = FlowStep.Form(flowID: "f", stepID: "link", fields: [], errors: [:], placeholders: [:])
+        let hint = wording.hint(for: link) ?? ""
+        #expect(hint.contains("right arrow"))
+        #expect(!hint.contains("Home Assistant"))
+        #expect(!hint.contains("!["))
+        #expect(!hint.contains("Submit"))
+        #expect(wording.label(field: "host", step: "user") == "Host")
         #expect(wording.label(field: "api_key", step: "user") == "Api Key")
-        #expect(wording.description(step: "user", placeholders: ["name": "Prise cuisine"]) == "Avant de configurer Prise cuisine, appuyez sur le bouton.")
-        #expect(wording.abort("missing_credentials") == "Identifiants manquants")
-        #expect(wording.abort("other") == nil)
+        #expect(wording.error("weird") == "Something odd happened, see the docs.")
+        #expect(wording.error("cannot_connect") == String(localized: "The device doesn’t answer. Check that it’s on and on the same network, then try again."))
+        #expect(wording.abort("missing_credentials")
+            == String(localized: "It needs an account link your server doesn’t have yet, so it can’t be added from Maison for now."))
+        #expect(wording.abort("already_configured") == String(localized: "It’s already added."))
+    }
+
+    @Test func aStepWithNothingToFillSaysToPressTheButton() {
+        let wording = FlowWording(domain: "hue", resources: [:])
+        let link = FlowStep.Form(flowID: "f", stepID: "link", fields: [], errors: [:], placeholders: [:])
+        #expect(wording.hint(for: link) == String(localized: "Press the button on the device, or accept on its screen, then tap Add."))
+        let confirm = FlowStep.Form(flowID: "f", stepID: "discovery_confirm", fields: [], errors: [:], placeholders: [:])
+        #expect(wording.hint(for: confirm) == nil)
+    }
+
+    @Test func dropsALongExplanation() {
+        let long = String(repeating: "This integration needs a long explanation about many things ", count: 4) + "."
+        #expect(FlowWording.plain(long) == nil)
     }
 
     @Test func listsFoundDevicesWithTheirNames() async throws {
