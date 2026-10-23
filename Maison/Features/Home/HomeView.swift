@@ -54,6 +54,7 @@ private struct HomeDashboard: View {
     @State private var scores: HomeScores?
     @State private var openedScore: ScoreKind?
     @State private var openedFinding: Finding?
+    @State private var showsHousekeeping = false
     @State private var createdRule: AutomationRule?
     @State private var temperatureChange: Double?
     @State private var confirmsTurnOff = false
@@ -89,6 +90,11 @@ private struct HomeDashboard: View {
                         }
                     }
                     .transition(.opacity)
+                } else if let late = store.allChores().first(where: { $0.isLate() }),
+                          let room = store.layout.areas.first(where: { $0.id == late.roomID }) {
+                    // Housekeeping comes last: only when the three scores have nothing more urgent.
+                    HousekeepingAttentionCard(status: late, room: room) { showsHousekeeping = true }
+                        .transition(.opacity)
                 }
             }
             .animation(.smooth, value: Attention.pick(from: scores))
@@ -135,6 +141,7 @@ private struct HomeDashboard: View {
             }
         }
         .sheet(item: $openedScore) { ScoreSheet(kind: $0, scores: scores) }
+        .sheet(isPresented: $showsHousekeeping) { HousekeepingSheet() }
         .sheet(item: $openedFinding) { finding in
             NavigationStack {
                 FindingView(finding: finding) { rule in

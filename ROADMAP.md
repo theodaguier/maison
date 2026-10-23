@@ -6,7 +6,7 @@
 
 Home Assistant collects; Maison understands and acts. Going further than Home Assistant doesn't mean collecting more data than it does — it already reads thousands of brands — but doing more with that data: explaining, estimating, learning, and turning what it finds into actions.
 
-V1 is that core, and that core only: three scores — Comfort, Energy and Network — fed through one abstract source boundary that knows no brand.
+V1 is that core, and that core only: three scores — Comfort, Energy and Network — and housekeeping, room by room, fed through one abstract source boundary that knows no brand.
 
 ## Principles
 
@@ -59,7 +59,7 @@ Maison follows what happens in the home, not only its devices. Each moment has t
 | Laundry | The machine's power curve | Usual times, presence | "Machine started": end reminder, cost |
 | Working from home | CO₂ in the office | Weekday presence, Work Focus, calendar | "Working from home today" |
 | Relaxing | TV and music in Home Assistant | Apple Music playing on the iPhone | An "Evening" scene |
-| Cleaning | Robot vacuum | When people are usually home, pollen | Tasks per room, recurring reminders |
+| Cleaning (in V1, see below) | Robot vacuum, the room's humidity and dust | The room's type, when people are usually home, pollen, guests | Tasks per room, recurring reminders |
 | Airing | Window sensors, CO₂ | Outdoor weather and air quality, season: the best time to air today | "I aired": daily reminder |
 | Guests | More devices on the router (its Home Assistant integration) | Calendar | "I have guests" |
 | Leaving and coming back | Locks, windows | The iPhone's location, calendar | A "Before leaving" checklist |
@@ -73,11 +73,13 @@ Maison follows what happens in the home, not only its devices. Each moment has t
 
 ## Findings
 
-What the user receives. In V1, three scores:
+What the user receives. In V1, three scores and housekeeping:
 
 - **Comfort:** a room out of its range, heating or cooling running in an empty home, a window open while it runs.
 - **Energy:** standby use, the month's projected cost, the costliest devices, use at equal weather, cheaper hours. An energy bill or the energy contract, analysed on the device, is linked to this score and recalibrates it.
 - **Network:** whether the connection is up, the devices the router sees, and outages. An internet-box bill or the box contract, analysed on the device, is linked to this score.
+
+- **Housekeeping:** what each room needs and when, after its type. Every room has a type (living room, kitchen, bedroom, bathroom, entrance, office, laundry, outdoor, other): recognised from its icon and name in the source, asked in one tap when it isn't sure, or chosen. The type gives the room's tasks and their rhythm; the room's own sensors change the rhythm (a bathroom whose humidity stays high is cleaned sooner). "Done" takes one tap, and a robot vacuum starts from Maison. Tasks belong to a room, never to an object: an object's upkeep waits with the inventory (see Parking).
 
 After V1, still in this product: devices (offline, battery low, a frozen sensor, a device behaving unusually), safety (a door left open, unlocked after everyone left, water leak, smoke), and habits (a manual action repeated in the same context, offered as a rule). Upkeep returns with the inventory (see Parking).
 
@@ -85,20 +87,22 @@ Comfort ranges are never hard-coded: they are learned from the home's history or
 
 ## V1
 
-The core: the three scores, and the source boundary that feeds them. Brand-agnostic.
+The core: the three scores, housekeeping, and the source boundary that feeds them. Brand-agnostic.
 
 1. **Comfort, Energy, Network.** Each score keeps the origin of every value (measured, estimated or entered), says why, and ends in one tap.
-2. **The source boundary.** The intelligence layer is one module behind it, with the origin of every value. Home Assistant is the first and only connector; the boundary stays generic so another source could plug in later. No screen reads a source directly.
-3. **Documents, only when they feed a score.** Energy bills, internet-box bills, energy contracts, box contracts. Analysed on the device, linked to Energy or to Network.
-4. **Today:** the three scores and the day summary. Each finding has its origin, its reason and a one-tap action.
-5. **A useful first launch:** import Home Assistant's existing history (detailed history and long-term statistics), so Maison has something to say within minutes.
-6. **Tidy the setup:** suggest rooms, hide duplicates, clear names.
-7. **No dead end on a score.** Energy reads Home Assistant's energy dashboard, suggests the right meter when it isn't set, or takes a bill and a price per kWh. Comfort ranges and usual hours are learned from the history or set by the user. Network uses the router's integration when there is one.
-8. **Widgets:** Home Screen, StandBy, Lock Screen. They need an App Group and a keychain access group shared with the app, so the extension can read the sign-in and refresh it.
-9. **Validation, before anything paused comes back.** About five testers from outside the project, for two weeks. Success: they open the app on their own, without being reminded.
+2. **Housekeeping, room by room.** Every room has a type, recognised, suggested in one tap, or chosen; the type gives room-level tasks and their rhythm, and the room's sensors change it. One sheet shows the whole home for the week, each room shows its own tasks with "Done", and Rooms says what is late. Without any device it is a list of reminders that already knows each room; with a robot vacuum, Maison starts it. What was done stays on the iPhone until the add-on keeps it for the household.
+3. **The source boundary.** The intelligence layer is one module behind it, with the origin of every value. Home Assistant is the first and only connector; the boundary stays generic so another source could plug in later. No screen reads a source directly.
+4. **Documents, only when they feed a score.** Energy bills, internet-box bills, energy contracts, box contracts. Analysed on the device, linked to Energy or to Network.
+5. **Today:** the three scores and the day summary. Each finding has its origin, its reason and a one-tap action.
+6. **A useful first launch:** import Home Assistant's existing history (detailed history and long-term statistics), so Maison has something to say within minutes.
+7. **Tidy the setup:** suggest rooms, hide duplicates, clear names.
+8. **No dead end on a score.** Energy reads Home Assistant's energy dashboard, suggests the right meter when it isn't set, or takes a bill and a price per kWh. Comfort ranges and usual hours are learned from the history or set by the user. Network uses the router's integration when there is one.
+9. **Widgets:** Home Screen, StandBy, Lock Screen. They need an App Group and a keychain access group shared with the app, so the extension can read the sign-in and refresh it.
+10. **Validation, before anything paused comes back.** About five testers from outside the project, for two weeks. Success: they open the app on their own, without being reminded.
 
 ## Next
 
+- Housekeeping signals that need a moment first: showers, cooking, working from home, guests from the calendar, pollen.
 - Moments of life, starting with sleep (Health ↔ bedroom), laundry, showering, airing. Inference uses sensors, Health and what the person enters.
 - Device and safety findings, beyond the three scores.
 - The push relay and notifications with actions.

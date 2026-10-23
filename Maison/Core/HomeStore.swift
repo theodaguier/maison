@@ -19,7 +19,11 @@ final class HomeStore {
     /// Counts service calls the server rejected or couldn't take, so the interface can signal them.
     private(set) var failedCommands = 0
     private(set) var states: [String: EntityState] = [:]
-    private(set) var layout = HomeLayout()
+    private(set) var layout = HomeLayout() {
+        didSet { noteRoomsSeen() }
+    }
+    /// The chores done in each room, kept on this iPhone.
+    private(set) var housekeepingLog: HousekeepingLog
     private(set) var serverURL: URL?
     /// The address that works away from home, `nil` when the server has none.
     private(set) var remoteURL: URL?
@@ -47,6 +51,8 @@ final class HomeStore {
     /// `source_connected` is sent once per sign-in, not again when a lost connection comes back.
     @ObservationIgnored private var reportedConnection = false
     @ObservationIgnored private let isDemo: Bool
+    /// Where the housekeeping log and room types are kept; the demo has its own.
+    @ObservationIgnored let housekeepingDefaults: UserDefaults
     /// The sample home, opened from onboarding or with `-demo`.
     var isDemoHome: Bool { isDemo }
 
@@ -62,6 +68,8 @@ final class HomeStore {
         self.presence = presence ?? .shared
         self.connector = connector
         isDemo = false
+        housekeepingDefaults = defaults
+        housekeepingLog = HousekeepingLog.load(from: defaults)
         let credentials = try? credentialStore.load()
         self.credentials = credentials
         serverURL = credentials?.serverURL
@@ -77,9 +85,12 @@ final class HomeStore {
         presence = PresenceReporter(webhooks: MemoryWebhookStorage(), credentialStore: credentialStore, isDemo: true)
         connector = ServerConnector()
         isDemo = true
+        housekeepingDefaults = UserDefaults(suiteName: "com.theodaguier.maison.demo") ?? .standard
+        housekeepingLog = DemoHome.housekeepingLog
         self.states = Dictionary(states.map { ($0.entityID, $0) }, uniquingKeysWith: { _, last in last })
         self.layout = layout
         self.phase = phase
+        noteRoomsSeen()
         serverURL = URL(string: "http://homeassistant.local:8123")
         serverVersion = "2026.8.1"
         lastUpdate = .now
@@ -689,6 +700,25 @@ extension HomeStore {
     func area(of entity: EntityState) -> Area? {
         guard let id = layout.areaByEntity[entity.entityID] else { return nil }
         return layout.areas.first { $0.id == id }
+    }
+
+    /// Marks a chore done in a room, and keeps it.
+    func markDone(_ chore: Chore, in area: Area, at date: Date = .now) {
+        housekeepingLog.markDone(chore, in: area.id, at: date)
+        housekeepingLog.save(to: housekeepingDefaults)
+    }
+
+    /// The room's type, chosen or confirmed by the person.
+    func chooseKind(_ kind: RoomKind, for area: Area) {
+        housekeepingLog.kinds[area.id] = kind
+        housekeepingLog.save(to: housekeepingDefaults)
+    }
+
+    private func noteRoomsSeen() {
+        let unseen = layout.areas.map(\.id).filter { housekeepingLog.firstSeen[$0] == nil }
+        guard !unseen.isEmpty else { return }
+        housekeepingLog.noteSeen(unseen)
+        housekeepingLog.save(to: housekeepingDefaults)
     }
 
     func devices(in area: Area) -> [EntityState] {

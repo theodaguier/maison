@@ -111,6 +111,22 @@
         }
       }
     },
+    "%@ has %lld µg/m³ of fine particles": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ has %2$lld µg/m³ of fine particles"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ a %2$lld µg/m³ de particules fines"
+          }
+        }
+      }
+    },
     "%@ has been locked since %@.": {
       "localizations": {
         "fr": {
@@ -157,6 +173,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$@ : %2$@"
+          }
+        }
+      }
+    },
+    "Late: %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En retard : %@"
           }
         }
       }
@@ -317,6 +343,32 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@ envoie les relevés de la veille chaque matin. Le score apparaît avec les premiers."
+          }
+        }
+      }
+    },
+    "%@ sooner": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ plus tôt"
+          }
+        }
+      }
+    },
+    "%@ stays at %lld %% humidity": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ stays at %2$lld %% humidity"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ reste à %2$lld %% d’humidité"
           }
         }
       }
@@ -639,6 +691,86 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$lld %%, trop chaud vers %2$@"
+          }
+        }
+      }
+    },
+    "%lld chores to do": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld chore to do"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld chores to do"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld tâche à faire"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld tâches à faire"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld days late": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "One day late"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld days late"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "En retard d’un jour"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "En retard de %lld jours"
+                }
+              }
+            }
           }
         }
       }
@@ -1029,6 +1161,16 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "%lld late": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld en retard"
           }
         }
       }
@@ -1620,6 +1762,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "7 jours"
+          }
+        }
+      }
+    },
+    "A Room to Name": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une pièce à préciser"
           }
         }
       }
@@ -2244,6 +2396,16 @@
         }
       }
     },
+    "Battery %lld %%": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Batterie %lld %%"
+          }
+        }
+      }
+    },
     "Becomes": {
       "localizations": {
         "fr": {
@@ -2424,6 +2586,16 @@
         }
       }
     },
+    "Choose": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisir"
+          }
+        }
+      }
+    },
     "Choose a Server": {
       "localizations": {
         "fr": {
@@ -2450,6 +2622,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choix des favoris"
+          }
+        }
+      }
+    },
+    "Chores for this type of room. Done notes it and sets the next one.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les tâches de ce type de pièce. « C’est fait » la note et recale la suivante."
+          }
+        }
+      }
+    },
+    "Cleaning": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En train de nettoyer"
           }
         }
       }
@@ -3054,6 +3246,16 @@
         }
       }
     },
+    "Desk": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bureau"
+          }
+        }
+      }
+    },
     "Detected": {
       "localizations": {
         "fr": {
@@ -3164,6 +3366,16 @@
         }
       }
     },
+    "Doormat": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tapis"
+          }
+        }
+      }
+    },
     "Doors & Windows": {
       "localizations": {
         "fr": {
@@ -3190,6 +3402,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Déshumidifie"
+          }
+        }
+      }
+    },
+    "Dusting": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Poussière"
           }
         }
       }
@@ -3384,12 +3606,32 @@
         }
       }
     },
+    "Entrance": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entrée"
+          }
+        }
+      }
+    },
     "Estimated": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Estimé"
+          }
+        }
+      }
+    },
+    "estimated": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "estimé"
           }
         }
       }
@@ -3424,6 +3666,56 @@
         }
       }
     },
+    "Every %lld days": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Every day"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Every %lld days"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Chaque jour"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Tous les %lld jours"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Every day": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chaque jour"
+          }
+        }
+      }
+    },
     "Every day at %@": {
       "localizations": {
         "fr": {
@@ -3440,6 +3732,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "Chaque soir à 19 h, ferme les volets du salon"
+          }
+        }
+      }
+    },
+    "Every month": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chaque mois"
+          }
+        }
+      }
+    },
+    "Every three months": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tous les trois mois"
+          }
+        }
+      }
+    },
+    "Every two weeks": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes les deux semaines"
+          }
+        }
+      }
+    },
+    "Every week": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chaque semaine"
           }
         }
       }
@@ -3534,6 +3866,16 @@
         }
       }
     },
+    "Floors": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sols"
+          }
+        }
+      }
+    },
     "For %lld min": {
       "localizations": {
         "fr": {
@@ -3624,6 +3966,26 @@
         }
       }
     },
+    "Garage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Garage"
+          }
+        }
+      }
+    },
+    "Garden and terrace": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jardin et terrasse"
+          }
+        }
+      }
+    },
     "Get Started": {
       "localizations": {
         "fr": {
@@ -3640,6 +4002,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Passez la porte et continuez le scan"
+          }
+        }
+      }
+    },
+    "Going back": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retourne à sa base"
           }
         }
       }
@@ -3874,6 +4246,52 @@
         }
       }
     },
+    "Housekeeping": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ménage"
+          }
+        }
+      }
+    },
+    "Housekeeping, measured dust": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ménage, poussière mesurée"
+          }
+        }
+      }
+    },
+    "Housekeeping, measured humidity": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ménage, humidité mesurée"
+          }
+        }
+      }
+    },
+    "housekeeping.attention": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@: %2$@ %3$@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ : %2$@ %3$@"
+          }
+        }
+      }
+    },
     "How you use Maison. Never your home.": {
       "localizations": {
         "fr": {
@@ -3980,6 +4398,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "Dans %@"
+          }
+        }
+      }
+    },
+    "In %lld days": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "In %lld day"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "In %lld days"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Dans %lld jour"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Dans %lld jours"
+                }
+              }
+            }
           }
         }
       }
@@ -4334,6 +4792,16 @@
         }
       }
     },
+    "Laundry": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buanderie"
+          }
+        }
+      }
+    },
     "Layout and settings synced with iCloud": {
       "localizations": {
         "fr": {
@@ -4514,6 +4982,16 @@
         }
       }
     },
+    "Living room": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salon"
+          }
+        }
+      }
+    },
     "Loading Household…": {
       "localizations": {
         "fr": {
@@ -4620,6 +5098,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Recherche de votre serveur…"
+          }
+        }
+      }
+    },
+    "Looks like: %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On dirait : %@"
           }
         }
       }
@@ -4970,6 +5458,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "À surveiller"
+          }
+        }
+      }
+    },
+    "Needs help": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A besoin d’aide"
           }
         }
       }
@@ -5364,6 +5862,16 @@
         }
       }
     },
+    "noted %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "noté %@"
+          }
+        }
+      }
+    },
     "Nothing is saved until you confirm. Then the rule runs on your server, like the others.": {
       "localizations": {
         "fr": {
@@ -5380,6 +5888,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rien de partagé"
+          }
+        }
+      }
+    },
+    "Office": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bureau"
           }
         }
       }
@@ -5460,6 +5978,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Allumé"
+          }
+        }
+      }
+    },
+    "On its base": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur sa base"
           }
         }
       }
@@ -5700,6 +6228,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Autres"
+          }
+        }
+      }
+    },
+    "Other Type": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autre type"
           }
         }
       }
@@ -6150,6 +6688,22 @@
         }
       }
     },
+    "robot.start": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lancer"
+          }
+        }
+      }
+    },
     "Role": {
       "localizations": {
         "fr": {
@@ -6176,6 +6730,32 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pièce %lld"
+          }
+        }
+      }
+    },
+    "Room Type": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Type de pièce"
+          }
+        }
+      }
+    },
+    "room.other": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Other"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autre"
           }
         }
       }
@@ -6500,6 +7080,16 @@
         }
       }
     },
+    "Send Back": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renvoyer"
+          }
+        }
+      }
+    },
     "Send to": {
       "localizations": {
         "fr": {
@@ -6700,6 +7290,16 @@
         }
       }
     },
+    "Sheets": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Draps"
+          }
+        }
+      }
+    },
     "Show Less": {
       "localizations": {
         "fr": {
@@ -6726,6 +7326,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Afficher un code à scanner"
+          }
+        }
+      }
+    },
+    "Shower": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Douche"
           }
         }
       }
@@ -6806,6 +7416,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Depuis le %@"
+          }
+        }
+      }
+    },
+    "Sink and mirror": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lavabo et miroir"
           }
         }
       }
@@ -7076,6 +7696,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Activation de la vérification d’internet"
+          }
+        }
+      }
+    },
+    "Terrace": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terrasse"
+          }
+        }
+      }
+    },
+    "The chores Maison proposes follow the type.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les tâches que Maison propose suivent le type."
           }
         }
       }
@@ -7490,6 +8130,26 @@
         }
       }
     },
+    "this week": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "cette semaine"
+          }
+        }
+      }
+    },
+    "This Week’s Housekeeping": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ménage de la semaine"
+          }
+        }
+      }
+    },
     "Throughput": {
       "localizations": {
         "fr": {
@@ -7540,6 +8200,16 @@
         }
       }
     },
+    "to do": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "à faire"
+          }
+        }
+      }
+    },
     "To Look At Today, %@": {
       "localizations": {
         "fr": {
@@ -7580,6 +8250,26 @@
         }
       }
     },
+    "Toilet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toilettes"
+          }
+        }
+      }
+    },
+    "Tomorrow": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demain"
+          }
+        }
+      }
+    },
     "Too cold": {
       "localizations": {
         "fr": {
@@ -7616,6 +8306,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Touchez le plan là où se trouve l’appareil, puis faites-le glisser pour ajuster."
+          }
+        }
+      }
+    },
+    "Towels": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Serviettes"
           }
         }
       }
@@ -7890,6 +8590,16 @@
         }
       }
     },
+    "Up to date": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À jour"
+          }
+        }
+      }
+    },
     "Updated": {
       "localizations": {
         "fr": {
@@ -7950,6 +8660,16 @@
         }
       }
     },
+    "Vacuum": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aspirateur"
+          }
+        }
+      }
+    },
     "Vacuums": {
       "localizations": {
         "fr": {
@@ -7996,6 +8716,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Via %@"
+          }
+        }
+      }
+    },
+    "What is it for?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À quoi sert-elle ?"
           }
         }
       }
@@ -8290,6 +9020,16 @@
         }
       }
     },
+    "Worktop and sink": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plan de travail et évier"
+          }
+        }
+      }
+    },
     "Worth a Look": {
       "localizations": {
         "fr": {
@@ -8346,6 +9086,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rédigé sur votre iPhone à partir de l’historique de votre serveur. Rien n’est envoyé ailleurs."
+          }
+        }
+      }
+    },
+    "Yes": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oui"
           }
         }
       }
