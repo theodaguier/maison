@@ -419,7 +419,7 @@ struct SourceDetailPage: View {
             discovered = await store.discoveredDevices()
         }
         .navigationDestination(isPresented: $searches) {
-            IntegrationSearchPage(categories: source.categories.isEmpty ? nil : source.categories, title: source.title)
+            IntegrationSearchPage(need: source.need, title: source.title)
         }
         #if DEBUG
         // `-chooseIntegration YES` opens the integrations for the source, to check them.
@@ -430,7 +430,10 @@ struct SourceDetailPage: View {
     /// The same on every source: what the server found for it, then Maison's own way when it has one,
     /// the integrations most homes use for it, and any other brand.
     @ViewBuilder private var setup: some View {
-        let serving = IntegrationDescription.serving(source.categories, in: catalog)
+        let brands = source.need.map { IntegrationDescription.serving($0, in: catalog) } ?? []
+        // A device no brand integration gives (a smoke detector) comes through a hub: Zigbee, Matter.
+        let serving = brands.isEmpty && source.setup == .device
+            ? IntegrationDescription.serving(IntegrationGroup.prefixes[.hubs] ?? [], in: catalog) : brands
         let found = discovered.filter { device in serving.contains { $0.domain == device.domain } }
         if !found.isEmpty {
             SettingsGroup("Found at Home") {
@@ -554,7 +557,7 @@ private struct MeterWayPage: View {
 
 struct IntegrationSearchPage: View {
     @Environment(HomeStore.self) private var store
-    var categories: [String]?
+    var need: IntegrationNeed?
     var title: String?
     @State private var catalog: [IntegrationDescription] = []
     @State private var query = ""
@@ -564,8 +567,8 @@ struct IntegrationSearchPage: View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
                 IntegrationSearchField(query: $query)
-                if let categories {
-                    let serving = IntegrationDescription.serving(categories, in: catalog)
+                if let need {
+                    let serving = IntegrationDescription.serving(need, in: catalog)
                     let hubs = IntegrationDescription.serving(IntegrationGroup.prefixes[.hubs] ?? [], in: catalog)
                     let shown = query.isEmpty ? serving : IntegrationDescription.search(query, in: serving + hubs)
                     IntegrationList(integrations: shown, add: { adding = $0 }, groups: IntegrationGroup.allCases.filter { $0 != .hubs })

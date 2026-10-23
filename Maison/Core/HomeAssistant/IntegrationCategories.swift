@@ -32,12 +32,31 @@ enum IntegrationGroup: String, CaseIterable, Sendable {
 /// An integration's categories and how many homes use it.
 struct IntegrationProfile: Decodable, Sendable {
     let categories: [String]
+    /// The kinds of entities it creates: `sensor`, `device_tracker`, `weather`…
+    let platforms: [String]
     let installs: Int
 
     private enum CodingKeys: String, CodingKey {
         case categories = "c"
+        case platforms = "p"
         case installs = "n"
     }
+
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        categories = try container.decode([String].self, forKey: .categories)
+        platforms = try container.decodeIfPresent([String].self, forKey: .platforms) ?? []
+        installs = try container.decode(Int.self, forKey: .installs)
+    }
+}
+
+/// What a source needs from an integration: to serve its part of the home, and to create the kind of
+/// entity it reads. A box with an alarm is in the alarms' category, but it has no smoke sensor.
+struct IntegrationNeed: Sendable, Equatable {
+    /// Home Assistant category prefixes.
+    let categories: [String]
+    /// Any of these platforms.
+    let platforms: [String]
 }
 
 enum IntegrationCategories {
@@ -56,6 +75,7 @@ enum IntegrationCategories {
 extension IntegrationDescription {
     var categories: [String] { IntegrationCategories.all[domain]?.categories ?? [] }
     var installs: Int { IntegrationCategories.all[domain]?.installs ?? 0 }
+    var platforms: [String] { IntegrationCategories.all[domain]?.platforms ?? [] }
     var groups: [IntegrationGroup] { IntegrationGroup.of(categories) }
 
     /// Serves one of `prefixes` (Home Assistant categories).
@@ -66,6 +86,11 @@ extension IntegrationDescription {
     /// The integrations serving `prefixes`, the most used first.
     static func serving(_ prefixes: [String], in catalog: [IntegrationDescription]) -> [IntegrationDescription] {
         catalog.filter { $0.serves(prefixes) }.sorted { $0.installs > $1.installs }
+    }
+
+    /// The integrations that serve the need and create the entity it reads, the most used first.
+    static func serving(_ need: IntegrationNeed, in catalog: [IntegrationDescription]) -> [IntegrationDescription] {
+        serving(need.categories, in: catalog).filter { item in need.platforms.contains { item.platforms.contains($0) } }
     }
 }
 

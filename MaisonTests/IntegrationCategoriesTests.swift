@@ -21,10 +21,15 @@ struct IntegrationCategoriesTests {
         #expect(IntegrationGroup.of([]) == [.other])
     }
 
-    @Test func aSourceOnlyOffersWhatServesIt() {
-        let internet = IntegrationDescription.serving(DataSource.categories["internet"] ?? [], in: [ping, calendar, plug])
-        #expect(internet.map(\.domain) == ["ping"])
-        #expect(ping.groups.contains(.network))
+    @Test func aSourceOnlyOffersWhatMeasuresIt() throws {
+        let freebox = IntegrationDescription(domain: "freebox", name: "Freebox", iotClass: "local_polling")
+        let met = IntegrationDescription(domain: "met", name: "Met.no", iotClass: "cloud_polling")
+        // The box has an alarm, in the alarms' category, but no smoke sensor.
+        #expect(IntegrationDescription.serving(try #require(DataSource.needs["smoke"]), in: [freebox, met, plug, calendar]).isEmpty)
+        #expect(IntegrationDescription.serving(try #require(DataSource.needs["router"]), in: [freebox, met, plug, calendar]).map(\.domain) == ["freebox"])
+        #expect(IntegrationDescription.serving(try #require(DataSource.needs["weather"]), in: [freebox, met, ping]).map(\.domain) == ["met"])
+        // The internet check is Maison's own: no list of computer monitors.
+        #expect(DataSource.needs["internet"] == nil)
         #expect(calendar.groups == [.other])
     }
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Builds Maison/Resources/IntegrationCategories.json from Home Assistant's own data.
 
-The categories are those of each integration's documentation page (`ha_categories`), and the
-popularity is the number of installations in Home Assistant's public analytics. Nothing is written
+The categories and the kinds of entities an integration creates are those of its documentation page
+(`ha_categories`, `ha_platforms`), and the popularity is the number of installations in Home Assistant's public analytics. Nothing is written
 by hand, so no brand is chosen by Maison.
 
     git clone --depth 1 --filter=blob:none --sparse https://github.com/home-assistant/home-assistant.io.git docs
@@ -45,7 +45,7 @@ def main(pages):
             continue
         categories = listed(matter, "ha_categories")
         if categories:
-            result[domain.group(1)] = {"c": categories, "n": installs.get(domain.group(1), 0)}
+            result[domain.group(1)] = {"c": categories, "p": listed(matter, "ha_platforms"), "n": installs.get(domain.group(1), 0)}
     with open(OUTPUT, "w", encoding="utf-8") as file:
         json.dump(result, file, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
         file.write("\n")

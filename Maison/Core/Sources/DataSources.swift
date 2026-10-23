@@ -20,30 +20,30 @@ struct DataSource: Identifiable, Hashable, Sendable {
     /// The entities that provide it, for its page.
     var entityIDs: [String] = []
 
-    /// Home Assistant categories of the integrations that can provide it (`computers_network.monitoring`),
-    /// so its page offers those, not a calendar.
-    var categories: [String] { Self.categories[id] ?? [] }
+    /// The integrations that can provide it: their Home Assistant category and the kind of entity it reads,
+    /// so its page offers those, not a calendar or a box with an alarm. `nil` when Maison's own way is the
+    /// one (the internet check).
+    var need: IntegrationNeed? { Self.needs[id] }
 
-    static let categories: [String: [String]] = [
-        "meter": ["energy.meters_monitoring"],
-        "tariff": ["energy.energy_prices"],
-        "plugs": ["plugs_switches", "energy.meters_monitoring"],
-        "solar": ["energy.solar_batteries"],
-        "battery": ["energy.solar_batteries", "energy.ev_charging", "energy.backup_power"],
-        "gas": ["energy.meters_monitoring"],
-        "water": ["water.meters_leak_detection"],
-        "temperature": ["sensors.temperature_humidity", "climate.thermostats_heating"],
-        "humidity": ["sensors.temperature_humidity", "climate.air_purifiers_humidifiers"],
-        "carbonDioxide": ["sensors.air_quality"],
-        "heating": ["climate.thermostats_heating", "climate.heat_pumps_air_conditioning"],
-        "windows": ["blinds_curtains"],
-        "weather": ["weather_alerts.forecasts"],
-        "internet": ["computers_network.monitoring"],
-        "router": ["computers_network.routers_network"],
-        "leak": ["water.meters_leak_detection"],
-        "smoke": ["security_safety.smoke_co_alarms", "security_safety.alarm_systems"],
-        "doors": ["security_safety.locks_access", "security_safety.alarm_systems"],
-        "presence": ["presence_location.phones_companion_apps", "presence_location.trackers"],
+    static let needs: [String: IntegrationNeed] = [
+        "meter": IntegrationNeed(categories: ["energy.meters_monitoring"], platforms: ["sensor"]),
+        "tariff": IntegrationNeed(categories: ["energy.energy_prices"], platforms: ["sensor"]),
+        "plugs": IntegrationNeed(categories: ["plugs_switches"], platforms: ["sensor"]),
+        "solar": IntegrationNeed(categories: ["energy.solar_batteries"], platforms: ["sensor"]),
+        "battery": IntegrationNeed(categories: ["energy.solar_batteries", "energy.ev_charging", "energy.backup_power"], platforms: ["sensor"]),
+        "gas": IntegrationNeed(categories: ["energy.meters_monitoring"], platforms: ["sensor"]),
+        "water": IntegrationNeed(categories: ["water.meters_leak_detection"], platforms: ["sensor"]),
+        "temperature": IntegrationNeed(categories: ["sensors.temperature_humidity", "climate.thermostats_heating"], platforms: ["sensor", "climate"]),
+        "humidity": IntegrationNeed(categories: ["sensors.temperature_humidity", "climate.air_purifiers_humidifiers"], platforms: ["sensor", "humidifier"]),
+        "carbonDioxide": IntegrationNeed(categories: ["sensors.air_quality"], platforms: ["sensor"]),
+        "heating": IntegrationNeed(categories: ["climate.thermostats_heating", "climate.heat_pumps_air_conditioning"], platforms: ["climate"]),
+        "windows": IntegrationNeed(categories: ["blinds_curtains"], platforms: ["cover"]),
+        "weather": IntegrationNeed(categories: ["weather_alerts.forecasts"], platforms: ["weather"]),
+        "router": IntegrationNeed(categories: ["computers_network.routers_network"], platforms: ["device_tracker"]),
+        "leak": IntegrationNeed(categories: ["water.meters_leak_detection"], platforms: ["binary_sensor"]),
+        "smoke": IntegrationNeed(categories: ["security_safety.smoke_co_alarms"], platforms: ["binary_sensor"]),
+        "doors": IntegrationNeed(categories: ["security_safety.locks_access"], platforms: ["lock", "binary_sensor"]),
+        "presence": IntegrationNeed(categories: ["presence_location.phones_companion_apps", "presence_location.trackers"], platforms: ["device_tracker"]),
     ]
 
     enum State: Hashable, Sendable {
