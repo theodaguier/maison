@@ -119,7 +119,7 @@ struct SummaryCard: View {
                         .font(.roundedHeadline)
                 } else {
                     Image(systemName: summary.isCalm ? "leaf.fill" : "exclamationmark.circle.fill")
-                        .foregroundStyle(summary.isCalm ? .green : .orange)
+                        .foregroundStyle(summary.isCalm ? Theme.good : Color.primary)
                     Text(summary.title)
                         .font(.roundedHeadline)
                 }

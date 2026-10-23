@@ -11,6 +11,11 @@ struct HomeScores: Sendable, Equatable {
     var hasElectricityMeter = false
     /// What Maison noticed, most valuable first.
     var findings: [Finding] = []
+    /// What the home screen shows under the scores, most urgent first.
+    var highlights: [Highlight] = []
+    /// The price of a kWh and what the day and the month cost, when a price is known.
+    var energyPrice: EnergyPrice?
+    var energyCost: EnergyCost?
     var computedAt: Date
 }
 
@@ -85,7 +90,7 @@ extension HomeStore {
         async let meters = electricityMeters()
         async let findings = findings(now: now)
         async let network = networkScore(window: window, weekAgo: weekAgo)
-        return await HomeScores(
+        var scores = await HomeScores(
             comfort: comfort,
             energy: energy,
             network: network,
@@ -94,6 +99,11 @@ extension HomeStore {
             findings: findings,
             computedAt: now
         )
+        let inputs = await highlightInputs(for: scores)
+        scores.energyPrice = inputs.price
+        scores.energyCost = inputs.cost
+        scores.highlights = Highlights.compute(scores: scores, inputs: inputs)
+        return scores
     }
 
     private func comfortScore(window: DateInterval, weekAgo: Date) async -> ComfortScore? {

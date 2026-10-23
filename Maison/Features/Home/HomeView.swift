@@ -55,6 +55,10 @@ private struct HomeDashboard: View {
     @State private var openedScore: ScoreKind?
     @State private var openedFinding: Finding?
     @State private var showsHousekeeping = false
+    @State private var showsSources = false
+    @State private var layout = HomeLayoutSetting.load()
+    @State private var editsLayout = false
+    @State private var editsShortcuts = false
     @State private var createdRule: AutomationRule?
     @State private var temperatureChange: Double?
     @State private var confirmsTurnOff = false
@@ -80,24 +84,24 @@ private struct HomeDashboard: View {
             VStack(spacing: Theme.sectionSpacing) {
                 hero
                 ScoresCard(scores: scores, isDimmed: store.phase != .connected) { openedScore = $0 }
-                SummaryCard(summary: scoredSummary, digest: digest) { readsDigest = true }
-                if let attention = Attention.pick(from: scores) {
-                    AttentionCard(attention: attention) {
-                        if let id = attention.findingID, let finding = scores?.findings.first(where: { $0.id == id }) {
-                            openedFinding = finding
-                        } else {
-                            openedScore = attention.kind
-                        }
-                    }
-                    .transition(.opacity)
-                } else if let late = store.allChores().first(where: { $0.isLate() }),
-                          let room = store.layout.areas.first(where: { $0.id == late.roomID }) {
-                    // Housekeeping comes last: only when the three scores have nothing more urgent.
+                ForEach(arrangedSections) { section in
+                    sectionView(section)
+                        .transition(.opacity)
+                }
+                // Housekeeping comes last: the latest chore, after what the scores have to say.
+                if let late = store.allChores().first(where: { $0.isLate() }),
+                   let room = store.layout.areas.first(where: { $0.id == late.roomID }) {
                     HousekeepingAttentionCard(status: late, room: room) { showsHousekeeping = true }
                         .transition(.opacity)
                 }
+                Button("Edit Home", systemImage: "square.and.pencil") { editsLayout = true }
+                    .font(.roundedSubheadlineEmphasized)
+                    .buttonStyle(.glass)
+                    .controlSize(.large)
+                    .padding(.top, 6)
             }
-            .animation(.smooth, value: Attention.pick(from: scores))
+            .animation(.smooth, value: scores?.highlights)
+            .animation(.smooth, value: layout)
             .padding(.horizontal, Theme.screenPadding)
             .padding(.bottom, 24)
             .background(alignment: .top) { illustration.offset(y: -topInset) }
@@ -179,6 +183,9 @@ private struct HomeDashboard: View {
             await digest.refreshIfNeeded(from: store, now: summary.sentences + summary.more)
         }
         .sheet(item: $opened) { DeviceSheet(entityID: $0.id) }
+        .navigationDestination(isPresented: $showsSources) { AllSourcesPage() }
+        .sheet(isPresented: $editsLayout) { HomeLayoutEditor(layout: $layout) }
+        .sheet(isPresented: $editsShortcuts) { HomeFavoritesEditor() }
         .sheet(isPresented: $readsDigest) {
             if let digest { DaySummarySheet(digest: digest, current: summary.sentences + summary.more) }
         }
@@ -228,6 +235,35 @@ private struct HomeDashboard: View {
     }
 
     private var summary: HomeSummary { store.summary(temperatureChange: temperatureChange) }
+
+    /// The person's sections, a score with something to fix first.
+    private var arrangedSections: [HomeSection] {
+        let pressing = Set((scores?.highlights ?? []).filter(\.isPressing).map(\.score))
+        return layout.arranged(withFindings: pressing)
+    }
+
+    private func open(_ destination: HomeDestination) {
+        switch destination {
+        case .score(let kind): openedScore = kind
+        case .finding(let finding): openedFinding = finding
+        case .device(let id): opened = OpenedDevice(id: id)
+        case .sources: showsSources = true
+        }
+    }
+
+    @ViewBuilder
+    private func sectionView(_ section: HomeSection) -> some View {
+        let highlight = section.highlight(in: scores?.highlights ?? [])
+        switch section {
+        case .summary: SummaryCard(summary: scoredSummary, digest: digest) { readsDigest = true }
+        case .shortcuts: ShortcutsRow(edit: { editsShortcuts = true }, openDevice: { opened = OpenedDevice(id: $0) })
+        case .comfort: ComfortSection(scores: scores, highlight: highlight, open: open)
+        case .energy: EnergySection(scores: scores, highlight: highlight, open: open)
+        case .network: NetworkSection(scores: scores, highlight: highlight, open: open)
+        case .weather: WeatherSection(highlight: highlight, open: open)
+        case .monthCost: MonthCostSection(scores: scores, highlight: highlight, open: open)
+        }
+    }
 
     private func refreshScores() async {
         guard store.phase == .connected || scores == nil, !store.states.isEmpty else { return }
