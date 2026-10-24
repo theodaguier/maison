@@ -66,6 +66,8 @@ struct ComfortScore: Sendable, Equatable {
     let rooms: [Room]
     let range: ClosedRange<Double>
     let rangeOrigin: ValueOrigin
+    /// The range is the usual one Maison starts from, not yet learned from the household's readings.
+    var rangeIsStarting = false
 
     static let minimumExcursion: TimeInterval = 15 * 60
 

@@ -48,6 +48,13 @@ enum ScoreKind: String, CaseIterable, Identifiable {
         case .network: scores?.network?.percent
         }
     }
+
+    /// What the ring shows before its percentage exists: the electricity used so far, until three days
+    /// give a habit to compare with.
+    func reading(in scores: HomeScores?) -> (value: String, unit: String)? {
+        guard self == .energy, let energy = scores?.energy, energy.percent == nil else { return nil }
+        return (energy.today.formatted(.number.precision(.fractionLength(0...1))), energy.unit)
+    }
 }
 
 // MARK: - Home
@@ -65,7 +72,7 @@ struct ScoresCard: View {
                     Theme.separator.frame(width: 1, height: 110)
                 }
                 Button { open(kind) } label: {
-                    ScoreRing(kind: kind, percent: kind.percent(in: scores), isLoading: scores == nil)
+                    ScoreRing(kind: kind, percent: kind.percent(in: scores), reading: kind.reading(in: scores), isLoading: scores == nil)
                         .frame(maxWidth: .infinity)
                         .contentShape(.rect)
                 }
@@ -83,6 +90,8 @@ struct ScoresCard: View {
 private struct ScoreRing: View {
     let kind: ScoreKind
     let percent: Int?
+    /// Shown in the ring while there is no percentage yet.
+    var reading: (value: String, unit: String)?
     let isLoading: Bool
 
     var body: some View {
@@ -92,6 +101,8 @@ private struct ScoreRing: View {
                 if let percent {
                     NumberLabel(value: "\(percent)", unit: "%", size: .small, unitStyle: AnyShapeStyle(.primary))
                         .contentTransition(.numericText(value: Double(percent)))
+                } else if let reading {
+                    NumberLabel(value: reading.value, unit: reading.unit, size: .small, unitStyle: AnyShapeStyle(.secondary))
                 } else if isLoading {
                     ProgressView().controlSize(.small)
                 } else {
@@ -108,7 +119,7 @@ private struct ScoreRing: View {
         .animation(.smooth, value: percent)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(kind.title)
-        .accessibilityValue(percent.map { "\($0) %" } ?? String(localized: "Not measured yet"))
+        .accessibilityValue(percent.map { "\($0) %" } ?? reading.map { "\($0.value) \($0.unit)" } ?? String(localized: "Not measured yet"))
         .accessibilityAddTraits(.isButton)
     }
 }
@@ -431,10 +442,10 @@ private struct ComfortFiche: View {
                 case .air:
                     RoomValues(deviceClass: "carbon_dioxide", unit: " ppm", range: 0...1000)
                 }
-                RangeRow(range: score.range, origin: score.rangeOrigin) { editsRange = true }
+                RangeRow(range: score.range, origin: score.rangeOrigin, isStarting: score.rangeIsStarting) { editsRange = true }
             }
             .sheet(isPresented: $editsRange) { ComfortRangeEditor(range: score.range) }
-        } else if store.roomTemperatureSensors.isEmpty {
+        } else if store.comfortSensors.isEmpty {
             MissingScore(
                 symbol: "thermometer.medium.slash",
                 title: "No Temperature in Your Rooms",
@@ -444,8 +455,8 @@ private struct ComfortFiche: View {
             VStack(spacing: 14) {
                 MissingScore(
                     symbol: "calendar.badge.clock",
-                    title: "Learning Your Range",
-                    message: "Maison needs three days of readings to learn the temperatures you live in. You can set your range now instead."
+                    title: "Waiting for a Reading",
+                    message: "Your thermometers haven’t sent a temperature in the last 24 hours. The score appears with the next one. You can set your range now."
                 )
                 Button("Set My Range") { editsRange = true }
                     .buttonStyle(.glassProminent)
@@ -537,6 +548,7 @@ private struct RoomValues: View {
 private struct RangeRow: View {
     let range: ClosedRange<Double>
     let origin: ValueOrigin
+    var isStarting = false
     let edit: () -> Void
 
     var body: some View {
@@ -549,7 +561,9 @@ private struct RangeRow: View {
                     .background(.orange, in: .rect(cornerRadius: 9))
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Your Range").font(.roundedHeadline)
-                    Text(origin == .entered ? String(localized: "Set by you") : String(localized: "Learned from your past week"))
+                    Text(origin == .entered ? String(localized: "Set by you")
+                        : isStarting ? String(localized: "A usual range, until Maison learns yours")
+                        : String(localized: "Learned from your past week"))
                         .font(.roundedFootnote)
                         .foregroundStyle(.secondary)
                 }
