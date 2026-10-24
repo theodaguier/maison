@@ -68,7 +68,7 @@ struct FindingView: View {
                     .disabled(isSaving)
                 }
                 if let error {
-                    Text(error).font(.roundedFootnote).foregroundStyle(.orange)
+                    Text(error).font(.roundedFootnote).foregroundStyle(.red)
                 }
                 HStack(spacing: 28) {
                     Button("Ignore") {
@@ -150,7 +150,7 @@ private struct DayTimeline: View {
                     }
                     ForEach(Array(hours.enumerated()), id: \.offset) { index, hour in
                         if (usage[hour] ?? 0) > 0.05 {
-                            Rectangle().fill(Color.orange).frame(width: width, height: 14).offset(x: Double(index) * width)
+                            Rectangle().fill(ScoreKind.energy.color).frame(width: width, height: 14).offset(x: Double(index) * width)
                         }
                     }
                 }
@@ -167,7 +167,7 @@ private struct DayTimeline: View {
             .font(.roundedFootnote)
             .foregroundStyle(.tertiary)
             HStack(spacing: 16) {
-                Label("It runs", systemImage: "circle.fill").foregroundStyle(.orange)
+                Label("It runs", systemImage: "circle.fill").foregroundStyle(ScoreKind.energy.color)
                 if offPeak != nil {
                     Label("Off-peak hours", systemImage: "circle.fill").foregroundStyle(.green)
                 }

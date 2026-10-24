@@ -732,6 +732,10 @@ final class HomeStore {
         household.toggleFavorite(entity.entityID)
     }
 
+    func setFavorites(_ entityIDs: [String]) {
+        household.setFavorites(entityIDs)
+    }
+
     func isFavorite(_ entity: EntityState) -> Bool {
         favoriteIDs.contains(entity.entityID)
     }

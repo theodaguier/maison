@@ -61,6 +61,19 @@ struct HouseholdStoreTests {
         #expect(await cloud.storedFavorites(of: "_me", in: .owned) == ["lock.porte"])
     }
 
+    @Test func reorderedShortcutsAreSavedInTheirNewOrder() async {
+        let cloud = FakeHouseholdCloud()
+        let store = HouseholdStore(cloud: cloud, defaults: defaults)
+        await store.serverConnected(server)
+
+        store.setFavorites(["scene.cinema", "lock.porte", "scene.cinema", "light.salon"])
+        await store.waitForUploads()
+
+        #expect(store.favoriteIDs == ["scene.cinema", "lock.porte", "light.salon"])
+        #expect(defaults.stringArray(forKey: "favoriteEntityIDs") == ["scene.cinema", "lock.porte", "light.salon"])
+        #expect(await cloud.storedFavorites(of: "_me", in: .owned) == ["scene.cinema", "lock.porte", "light.salon"])
+    }
+
     @Test func aFavoriteToggledBeforeLoadingWinsOverICloud() async {
         let cloud = FakeHouseholdCloud()
         _ = try? await cloud.create(server)
