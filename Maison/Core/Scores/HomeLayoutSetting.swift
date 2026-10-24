@@ -60,7 +60,7 @@ enum HomeVisuals {
         let length = window.duration / Double(count)
         return (0..<count).map { index in
             let slice = DateInterval(start: window.start.addingTimeInterval(Double(index) * length), duration: length)
-            // Touching at an edge doesn't count: only a shared stretch of time does.
+            /// Touching at an edge doesn't count: only a shared stretch of time does.
             func overlaps(_ interval: DateInterval) -> Bool { (interval.intersection(with: slice)?.duration ?? 0) > 0 }
             if outages.contains(where: overlaps) { return .down }
             guard let known, overlaps(known) else { return .unknown }

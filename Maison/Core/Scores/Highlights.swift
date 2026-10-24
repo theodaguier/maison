@@ -112,7 +112,7 @@ enum Highlights {
             let share = total > 0 ? min(1, top.kilowattHours / total) : 0
             if share >= minimumDeviceShare {
                 add("top-device:\(top.id)", .energy, .topDevice(entityID: top.id, name: top.name, share: share, kilowattHours: top.kilowattHours,
-                                                                  isToday: calendar.isDateInToday(energy.day)), .measured, .today)
+                                                                isToday: calendar.isDateInToday(energy.day)), .measured, .today)
             }
         }
 
