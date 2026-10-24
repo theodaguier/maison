@@ -21,6 +21,8 @@ struct EntityRegistryEntry: Sendable, Hashable, Decodable {
     let entityCategory: String?
     /// The integration that provides the entity ("sonos", "hue").
     var platform: String?
+    /// What the entity is within its integration ("filter_life"), the same in every language.
+    var translationKey: String?
 
     var isVisible: Bool {
         hiddenBy == nil && disabledBy == nil && entityCategory == nil
@@ -34,6 +36,7 @@ struct EntityRegistryEntry: Sendable, Hashable, Decodable {
         case disabledBy = "disabled_by"
         case entityCategory = "entity_category"
         case platform
+        case translationKey = "translation_key"
     }
 }
 
@@ -54,6 +57,7 @@ struct HomeLayout: Sendable, Hashable {
     var deviceByEntity: [String: String] = [:]
     var hiddenEntities: Set<String> = []
     var platformByEntity: [String: String] = [:]
+    var translationKeyByEntity: [String: String] = [:]
 
     init() {}
 
@@ -69,6 +73,9 @@ struct HomeLayout: Sendable, Hashable {
             }
             if let platform = entry.platform {
                 platformByEntity[entry.entityID] = platform
+            }
+            if let key = entry.translationKey {
+                translationKeyByEntity[entry.entityID] = key
             }
             if !entry.isVisible {
                 hiddenEntities.insert(entry.entityID)

@@ -53,6 +53,17 @@ struct RootView: View {
             }
         }
         .environment(\.selectTab, SelectTab { tab = $0 })
+        #if DEBUG
+        // `-tab rooms` opens a tab at launch, to check its design.
+        .onAppear {
+            switch UserDefaults.standard.string(forKey: "tab") {
+            case "rooms": tab = .rooms
+            case "rules": tab = .rules
+            case "settings": tab = .settings
+            default: break
+            }
+        }
+        #endif
     }
 }
 

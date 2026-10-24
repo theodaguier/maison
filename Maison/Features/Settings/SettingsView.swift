@@ -480,7 +480,7 @@ extension HomeStore {
     /// "Administrator · Apple Account"
     var profileSubtitle: String {
         let rights = currentUser?.isAdmin == true ? String(localized: "Administrator") : String(localized: "Resident")
-        return household.status == .ready ? String(localized: "\(rights) · Apple Account") : rights
+        return household.status == .ready ? String(localized: "\(rights), Apple Account") : rights
     }
 
     /// "Tailscale", "Nabu Casa" or the remote host; `nil` when the server has no address away from home.

@@ -2,6 +2,8 @@ import SwiftUI
 
 /// One room: its key measurements as ring cards, then its devices by category.
 struct RoomView: View {
+    /// Upkeep marked done here, hidden right away.
+    @State private var done: Set<String> = []
     @Environment(HomeStore.self) private var store
     let room: Area
     @State private var opened: OpenedDevice?
@@ -26,6 +28,9 @@ struct RoomView: View {
                     .padding(.top, -6)
                     .frame(height: heroSpace - Theme.sectionSpacing, alignment: .top)
                 metrics(devices)
+                ForEach(store.maintenance(in: room).filter { !done.contains($0.id) }) { item in
+                    MaintenanceCard(item: item) { done.insert(item.id) }
+                }
                 ForEach(RoomCategory.allCases, id: \.self) { category in
                     let members = devices.filter { category.contains($0) }
                     if !members.isEmpty {
@@ -87,7 +92,7 @@ struct RoomView: View {
     private func subtitle(_ devices: [EntityState]) -> String {
         let controllable = devices.filter { $0.kind != .sensor && $0.kind != .binarySensor }
         let on = controllable.filter(\.isActive).count
-        return String(localized: "\(controllable.count) devices · \(on) on")
+        return String(localized: "\(controllable.count) devices, \(on) on")
     }
 
     @ViewBuilder
@@ -191,4 +196,66 @@ enum RoomCategory: CaseIterable {
         RoomView(room: Area(id: "living_room", name: "Salon"))
     }
     .environment(DemoHome.store())
+}
+
+/// "Reported by the air conditioner: the filter needs cleaning", and "Done".
+private struct MaintenanceCard: View {
+    @Environment(HomeStore.self) private var store
+    let item: MaintenanceItem
+    let done: () -> Void
+
+    var body: some View {
+        HStack(spacing: 14) {
+            Image(systemName: symbol)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 40, height: 40)
+                .background(Color.teal, in: .rect(cornerRadius: 11))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(item.deviceName).font(.roundedFootnoteEmphasized).foregroundStyle(.secondary)
+                Text(title).font(.roundedHeadline)
+                Text(detail).font(.roundedFootnote).foregroundStyle(.orange)
+            }
+            Spacer(minLength: 0)
+            Button(String(localized: "upkeep.done", defaultValue: "Done")) {
+                Task {
+                    await store.markDone(item)
+                    withAnimation(.smooth) { done() }
+                }
+            }
+            .font(.roundedSubheadlineEmphasized)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(Color.teal.opacity(0.14), in: .capsule)
+            .foregroundStyle(.teal)
+            .buttonStyle(.plain)
+        }
+        .padding(16)
+        .cardStyle()
+        .transition(.opacity)
+    }
+
+    private var symbol: String {
+        switch item.kind {
+        case .filter: "air.purifier.fill"
+        case .battery: "battery.25percent"
+        case .problem: "exclamationmark.triangle.fill"
+        }
+    }
+
+    private var title: String {
+        switch item.kind {
+        case .filter: String(localized: "The filter needs cleaning")
+        case .battery: String(localized: "The battery is running low")
+        case .problem: String(localized: "It reports a problem")
+        }
+    }
+
+    private var detail: String {
+        switch item.kind {
+        case .filter(let remaining): String(localized: "\(Int(remaining)) % of its life left")
+        case .battery(let level): String(localized: "\(Int(level)) % left")
+        case .problem: String(localized: "Check the device")
+        }
+    }
 }

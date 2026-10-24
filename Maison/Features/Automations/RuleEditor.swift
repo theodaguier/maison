@@ -350,7 +350,7 @@ private struct EntityPicker: View {
         Picker(title, selection: $entityID) {
             Text("Choose…").tag("")
             ForEach(store.states.values.filter(filter).sortedByName()) { entity in
-                Text([entity.name, store.area(of: entity)?.name].compactMap(\.self).joined(separator: " · ")).tag(entity.entityID)
+                Text([entity.name, store.area(of: entity)?.name].compactMap(\.self).joined(separator: ", ")).tag(entity.entityID)
             }
         }
     }

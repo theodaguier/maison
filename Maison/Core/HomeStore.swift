@@ -333,6 +333,19 @@ final class HomeStore {
     }
     #endif
 
+    /// Adds a room on the server (an area in Home Assistant). Administrators only.
+    func createArea(named name: String) async throws {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        if isDemo {
+            layout.areas.append(Area(id: trimmed.lowercased().replacingOccurrences(of: " ", with: "_"), name: trimmed))
+            return
+        }
+        guard let connection else { throw HomeAssistantError.connectionClosed }
+        _ = try await connection.send(["type": "config/area_registry/create", "name": .string(trimmed)])
+        layout = try await connection.layout()
+    }
+
     /// Everything Maison sets up on the server by itself, so the person never has to open Home Assistant:
     /// devices it found, integrations that failed, remote access, the internet check. Administrators only.
     func setUpServer(now: Date = .now) async {

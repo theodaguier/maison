@@ -48,7 +48,7 @@ enum TurnOffTimer {
     static func start(_ minutes: Int, for entity: EntityState, in store: HomeStore) async throws {
         if let editor = try await store.configEditor() {
             try await editor.save(.script, id: scriptID(for: entity), config: [
-                "alias": .string(String(localized: "Maison · Turn off \(entity.name)")),
+                "alias": .string(String(localized: "Maison: turn off \(entity.name)")),
                 "description": .string(String(localized: "Created by the Maison app.")),
                 "mode": "restart",
                 "icon": "mdi:timer-outline",
@@ -145,7 +145,7 @@ enum OpenTooLongAlert {
         } ?? ["action": "persistent_notification.create", "data": ["title": "Maison", "message": .string(message)]]
         try await editor.save(.automation, id: id, config: [
             "id": .string(id),
-            "alias": .string(String(localized: "Maison · \(entity.name) open too long")),
+            "alias": .string(String(localized: "Maison: \(entity.name) open too long")),
             "description": .string(String(localized: "Created by the Maison app.")),
             "mode": "single",
             "triggers": [["trigger": "state", "entity_id": .string(entity.entityID), "to": "on", "for": ["minutes": .number(Double(minutes))]]],

@@ -43,6 +43,7 @@ enum DemoHome {
         layout.areaByEntity = placement
         layout.deviceByEntity = [
             "switch.chauffe_eau": "water_heater_plug", "sensor.chauffe_eau_energy": "water_heater_plug",
+            "climate.climatiseur": "aircon", "sensor.climatiseur_filter_life": "aircon", "button.climatiseur_reset_filter": "aircon",
             "switch.prise_cafe": "plug", "sensor.prise_cafe_power": "plug",
             "lock.porte_entree": "lock", "sensor.porte_entree_battery": "lock",
             "sensor.sdb_temperature": "bathroom_sensor", "sensor.sdb_humidity": "bathroom_sensor", "sensor.sdb_battery": "bathroom_sensor",
@@ -53,7 +54,8 @@ enum DemoHome {
             "binary_sensor.internet": "ping", "sensor.internet_round_trip_time_average": "ping",
             "sensor.internet_round_trip_time_maximum": "ping",
         ]
-        layout.hiddenEntities.formUnion(["binary_sensor.internet", "sensor.internet_round_trip_time_average", "sensor.internet_round_trip_time_maximum"])
+        layout.translationKeyByEntity = ["sensor.climatiseur_filter_life": "filter_life", "button.climatiseur_reset_filter": "reset_filter"]
+        layout.hiddenEntities.formUnion(["sensor.climatiseur_filter_life", "button.climatiseur_reset_filter", "binary_sensor.internet", "sensor.internet_round_trip_time_average", "sensor.internet_round_trip_time_maximum"])
         return layout
     }()
 
@@ -142,6 +144,10 @@ enum DemoHome {
                 "friendly_name": "Chauffe-eau", "device_class": "energy", "unit_of_measurement": "kWh", "state_class": "total_increasing",
             ]),
             EntityState(entityID: "switch.chauffe_eau", state: "on", attributes: ["friendly_name": "Chauffe-eau"]),
+            EntityState(entityID: "sensor.climatiseur_filter_life", state: "8", attributes: [
+                "friendly_name": "Climatiseur durée de vie du filtre", "unit_of_measurement": "%",
+            ]),
+            EntityState(entityID: "button.climatiseur_reset_filter", state: "unknown", attributes: ["friendly_name": "Climatiseur filtre nettoyé"]),
             EntityState(entityID: "sensor.compteur_eau", state: "182.4", attributes: [
                 "friendly_name": "Compteur d’eau", "device_class": "water", "unit_of_measurement": "L", "state_class": "total_increasing",
             ]),

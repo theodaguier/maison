@@ -63,11 +63,11 @@ extension HomeStore {
             let change = peak.value - yesterdayPeak
             let difference = abs(change).formatted(.number.precision(.fractionLength(1)))
             if abs(change) < 0.3 {
-                detail += " · " + String(localized: "as warm as yesterday")
+                detail += ", " + String(localized: "as warm as yesterday")
             } else if change > 0 {
-                detail += " · " + String(localized: "\(difference)° warmer than yesterday")
+                detail += ", " + String(localized: "\(difference)° warmer than yesterday")
             } else {
-                detail += " · " + String(localized: "\(difference)° cooler than yesterday")
+                detail += ", " + String(localized: "\(difference)° cooler than yesterday")
             }
         }
         return DayFact(kind: .temperature, title: title, detail: detail)
@@ -89,7 +89,7 @@ extension HomeStore {
             facts.append(DayFact(
                 kind: .climate(heating: changes.contains { $0.state == "heat" }),
                 title: String(localized: "\(Phrasing.subject(climate.name)) ran for \(duration)"),
-                detail: details.joined(separator: " · ")
+                detail: details.joined(separator: ", ")
             ))
         }
         return facts
