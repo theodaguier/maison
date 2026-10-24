@@ -49,7 +49,7 @@ Xcode writes that setting into Info.plist as `PostHogAPIKey`. Settings → Share
 
 ## Household sharing
 
-The household lives in a CloudKit zone (`Household`) in the owner's private database of `iCloud.com.theodaguier.maison`, shared as a whole with a zone-wide `CKShare`. It holds the household (name, server URLs) and one `MemberFavorites` record per member — never device state. A share doesn't grant Home Assistant access: everyone signs in with their own Home Assistant account.
+The household lives in a CloudKit zone (`Household`) in the owner's private database of `iCloud.com.theodaguier.maison`, shared as a whole with a zone-wide `CKShare`. It holds the household (name, server URLs), one `MemberFavorites` record per member, and a `MemberProfile` when someone edits the name the household sees — never device state, and never a copy of an Apple ID identity. On iOS 26 the owner's name is present on the share only with the iCloud Extended Share Access entitlement (`InProcessShareOwnerParticipantInfo`); it is shown, not stored. A share doesn't grant Home Assistant access: everyone signs in with their own Home Assistant account.
 
 - **Invite**: Settings → Household → Invite Someone adds the person's iCloud email or phone number to the share as Resident (`privateUser`) or Administrator (`administrator`), then hands the link to the share sheet.
 - **Accept**: opening the link calls `SceneDelegate`, which accepts the share; the connect screen then offers the household's server.

@@ -77,6 +77,9 @@ targets:
           - iCloud.com.theodaguier.maison
         com.apple.developer.icloud-services:
           - CloudKit
+        # iOS 26 hides the share owner's name unless this is set. Display only; never stored.
+        com.apple.developer.icloud-extended-share-access:
+          - InProcessShareOwnerParticipantInfo
     scheme:
       testTargets:
         - MaisonTests

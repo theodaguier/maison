@@ -63,16 +63,24 @@ struct HouseholdMember: Sendable, Hashable, Identifiable {
     let role: HouseholdRole
     let isPending: Bool
     let isCurrentUser: Bool
+    /// Email or phone the invitation was addressed to, when iCloud still has it.
+    let contact: String?
 
-    init(id: String, name: String?, role: HouseholdRole, isPending: Bool = false, isCurrentUser: Bool = false) {
+    init(id: String, name: String?, role: HouseholdRole, isPending: Bool = false, isCurrentUser: Bool = false, contact: String? = nil) {
         self.id = id
         self.name = name
         self.role = role
         self.isPending = isPending
         self.isCurrentUser = isCurrentUser
+        self.contact = contact
     }
 
     /// Maps the fields of a `CKShare.Participant`, kept apart so it can be tested without iCloud.
+    ///
+    /// CloudKit reports the share owner, and often the current user, as `.pending` or `.unknown`,
+    /// and on iOS 26 the owner's name is nil unless the extended share-access entitlement is set.
+    /// Neither person was invited: the owner created the share, and the current user is already in
+    /// it. Only someone else whose status is exactly `.pending` is an invitation.
     init(
         participantID: String,
         nameComponents: PersonNameComponents?,
@@ -82,15 +90,17 @@ struct HouseholdMember: Sendable, Hashable, Identifiable {
         acceptance: CKShare.ParticipantAcceptanceStatus,
         isCurrentUser: Bool
     ) {
-        let formattedName: String? = nameComponents
+        let formattedName = nameComponents
             .map { $0.formatted(.name(style: .medium)) }
-            .flatMap { name -> String? in name.isEmpty ? nil : name }
+            .flatMap { Self.nonEmpty($0) }
+        let contact = Self.nonEmpty(email ?? phoneNumber)
         self.init(
             id: participantID,
-            name: formattedName ?? email ?? phoneNumber,
+            name: formattedName ?? contact,
             role: HouseholdRole(role),
-            isPending: acceptance == .pending,
-            isCurrentUser: isCurrentUser
+            isPending: Self.isPendingInvitation(role: role, acceptance: acceptance, isCurrentUser: isCurrentUser),
+            isCurrentUser: isCurrentUser,
+            contact: contact
         )
     }
 
@@ -106,6 +116,101 @@ struct HouseholdMember: Sendable, Hashable, Identifiable {
             isCurrentUser: isCurrentUser
         )
     }
+
+    /// Whether this participant is an invitation that hasn't been accepted.
+    static func isPendingInvitation(
+        role: CKShare.ParticipantRole,
+        acceptance: CKShare.ParticipantAcceptanceStatus,
+        isCurrentUser: Bool
+    ) -> Bool {
+        if isCurrentUser || role == .owner { return false }
+        return acceptance == .pending
+    }
+
+    /// A removed participant is gone. The owner and the current user stay listed: CloudKit's
+    /// acceptance status for them is not a reliable "removed".
+    static func belongsInHousehold(
+        role: CKShare.ParticipantRole,
+        acceptance: CKShare.ParticipantAcceptanceStatus,
+        isCurrentUser: Bool
+    ) -> Bool {
+        if isCurrentUser || role == .owner { return true }
+        return acceptance != .removed
+    }
+
+    /// Whether this share participant is the person using the app.
+    ///
+    /// `currentUserParticipant` is sometimes missing on the owner's private database, and on iOS 26
+    /// the owner's user record id is nil without the extended share-access entitlement. The owner
+    /// of a household kept in this iPhone's private database is that person.
+    static func matchesCurrentUser(
+        role: CKShare.ParticipantRole,
+        participantRecordName: String?,
+        currentUserRecordName: String?,
+        matchesCurrentParticipant: Bool,
+        inPrivateDatabase: Bool
+    ) -> Bool {
+        if matchesCurrentParticipant { return true }
+        if let currentUserRecordName, participantRecordName == currentUserRecordName { return true }
+        return inPrivateDatabase && role == .owner
+    }
+
+    /// The stored pending flag, corrected when the owner or the current user was marked invited.
+    var normalized: HouseholdMember {
+        guard isPending, isCurrentUser || role == .owner else { return self }
+        return HouseholdMember(id: id, name: name, role: role, isPending: false, isCurrentUser: isCurrentUser, contact: contact)
+    }
+
+    /// Whether Settings should present this person as an invitation. The owner and the current user never are.
+    var showsAsInvitation: Bool {
+        normalized.isPending
+    }
+
+    func withName(_ name: String?) -> HouseholdMember {
+        HouseholdMember(id: id, name: name, role: role, isPending: isPending, isCurrentUser: isCurrentUser, contact: contact)
+    }
+
+    func withRole(_ role: HouseholdRole) -> HouseholdMember {
+        HouseholdMember(id: id, name: name, role: role, isPending: isPending, isCurrentUser: isCurrentUser, contact: contact)
+    }
+
+    /// The name to show. A name from iCloud wins. The current user, whose Apple ID name is often
+    /// missing, falls back to `accountName` — the name already known on this iPhone. That fallback
+    /// never applies to someone else, and a missing name is never the "invitation sent" label.
+    func resolvedName(accountName: String?) -> String? {
+        if let name = Self.nonEmpty(name) { return name }
+        guard isCurrentUser, !showsAsInvitation else { return nil }
+        return Self.nonEmpty(accountName)
+    }
+
+    /// One or two initials. `nil` when there is no name to draw from: the avatar uses a symbol then, never "?".
+    func initials(accountName: String?) -> String? {
+        guard let name = resolvedName(accountName: accountName) else { return nil }
+        let visible = name.split(separator: "@", maxSplits: 1).first.map(String.init) ?? name
+        let words = visible.split(whereSeparator: \.isWhitespace)
+        if words.count >= 2, let first = Self.mark(in: words[0]), let last = Self.mark(in: words[words.count - 1]) {
+            return String([first, last]).uppercased()
+        }
+        guard let mark = Self.mark(in: visible) else { return nil }
+        return String(mark).uppercased()
+    }
+
+    /// The address a pending invitation can be sent to again.
+    var invitationContact: String? {
+        if let contact = Self.nonEmpty(contact) { return contact }
+        guard let name = Self.nonEmpty(name), name.contains("@") || name.first == "+" else { return nil }
+        return name
+    }
+
+    static func nonEmpty(_ value: String?) -> String? {
+        guard let value else { return nil }
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
+    private static func mark(in text: some StringProtocol) -> Character? {
+        text.first { $0.isLetter || $0.isNumber }
+    }
 }
 
 extension [HouseholdMember] {
@@ -113,7 +218,7 @@ extension [HouseholdMember] {
     func sortedForDisplay() -> [HouseholdMember] {
         let order: [HouseholdRole] = [.owner, .administrator, .resident]
         return sorted { lhs, rhs in
-            if lhs.isPending != rhs.isPending { return !lhs.isPending }
+            if lhs.showsAsInvitation != rhs.showsAsInvitation { return !lhs.showsAsInvitation }
             if lhs.role != rhs.role {
                 return order.firstIndex(of: lhs.role)! < order.firstIndex(of: rhs.role)!
             }
@@ -184,6 +289,31 @@ enum MemberFavorites {
         let record = record ?? CKRecord(recordType: recordType, recordID: recordID(for: memberID, in: zoneID))
         record[Field.memberID] = memberID
         record[Field.entityIDs] = entityIDs.isEmpty ? nil : entityIDs
+        return record
+    }
+}
+
+/// The name a member chose to show. This is what they typed, never a copy of their Apple ID identity:
+/// iOS 26 only allows that identity to be displayed, not stored.
+enum MemberProfile {
+    static let recordType = "MemberProfile"
+
+    private enum Field {
+        static let displayName = "displayName"
+    }
+
+    static func recordID(for memberID: String, in zoneID: CKRecordZone.ID) -> CKRecord.ID {
+        CKRecord.ID(recordName: "profile-\(memberID)", zoneID: zoneID)
+    }
+
+    static func displayName(from record: CKRecord) -> String? {
+        guard record.recordType == recordType else { return nil }
+        return HouseholdMember.nonEmpty(record[Field.displayName] as? String)
+    }
+
+    static func record(_ displayName: String, for memberID: String, updating record: CKRecord? = nil, in zoneID: CKRecordZone.ID) -> CKRecord {
+        let record = record ?? CKRecord(recordType: recordType, recordID: recordID(for: memberID, in: zoneID))
+        record[Field.displayName] = HouseholdMember.nonEmpty(displayName)
         return record
     }
 }
