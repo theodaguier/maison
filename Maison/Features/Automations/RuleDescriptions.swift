@@ -16,6 +16,11 @@ extension HomeStore {
     func describe(_ trigger: AutomationRule.Trigger) -> StepDescription {
         switch trigger {
         case .time(let at):
+            if let offPeak = offPeakHour(at) {
+                return StepDescription(symbol: "clock.fill", color: .indigo,
+                                       title: offPeak.isStart ? String(localized: "Off-peak hours start") : String(localized: "Off-peak hours end"),
+                                       detail: String(localized: "\(RuleTime.display(at)) from your tariff"))
+            }
             return StepDescription(symbol: "clock.fill", color: .blue,
                                    title: String(localized: "Every day at \(RuleTime.display(at))"),
                                    detail: String(localized: "Fixed time"))
@@ -29,14 +34,15 @@ extension HomeStore {
             return StepDescription(symbol: states[id]?.symbolName ?? "sensor.fill", color: .teal, title: title,
                                    detail: area(of: states[id])?.name ?? String(localized: "Device"))
         case .threshold(let id, let above, let below):
-            let unit = states[id]?.unit ?? ""
-            let title = if let above {
-                String(localized: "\(entityName(id)) above \(Self.number(above))\(unit)")
-            } else {
-                String(localized: "\(entityName(id)) below \(Self.number(below ?? 0))\(unit)")
-            }
-            return StepDescription(symbol: "thermometer.medium", color: .orange, title: title,
+            return StepDescription(symbol: "thermometer.medium", color: .orange, title: thresholdText(id, above: above, below: below),
                                    detail: area(of: states[id])?.name ?? String(localized: "Measurement"))
+        case .interval(let minutes):
+            return StepDescription(symbol: "arrow.triangle.2.circlepath", color: .blue, title: RuleTime.intervalText(minutes),
+                                   detail: String(localized: "Regular interval"))
+        case .calendar(let id, let atStart):
+            return StepDescription(symbol: "calendar", color: .red,
+                                   title: atStart ? String(localized: "When an event starts") : String(localized: "When an event ends"),
+                                   detail: entityName(id))
         case .everyoneLeaves:
             return StepDescription(symbol: "figure.walk.departure", color: .indigo, title: String(localized: "When everyone leaves"),
                                    detail: String(localized: "Household members"))
@@ -62,6 +68,9 @@ extension HomeStore {
         case .nobodyHome:
             StepDescription(symbol: "person.2.slash.fill", color: .purple, title: String(localized: "Nobody is home"),
                             detail: String(localized: "Household members"))
+        case .between(let after, let before) where isOffPeak(after: after, before: before):
+            StepDescription(symbol: "clock.fill", color: .purple, title: String(localized: "During off-peak hours"),
+                            detail: String(localized: "\(RuleTime.display(after)) to \(RuleTime.display(before)) from your tariff"))
         case .between(let after, let before):
             StepDescription(symbol: "clock.fill", color: .purple,
                             title: String(localized: "Between \(RuleTime.display(after)) and \(RuleTime.display(before))"))
@@ -71,13 +80,28 @@ extension HomeStore {
             StepDescription(symbol: states[id]?.symbolName ?? "sensor.fill", color: .purple,
                             title: String(localized: "\(entityName(id)) is \(stateName(state, of: id))"),
                             detail: area(of: states[id])?.name)
+        case .threshold(let id, let above, let below):
+            StepDescription(symbol: "gauge.with.dots.needle.33percent", color: .purple,
+                            title: thresholdText(id, above: above, below: below), detail: area(of: states[id])?.name)
         case .other(let raw):
             StepDescription(symbol: "gearshape.fill", color: .gray, title: String(localized: "Condition set up in Home Assistant"),
                             detail: raw["condition"]?.stringValue)
         }
     }
 
-    func describe(_ action: AutomationRule.Action) -> StepDescription {
+    func thresholdText(_ id: String, above: Double?, below: Double?) -> String {
+        let unit = states[id]?.unit ?? ""
+        if let above { return String(localized: "\(entityName(id)) above \(Self.number(above))\(unit)") }
+        return String(localized: "\(entityName(id)) below \(Self.number(below ?? 0))\(unit)")
+    }
+
+    /// `rule` lets a wait read as "until off-peak hours end" when the rule starts with them.
+    func describe(_ action: AutomationRule.Action, in rule: AutomationRule? = nil) -> StepDescription {
+        if case .wait(let minutes) = action, let rule, let offPeak = energyTariff?.offPeak, minutes == offPeak.duration * 60,
+           rule.triggers.contains(.time(at: RuleTime.hour(offPeak.startHour))) {
+            return StepDescription(symbol: "hourglass", color: .orange, title: String(localized: "Wait for off-peak hours to end"),
+                                   detail: String(localized: "\(RuleTime.display(RuleTime.hour(offPeak.endHour))) from your tariff"))
+        }
         switch action {
         case .device(let id, let service, let data):
             let entity = states[id]
@@ -85,6 +109,10 @@ extension HomeStore {
                                    title: entityName(id), detail: commandText(service, data: data))
         case .scene(let id):
             return StepDescription(symbol: "play.fill", color: .orange, title: entityName(id), detail: String(localized: "Run the scene"))
+        case .roomLights(let areaID, let on):
+            return StepDescription(symbol: "lightbulb.2.fill", color: .yellow,
+                                   title: String(localized: "Lights \(Phrasing.location(area(id: areaID)?.name ?? areaID))"),
+                                   detail: on ? String(localized: "Turn on") : String(localized: "Turn off"))
         case .wait(let minutes):
             return StepDescription(symbol: "hourglass", color: .orange, title: String(localized: "Wait \(minutes) min"))
         case .notify(_, let message):
@@ -111,6 +139,7 @@ extension HomeStore {
         case "set_temperature": parts.append(String(localized: "Set to \(EntityState.degrees(data["temperature"]?.doubleValue ?? 0))"))
         case "media_play": parts.append(String(localized: "Play"))
         case "media_pause": parts.append(String(localized: "Pause"))
+        case "trigger": parts.append(String(localized: "Run"))
         default: parts.append(verb.replacingOccurrences(of: "_", with: " ").capitalized)
         }
         if let brightness = data["brightness_pct"]?.doubleValue { parts.append("\(Self.number(brightness)) %") }
@@ -143,6 +172,12 @@ extension HomeStore {
         }
         let lightsOn = devices.filter { $0.service == "light.turn_on" }
         let lightsOff = devices.filter { $0.service == "light.turn_off" }
+        for action in actions {
+            if case .roomLights(let areaID, let on) = action {
+                let room = Phrasing.location(area(id: areaID)?.name ?? areaID)
+                phrases.append(on ? String(localized: "turns on the lights \(room)") : String(localized: "turns off the lights \(room)"))
+            }
+        }
         if !lightsOn.isEmpty {
             let rooms = Set(lightsOn.compactMap { area(of: states[$0.id])?.name })
             let brightness = lightsOn.first?.data["brightness_pct"]?.doubleValue
@@ -204,6 +239,17 @@ enum RuleTime {
     static func text(_ date: Date) -> String {
         let parts = Calendar.current.dateComponents([.hour, .minute], from: date)
         return String(format: "%02d:%02d:00", parts.hour ?? 0, parts.minute ?? 0)
+    }
+
+    /// "22:00:00" for 22.
+    static func hour(_ hour: Int) -> String {
+        String(format: "%02d:00:00", hour)
+    }
+
+    static func intervalText(_ minutes: Int) -> String {
+        minutes >= 60 && minutes % 60 == 0
+            ? (minutes == 60 ? String(localized: "Every hour") : String(localized: "Every \(minutes / 60) hours"))
+            : String(localized: "Every \(minutes) minutes")
     }
 
     static func display(_ text: String) -> String {

@@ -43,10 +43,10 @@ final class HomeStore {
 
     @ObservationIgnored private let credentialStore: any CredentialStorage
     @ObservationIgnored private var credentials: Credentials?
-    @ObservationIgnored private var connection: HomeAssistantConnection?
+    @ObservationIgnored private(set) var connection: HomeAssistantConnection?
     @ObservationIgnored private let connector: ServerConnector
     /// The address the current connection goes through; REST calls use it too.
-    @ObservationIgnored private var activeURL: URL?
+    @ObservationIgnored private(set) var activeURL: URL?
     @ObservationIgnored private var updatesTask: Task<Void, Never>?
     @ObservationIgnored private var retryTask: Task<Void, Never>?
     /// `source_connected` is sent once per sign-in, not again when a lost connection comes back.
@@ -360,12 +360,14 @@ final class HomeStore {
 
     /// Everything Maison sets up on the server by itself, so the person never has to open Home Assistant:
     /// devices it found, integrations that failed, remote access, the internet check. Administrators only.
-    func setUpServer(now: Date = .now) async {
-        guard !isDemo, phase == .connected, let connection else { return }
+    /// `true` when something changed on the server, and the devices were read again.
+    @discardableResult
+    func setUpServer(now: Date = .now) async -> Bool {
+        guard !isDemo, phase == .connected, let connection else { return false }
         // The account is read after connecting, in the background: ask for it if it isn't there yet.
         var user = currentUser
         if user == nil { user = try? await connection.currentUser() }
-        guard user?.isAdmin == true, let credentials = try? await freshCredentials() else { return }
+        guard user?.isAdmin == true, let credentials = try? await freshCredentials() else { return false }
         let flows = ConfigFlowClient(serverURL: activeURL ?? credentials.serverURL, accessToken: credentials.accessToken)
         var changed = await adoptDiscoveredDevices(flows: flows, connection: connection)
         changed = await repairIntegrations(flows: flows, now: now) || changed
@@ -374,9 +376,11 @@ final class HomeStore {
             changed = true
         }
         changed = await ensureInternetResponseTime(connection: connection) || changed
+        changed = await ensureWeather(flows: flows, now: now) || changed
         await syncGridConsumption(now: now)
         // New integrations bring entities and registry entries: reconnecting reads them.
         if changed { await connect() }
+        return changed
     }
 
     /// The kWh price set in Home Assistant's Energy dashboard, if any.
@@ -429,6 +433,28 @@ final class HomeStore {
         return added
     }
 
+    /// "Add a Device" from the +: confirms right away what Home Assistant found on the network, and
+    /// says what still waits for a code. `nil` without an administrator's account.
+    func addFoundDevices() async -> (added: [String], waiting: [String])? {
+        if isDemo { return ([], []) }
+        guard phase == .connected, let connection else { return nil }
+        var user = currentUser
+        if user == nil { user = try? await connection.currentUser() }
+        guard user?.isAdmin == true, let credentials = try? await freshCredentials() else { return nil }
+        let flows = ConfigFlowClient(serverURL: activeURL ?? credentials.serverURL, accessToken: credentials.accessToken)
+        var added: [String] = [], waiting: [String] = []
+        for flow in (try? await connection.discoveredFlows()) ?? [] {
+            if case .created? = try? await flows.confirmIfNothingToAsk(flowID: flow.flowID) {
+                ServerSetupLog.recordAdded(flow.handler)
+                added.append(flow.handler)
+            } else {
+                waiting.append(flow.handler)
+            }
+        }
+        if !added.isEmpty { await connect() }
+        return (added, waiting)
+    }
+
     /// Reloads integrations that failed to start, once a day each, as one would from their menu.
     private func repairIntegrations(flows: ConfigFlowClient, now: Date) async -> Bool {
         var reloaded = false
@@ -460,6 +486,21 @@ final class HomeStore {
         defaults.set(now, forKey: InternetCheckSetting.attemptedKey)
         guard case .created? = try? await flows.create("ping", answers: ["host": .string(InternetCheckSetting.host)]) else { return false }
         defaults.set(now, forKey: InternetCheckSetting.addedKey)
+        return true
+    }
+
+    /// Adds a weather service when the server has none, as Home Assistant does when it is set up: the
+    /// most used one that asks nothing (it reads the home's location from the server). Once a day at most.
+    private func ensureWeather(flows: ConfigFlowClient, now: Date) async -> Bool {
+        let key = "weatherAttemptedAt"
+        guard !states.values.contains(where: { $0.domain == "weather" }) else { return false }
+        if let attempted = UserDefaults.standard.object(forKey: key) as? Date, now.timeIntervalSince(attempted) < 86_400 { return false }
+        UserDefaults.standard.set(now, forKey: key)
+        let installed = Set(integrations.map(\.domain))
+        let candidates = IntegrationDescription.serving(["weather_alerts.forecasts"], in: await integrationCatalog())
+            .filter { !installed.contains($0.domain) }
+        guard let added = await flows.addFirstAskingNothing(Array(candidates.prefix(3))) else { return false }
+        ServerSetupLog.recordAdded(added.domain)
         return true
     }
 
@@ -615,6 +656,11 @@ final class HomeStore {
     func save(_ rule: AutomationRule) async throws {
         if isDemo {
             DemoHome.rules[rule.id] = rule.config
+            // A new rule shows in the list, as the server would add its automation.
+            if !states.values.contains(where: { $0.domain == "automation" && $0.attributes["id"]?.stringValue == rule.id }) {
+                states["automation.\(rule.id)"] = EntityState(entityID: "automation.\(rule.id)", state: "on",
+                                                              attributes: ["friendly_name": .string(rule.name), "id": .string(rule.id)])
+            }
             return
         }
         guard let editor = try await configEditor() else { throw HomeAssistantError.connectionClosed }
@@ -622,7 +668,11 @@ final class HomeStore {
     }
 
     func delete(_ rule: AutomationRule) async throws {
-        if isDemo { return }
+        if isDemo {
+            DemoHome.rules[rule.id] = nil
+            states = states.filter { !($0.value.domain == "automation" && $0.value.attributes["id"]?.stringValue == rule.id) }
+            return
+        }
         guard let editor = try await configEditor() else { throw HomeAssistantError.connectionClosed }
         try await editor.delete(.automation, id: rule.id)
     }
@@ -701,6 +751,10 @@ extension HomeStore {
     func area(of entity: EntityState) -> Area? {
         guard let id = layout.areaByEntity[entity.entityID] else { return nil }
         return layout.areas.first { $0.id == id }
+    }
+
+    func area(id: String) -> Area? {
+        layout.areas.first { $0.id == id }
     }
 
     /// Marks a chore done in a room, and keeps it. Returns when it was done before, for Undo.

@@ -140,6 +140,13 @@ private struct HomeDashboard: View {
                 try? await Task.sleep(for: .seconds(300))
             }
         }
+        .task(id: ScoreInputs(store: store)) {
+            // A source just added brings entities, or a room: count them now rather than at the next round.
+            guard scores != nil else { return }
+            try? await Task.sleep(for: .seconds(2))
+            guard !Task.isCancelled else { return }
+            scores = await store.loadScores()
+        }
         .sheet(item: $openedScore) { ScoreSheet(kind: $0, scores: scores) }
         .sheet(isPresented: $showsHousekeeping) { HousekeepingSheet() }
         .sheet(item: $openedFinding) { finding in
@@ -224,12 +231,17 @@ private struct HomeDashboard: View {
 
     private func refreshScores() async {
         guard store.phase == .connected || scores == nil, !store.states.isEmpty else { return }
-        await store.setUpServer()
+        // The scores first: setting up the server can wait for a device, and the rings would wait with it.
         let started = ContinuousClock.now
-        let loaded = await store.loadScores()
+        var loaded = await store.loadScores()
+        let duration = ContinuousClock.now - started
         scores = loaded
+        if await store.setUpServer() {
+            loaded = await store.loadScores()
+            scores = loaded
+        }
         #if DEBUG
-        await store.writeScoreDiagnostics(loaded, duration: ContinuousClock.now - started)
+        await store.writeScoreDiagnostics(loaded, duration: duration)
         // `-sheet finding` opens the first finding once the scores are in.
         if UserDefaults.standard.string(forKey: "sheet") == "finding", openedFinding == nil { openedFinding = loaded.findings.first }
         #endif
@@ -280,6 +292,17 @@ private struct HomeDashboard: View {
         }
         .animation(.smooth, value: store.phase)
         .frame(minHeight: heroSpace - Theme.sectionSpacing, alignment: .bottom)
+    }
+}
+
+/// What the scores are computed from: entities appearing or moving to a room, not their values changing.
+private struct ScoreInputs: Hashable {
+    let entities: Int
+    let layout: HomeLayout
+
+    @MainActor init(store: HomeStore) {
+        entities = store.states.count
+        layout = store.layout
     }
 }
 

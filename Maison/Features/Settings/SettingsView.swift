@@ -26,6 +26,9 @@ struct SettingsView: View {
     @AppStorage("appearance") private var appearance: Appearance = .system
     @AppStorage(DaySummarySetting.key) private var daySummary = true
     @AppStorage(Analytics.enabledKey) private var analyticsEnabled = false
+    #if DEBUG
+    @State private var opensSources = UserDefaults.standard.bool(forKey: "sources") || UserDefaults.standard.string(forKey: "source") != nil
+    #endif
 
     var body: some View {
         NavigationStack {
@@ -63,6 +66,16 @@ struct SettingsView: View {
                                         .background(Theme.card, in: .rect(cornerRadius: 8))
                                         .overlay { RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.cardBorder, lineWidth: 1) }
                                 }
+                            }
+                            SettingsDivider()
+                            NavigationLink { AllSourcesPage() } label: {
+                                HStack(spacing: 12) {
+                                    SettingsIcon(symbol: "plus", color: .blue)
+                                    Text("Add a Source").font(.roundedBody).foregroundStyle(.blue)
+                                    Spacer()
+                                }
+                                .padding(.vertical, 10)
+                                .contentShape(.rect)
                             }
                         }
                         .buttonStyle(.plain)
@@ -155,6 +168,10 @@ struct SettingsView: View {
             .background(Theme.background)
             .scrollEdgeEffectStyle(.hard, for: .top)
             .navigationTitle("Settings")
+            #if DEBUG
+            // `-sources YES` opens All Sources, to check its design; `-source meter` one of them.
+            .navigationDestination(isPresented: $opensSources) { AllSourcesPage() }
+            #endif
         }
         .trackScreen(.settings)
     }
