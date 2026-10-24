@@ -3,6 +3,9 @@ import SwiftUI
 /// Onboarding until the first sign-in is done, then four tabs on the system Liquid Glass tab bar.
 struct RootView: View {
     @State private var tab: AppTab = .home
+    /// The + next to the tabs: its panel, and the screen one of its actions opened.
+    @State private var showsActions = false
+    @State private var quickSheet: QuickSheet?
     @Environment(HomeStore.self) private var store
     /// Set once on appear, so that signing in doesn't swap onboarding for the tabs before its summary.
     @State private var isOnboarding: Bool?
@@ -37,8 +40,20 @@ struct RootView: View {
         }
     }
 
+    /// The + is a tab only in looks: choosing it opens or closes the panel, and the tab shown stays.
+    private var selection: Binding<AppTab> {
+        Binding(get: { tab }, set: { chosen in
+            if chosen == .actions {
+                withAnimation(.smooth(duration: 0.3)) { showsActions.toggle() }
+            } else {
+                showsActions = false
+                tab = chosen
+            }
+        })
+    }
+
     private var tabs: some View {
-        TabView(selection: $tab) {
+        TabView(selection: selection) {
             Tab("Home", systemImage: "house.fill", value: AppTab.home) {
                 HomeView()
             }
@@ -51,6 +66,35 @@ struct RootView: View {
             Tab("Settings", systemImage: "gearshape.fill", value: AppTab.settings) {
                 SettingsView()
             }
+            Tab(value: AppTab.actions, role: .search) {
+                Color.clear
+            } label: {
+                Label(showsActions ? "Close" : "Quick Actions", systemImage: showsActions ? "xmark" : "plus")
+            }
+        }
+        .overlay {
+            if showsActions {
+                QuickActionsPanel(isPresented: $showsActions) { sheet in
+                    // Without animation: a sheet waits for the panel's fade to end before it rises.
+                    var instant = Transaction()
+                    instant.disablesAnimations = true
+                    withTransaction(instant) { showsActions = false }
+                    quickSheet = sheet
+                }
+                .transition(.opacity.combined(with: .offset(y: 24)))
+            }
+        }
+        .sensoryFeedback(.selection, trigger: showsActions)
+        .sheet(item: $quickSheet) { sheet in
+            switch sheet {
+            case .describeRule: DescribeRuleView()
+            case .newRule: RuleEditor(rule: .new(), isNew: true)
+            case .scenes: ScenesSheet()
+            case .search: DeviceSearchSheet()
+            case .leaving: LeavingSheet()
+            case .addDevice: AddDeviceSheet()
+            case .editShortcuts: ShortcutsEditor()
+            }
         }
         .environment(\.selectTab, SelectTab { tab = $0 })
         #if DEBUG
@@ -62,6 +106,8 @@ struct RootView: View {
             case "settings": tab = .settings
             default: break
             }
+            // `-actions YES` opens the + panel at launch.
+            if UserDefaults.standard.bool(forKey: "actions") { showsActions = true }
         }
         #endif
     }
@@ -69,6 +115,8 @@ struct RootView: View {
 
 enum AppTab: Hashable {
     case home, rooms, rules, settings
+    /// The + next to the tabs: never shown as a tab, it opens the quick actions.
+    case actions
 }
 
 /// Switches tab from inside a screen ("See" on the rule just created).
