@@ -43,6 +43,7 @@ enum DemoHome {
         layout.areaByEntity = placement
         layout.deviceByEntity = [
             "switch.chauffe_eau": "water_heater_plug", "sensor.chauffe_eau_energy": "water_heater_plug",
+            "climate.climatiseur": "aircon", "sensor.climatiseur_filter_life": "aircon", "button.climatiseur_reset_filter": "aircon",
             "switch.prise_cafe": "plug", "sensor.prise_cafe_power": "plug",
             "lock.porte_entree": "lock", "sensor.porte_entree_battery": "lock",
             "sensor.sdb_temperature": "bathroom_sensor", "sensor.sdb_humidity": "bathroom_sensor", "sensor.sdb_battery": "bathroom_sensor",
@@ -53,7 +54,8 @@ enum DemoHome {
             "binary_sensor.internet": "ping", "sensor.internet_round_trip_time_average": "ping",
             "sensor.internet_round_trip_time_maximum": "ping",
         ]
-        layout.hiddenEntities.formUnion(["binary_sensor.internet", "sensor.internet_round_trip_time_average", "sensor.internet_round_trip_time_maximum"])
+        layout.translationKeyByEntity = ["sensor.climatiseur_filter_life": "filter_life", "button.climatiseur_reset_filter": "reset_filter"]
+        layout.hiddenEntities.formUnion(["sensor.climatiseur_filter_life", "button.climatiseur_reset_filter", "binary_sensor.internet", "sensor.internet_round_trip_time_average", "sensor.internet_round_trip_time_maximum"])
         return layout
     }()
 
@@ -142,6 +144,10 @@ enum DemoHome {
                 "friendly_name": "Chauffe-eau", "device_class": "energy", "unit_of_measurement": "kWh", "state_class": "total_increasing",
             ]),
             EntityState(entityID: "switch.chauffe_eau", state: "on", attributes: ["friendly_name": "Chauffe-eau"]),
+            EntityState(entityID: "sensor.climatiseur_filter_life", state: "8", attributes: [
+                "friendly_name": "Climatiseur durée de vie du filtre", "unit_of_measurement": "%",
+            ]),
+            EntityState(entityID: "button.climatiseur_reset_filter", state: "unknown", attributes: ["friendly_name": "Climatiseur filtre nettoyé"]),
             EntityState(entityID: "sensor.compteur_eau", state: "182.4", attributes: [
                 "friendly_name": "Compteur d’eau", "device_class": "water", "unit_of_measurement": "L", "state_class": "total_increasing",
             ]),
@@ -485,4 +491,34 @@ enum DemoHome {
     private static func isoString(_ date: Date) -> String {
         ISO8601DateFormatter().string(from: date)
     }
+}
+
+extension DemoHome {
+    /// A few of the server's integrations, for the search.
+    static let integrationCatalog: [IntegrationDescription] = [
+        IntegrationDescription(domain: "airthings", name: "Airthings", iotClass: "cloud_polling"),
+        IntegrationDescription(domain: "aranet", name: "Aranet", iotClass: "local_push"),
+        IntegrationDescription(domain: "awair", name: "Awair", iotClass: "local_polling"),
+        IntegrationDescription(domain: "enphase_envoy", name: "Enphase Envoy", iotClass: "local_polling"),
+        IntegrationDescription(domain: "fritz", name: "AVM FRITZ!Box Tools", iotClass: "local_polling"),
+        IntegrationDescription(domain: "freebox", name: "Freebox", iotClass: "local_polling"),
+        IntegrationDescription(domain: "google", name: "Google Calendar", iotClass: "cloud_polling"),
+        IntegrationDescription(domain: "matter", name: "Matter", iotClass: "local_push"),
+        IntegrationDescription(domain: "met", name: "Meteorologisk institutt (Met.no)", iotClass: "cloud_polling"),
+        IntegrationDescription(domain: "meteo_france", name: "Météo-France", iotClass: "cloud_polling"),
+        IntegrationDescription(domain: "netatmo", name: "Netatmo", iotClass: "cloud_polling"),
+        IntegrationDescription(domain: "netgear", name: "NETGEAR", iotClass: "local_polling"),
+        IntegrationDescription(domain: "nut", name: "Network UPS Tools (NUT)", iotClass: "local_polling"),
+        IntegrationDescription(domain: "ping", name: "Ping (ICMP)", iotClass: "local_polling"),
+        IntegrationDescription(domain: "shelly", name: "Shelly", iotClass: "local_push"),
+        IntegrationDescription(domain: "tado", name: "tado°", iotClass: "cloud_polling"),
+        IntegrationDescription(domain: "tplink", name: "TP-Link Smart Home", iotClass: "local_polling"),
+        IntegrationDescription(domain: "upnp", name: "UPnP/IGD", iotClass: "local_polling"),
+        IntegrationDescription(domain: "zha", name: "Zigbee Home Automation", iotClass: "local_polling"),
+    ]
+
+    static let discoveredDevices = [
+        DiscoveredDevice(flowID: "demo-shelly", domain: "shelly", name: "Shelly Plug S"),
+        DiscoveredDevice(flowID: "demo-freebox", domain: "freebox", name: nil),
+    ]
 }

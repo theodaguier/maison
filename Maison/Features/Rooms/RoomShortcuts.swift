@@ -18,7 +18,8 @@ struct FavoritesSection: View {
                 }
                 .padding(.horizontal, 4)
                 .padding(.bottom, 4)
-                ForEach(favorites) { entity in
+                // Three, as in the mock-up: the rest is one tap away in See All.
+                ForEach(favorites.prefix(3)) { entity in
                     DeviceRow(entity: entity, showsRoom: true) { opened = OpenedDevice(id: entity.entityID) }
                 }
             }

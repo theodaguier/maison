@@ -65,6 +65,41 @@ struct HomeScoresTests {
         #expect(ComfortRangeSetting.learned(from: week) == 20.0...22.0)
     }
 
+    @Test func aUsualRangeScoresFromTheFirstDayUntilOneIsLearned() {
+        let first = ComfortRangeSetting.resolve(entered: nil, hourlyMeans: Array(repeating: 21, count: 10))
+        #expect(first.range == ComfortRangeSetting.starting)
+        #expect(first.origin == .estimated)
+        #expect(first.isStarting)
+
+        let week = (0..<168).map { 20 + Double($0 % 21) / 10 }
+        let learned = ComfortRangeSetting.resolve(entered: nil, hourlyMeans: week)
+        #expect(learned.range == 20.0...22.0)
+        #expect(!learned.isStarting)
+
+        let entered = ComfortRangeSetting.resolve(entered: 18...21, hourlyMeans: [])
+        #expect(entered.range == 18...21)
+        #expect(entered.origin == .entered)
+        #expect(!entered.isStarting)
+    }
+
+    @MainActor
+    @Test func aThermometerNotInARoomYetStillCounts() {
+        let added = EntityState(entityID: "sensor.thermometre_neuf", state: "20.5", attributes: [
+            "friendly_name": "Thermomètre", "device_class": "temperature", "unit_of_measurement": "°C",
+        ])
+        let store = HomeStore(
+            demo: DemoHome.states + [added],
+            layout: DemoHome.layout,
+            household: HouseholdStore(demo: DemoHome.household, members: DemoHome.members, plan: DemoHome.plan)
+        )
+        let sensors = store.comfortSensors
+        // Rooms first, then the one not in a room, under its own name.
+        #expect(sensors.count == store.roomTemperatureSensors.count + 1)
+        #expect(sensors.last?.id == "sensor.thermometre_neuf")
+        #expect(sensors.last?.name == "Thermomètre")
+        #expect(sensors.dropLast().map(\.id) == store.roomTemperatureSensors.map(\.area.id))
+    }
+
     // MARK: Energy
 
     @Test func energyScoresTheRatioToTheHabit() {
@@ -106,6 +141,18 @@ struct HomeScoresTests {
         #expect(score.usual == nil)
         #expect(score.percent == nil)
         #expect(EnergyScore.compute(hourly: [], unit: "kWh", now: start) == nil)
+    }
+
+    @Test func theEnergyRingShowsTodaysUseUntilThereIsAHabit() {
+        let learning = EnergyScore(today: 3.25, usual: nil, unit: "kWh", lastDay: [])
+        let scores = HomeScores(energy: learning, computedAt: start)
+        #expect(ScoreKind.energy.percent(in: scores) == nil)
+        #expect(ScoreKind.energy.reading(in: scores)?.unit == "kWh")
+        #expect(ScoreKind.energy.reading(in: scores)?.value == 3.25.formatted(.number.precision(.fractionLength(0...1))))
+
+        let habit = EnergyScore(today: 2, usual: 2, unit: "kWh", lastDay: [])
+        #expect(ScoreKind.energy.reading(in: HomeScores(energy: habit, computedAt: start)) == nil)
+        #expect(ScoreKind.comfort.reading(in: scores) == nil)
     }
 
     // MARK: Network

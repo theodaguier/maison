@@ -163,7 +163,7 @@ private struct MemberRow: View {
                 if member.isCurrentUser {
                     Text("You").font(.roundedFootnote).foregroundStyle(.tertiary)
                 } else if member.isPending {
-                    Text([name, String(localized: "Waiting via iCloud")].compactMap(\.self).joined(separator: " · "))
+                    Text([name, String(localized: "Waiting via iCloud")].compactMap(\.self).joined(separator: ", "))
                         .font(.roundedFootnote)
                         .foregroundStyle(.tertiary)
                         .lineLimit(1)

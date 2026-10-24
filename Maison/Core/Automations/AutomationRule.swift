@@ -25,6 +25,10 @@ struct AutomationRule: Equatable, Sendable {
         case threshold(entityID: String, above: Double?, below: Double?)
         case everyoneLeaves
         case someoneArrives
+        /// Every `minutes` minutes, on the clock (every 15 min: :00, :15, :30, :45).
+        case interval(minutes: Int)
+        /// When an event of a calendar starts or ends.
+        case calendar(entityID: String, atStart: Bool)
         case other(JSONValue)
     }
 
@@ -36,6 +40,7 @@ struct AutomationRule: Equatable, Sendable {
         case between(after: String, before: String)
         case weekdays([String])
         case state(entityID: String, state: String)
+        case threshold(entityID: String, above: Double?, below: Double?)
         case other(JSONValue)
     }
 
@@ -43,6 +48,8 @@ struct AutomationRule: Equatable, Sendable {
         /// `light.turn_on` on one entity, with its data (`brightness_pct`, `position`…).
         case device(entityID: String, service: String, data: [String: JSONValue])
         case scene(entityID: String)
+        /// Every light of a room, on or off.
+        case roomLights(areaID: String, on: Bool)
         case wait(minutes: Int)
         case notify(service: String, message: String)
         case other(JSONValue)
@@ -128,10 +135,30 @@ extension AutomationRule {
                 }
                 if above != nil || below != nil { return .threshold(entityID: id, above: above, below: below) }
             }
+        case "time_pattern":
+            if let interval = interval(raw) { return .interval(minutes: interval) }
+        case "calendar":
+            if let id = entityID(raw["entity_id"]), raw["offset"] == nil,
+               let event = raw["event"]?.stringValue, ["start", "end"].contains(event) {
+                return .calendar(entityID: id, atStart: event == "start")
+            }
         default:
             break
         }
         return .other(raw)
+    }
+
+    /// `minutes: "/15"`, or `hours: "/2"` on the hour. Anything else stays as written.
+    private static func interval(_ raw: JSONValue) -> Int? {
+        func every(_ value: JSONValue?) -> Int? {
+            guard let text = value?.stringValue, text.hasPrefix("/"), let number = Int(text.dropFirst()), number > 0 else { return nil }
+            return number
+        }
+        guard raw["seconds"] == nil || raw["seconds"]?.doubleValue == 0 || raw["seconds"]?.stringValue == "0" else { return nil }
+        if raw["hours"] == nil, let minutes = every(raw["minutes"]) { return minutes }
+        let onTheHour = raw["minutes"] == nil || raw["minutes"]?.doubleValue == 0 || raw["minutes"]?.stringValue == "0"
+        if onTheHour, let hours = every(raw["hours"]) { return hours * 60 }
+        return nil
     }
 
     private static func condition(_ raw: JSONValue) -> Condition {
@@ -143,6 +170,9 @@ extension AutomationRule {
             if entityID(raw["entity_id"]) == "zone.home" {
                 if raw["above"]?.doubleValue == 0, raw["below"] == nil { return .someoneHome }
                 if raw["below"]?.doubleValue == 1, raw["above"] == nil { return .nobodyHome }
+            } else if let id = entityID(raw["entity_id"]), raw["attribute"] == nil, raw["value_template"] == nil {
+                let above = raw["above"]?.doubleValue, below = raw["below"]?.doubleValue
+                if above != nil || below != nil { return .threshold(entityID: id, above: above, below: below) }
             }
         case "time":
             let weekdays = raw["weekday"].map { $0.arrayValue?.compactMap(\.stringValue) ?? [$0.stringValue].compactMap(\.self) }
@@ -175,6 +205,11 @@ extension AutomationRule {
         }
         if service == "scene.turn_on", targetIDs.count == 1, data.isEmpty, !hasOtherTargets {
             return .scene(entityID: targetIDs[0])
+        }
+        if service == "light.turn_on" || service == "light.turn_off", targetIDs.isEmpty, data.isEmpty,
+           let targets = raw["target"]?.objectValue, targets.count == 1,
+           let area = targets["area_id"].flatMap({ $0.stringValue ?? $0.arrayValue.flatMap { $0.count == 1 ? $0[0].stringValue : nil } }) {
+            return .roomLights(areaID: area, on: service == "light.turn_on")
         }
         if targetIDs.count == 1, !hasOtherTargets, raw["condition"] == nil, raw["enabled"] == nil, raw["continue_on_error"] == nil {
             return .device(entityID: targetIDs[0], service: service, data: data)
@@ -228,6 +263,12 @@ extension AutomationRule.Trigger {
             return ["trigger": "numeric_state", "entity_id": "zone.home", "below": 1]
         case .someoneArrives:
             return ["trigger": "numeric_state", "entity_id": "zone.home", "above": 0]
+        case .interval(let minutes):
+            return minutes >= 60 && minutes % 60 == 0
+                ? ["trigger": "time_pattern", "hours": .string("/\(minutes / 60)"), "minutes": 0]
+                : ["trigger": "time_pattern", "minutes": .string("/\(minutes)")]
+        case .calendar(let entityID, let atStart):
+            return ["trigger": "calendar", "event": atStart ? "start" : "end", "entity_id": .string(entityID)]
         case .other(let raw):
             return raw
         }
@@ -244,6 +285,9 @@ extension AutomationRule.Condition {
         case .between(let after, let before): ["condition": "time", "after": .string(after), "before": .string(before)]
         case .weekdays(let days): ["condition": "time", "weekday": .array(days.map { .string($0) })]
         case .state(let entityID, let state): ["condition": "state", "entity_id": .string(entityID), "state": .string(state)]
+        case .threshold(let entityID, let above, let below):
+            .object(["condition": "numeric_state", "entity_id": .string(entityID), "above": above.map(JSONValue.number), "below": below.map(JSONValue.number)]
+                .compactMapValues(\.self))
         case .other(let raw): raw
         }
     }
@@ -258,6 +302,8 @@ extension AutomationRule.Action {
             return .object(object)
         case .scene(let entityID):
             return ["action": "scene.turn_on", "target": ["entity_id": .string(entityID)]]
+        case .roomLights(let areaID, let on):
+            return ["action": on ? "light.turn_on" : "light.turn_off", "target": ["area_id": .string(areaID)]]
         case .wait(let minutes):
             return ["delay": AutomationRule.duration(minutes: minutes)]
         case .notify(let service, let message):

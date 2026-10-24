@@ -21,6 +21,16 @@
         }
       }
     },
+    "%@ %@ more per day": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$@ de plus par jour"
+          }
+        }
+      }
+    },
     "%@ %@ used": {
       "localizations": {
         "fr": {
@@ -47,6 +57,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$@ au-dessus de %2$@%3$@"
+          }
+        }
+      }
+    },
+    "%@ asks you to sign in on its own site. Your password stays there: Maison never sees it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ vous demande de vous connecter sur son site. Votre mot de passe y reste : Maison ne le voit jamais."
           }
         }
       }
@@ -111,6 +131,16 @@
         }
       }
     },
+    "%@ from your tariff": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ d’après votre tarif"
+          }
+        }
+      }
+    },
     "%@ has been locked since %@.": {
       "localizations": {
         "fr": {
@@ -157,6 +187,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$@ : %2$@"
+          }
+        }
+      }
+    },
+    "%@ is away": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ est absent"
           }
         }
       }
@@ -321,6 +361,22 @@
         }
       }
     },
+    "%@ to %@ from your tariff": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ to %2$@ from your tariff"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "De %1$@ à %2$@ d’après votre tarif"
+          }
+        }
+      }
+    },
     "%@ today": {
       "localizations": {
         "fr": {
@@ -373,39 +429,6 @@
         }
       }
     },
-    "%@ · %@": {
-      "shouldTranslate": false
-    },
-    "%@ · Apple Account": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ · Compte Apple"
-          }
-        }
-      }
-    },
-    "%@ · placed": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ · placé"
-          }
-        }
-      }
-    },
-    "%@ · position chosen": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ · position choisie"
-          }
-        }
-      }
-    },
     "%@ – %@°": {
       "localizations": {
         "en": {
@@ -418,6 +441,109 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$@ – %2$@°"
+          }
+        }
+      }
+    },
+    "%@, %@": {
+      "shouldTranslate": false
+    },
+    "%@, %lld upkeep": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %#@count@"
+          },
+          "substitutions": {
+            "count": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg upkeep"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg upkeeps"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %#@count@"
+          },
+          "substitutions": {
+            "count": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg entretien"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg entretiens"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%@, Apple Account": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, Compte Apple"
+          }
+        }
+      }
+    },
+    "%@, placed": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, placé"
+          }
+        }
+      }
+    },
+    "%@, position chosen": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, position choisie"
+          }
+        }
+      }
+    },
+    "%@: mostly in peak hours": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ : surtout en heures pleines"
           }
         }
       }
@@ -487,6 +613,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld %% de confort : toutes les pièces sont restées dans votre plage."
+          }
+        }
+      }
+    },
+    "%lld %% left": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Encore %lld %%"
+          }
+        }
+      }
+    },
+    "%lld %% of its life left": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Encore %lld %%"
           }
         }
       }
@@ -733,12 +879,12 @@
         }
       }
     },
-    "%lld devices · %lld on": {
+    "%lld devices, %lld on": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%#@devices@ · %2$lld on"
+            "value": "%#@devices@, %2$lld on"
           },
           "substitutions": {
             "devices": {
@@ -766,7 +912,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%#@devices@ · %#@on@"
+            "value": "%#@devices@, %#@on@"
           },
           "substitutions": {
             "devices": {
@@ -813,12 +959,12 @@
         }
       }
     },
-    "%lld doors · %lld windows": {
+    "%lld doors, %lld windows": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld portes · %2$lld fenêtres"
+            "value": "%1$lld portes, %2$lld fenêtres"
           }
         }
       }
@@ -913,6 +1059,16 @@
         }
       }
     },
+    "%lld in place": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld en place"
+          }
+        }
+      }
+    },
     "%lld integrations linked to your devices": {
       "localizations": {
         "en": {
@@ -949,6 +1105,16 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "%lld integrations, from your server.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld intégrations, celles de votre serveur."
           }
         }
       }
@@ -1083,6 +1249,16 @@
         }
       }
     },
+    "%lld of %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld sur %2$lld"
+          }
+        }
+      }
+    },
     "%lld of %lld rules enabled": {
       "localizations": {
         "en": {
@@ -1143,7 +1319,7 @@
         }
       }
     },
-    "%lld on": {
+    "%lld on, turned off as you leave": {
       "localizations": {
         "en": {
           "variations": {
@@ -1151,13 +1327,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld on"
+                  "value": "%lld on, turned off as you leave"
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld on"
+                  "value": "%lld on, turned off as you leave"
                 }
               }
             }
@@ -1169,13 +1345,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld allumé"
+                  "value": "%lld allumée, éteinte en partant"
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld allumés"
+                  "value": "%lld allumées, éteintes en partant"
                 }
               }
             }
@@ -1216,6 +1392,46 @@
                 "stringUnit": {
                   "state": "translated",
                   "value": "%lld coupures"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld playing, paused": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld playing, paused"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld playing, paused"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld en lecture, mise en pause"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld en lecture, mises en pause"
                 }
               }
             }
@@ -1303,12 +1519,28 @@
         }
       }
     },
-    "%lld rooms · %lld devices placed": {
+    "%lld rooms, %lld devices placed": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld pièces · %2$lld appareils placés"
+            "value": "%1$lld pièces, %2$lld appareils placés"
+          }
+        }
+      }
+    },
+    "%lld sources of %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld sources of %2$lld"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld sources sur %2$lld"
           }
         }
       }
@@ -1393,6 +1625,46 @@
         }
       }
     },
+    "%lld things to do yourself. The rest happens on its own.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld thing to do yourself. The rest happens on its own."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld things to do yourself. The rest happens on its own."
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld chose à régler. Le reste se fera tout seul."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld choses à régler. Le reste se fera tout seul."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld times today": {
       "localizations": {
         "en": {
@@ -1433,12 +1705,12 @@
         }
       }
     },
-    "%lld walls · %lld doors · %lld windows detected": {
+    "%lld walls, %lld doors, %lld windows detected": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld murs · %2$lld portes · %3$lld fenêtres détectés"
+            "value": "%1$lld murs, %2$lld portes, %3$lld fenêtres détectés"
           }
         }
       }
@@ -1564,6 +1836,16 @@
         }
       }
     },
+    "5 min before the next step": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5 min avant l’étape suivante"
+          }
+        }
+      }
+    },
     "6 h": {
       "localizations": {
         "fr": {
@@ -1580,6 +1862,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "7 jours"
+          }
+        }
+      }
+    },
+    "A Reader on the Meter": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un lecteur sur le compteur"
           }
         }
       }
@@ -1604,12 +1896,32 @@
         }
       }
     },
+    "A calendar event": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un événement d’agenda"
+          }
+        }
+      }
+    },
     "A device changes": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Un appareil change d’état"
+          }
+        }
+      }
+    },
+    "A device connected to your Wi-Fi shows up here by itself.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un appareil relié à votre Wi-Fi apparaît ici tout seul."
           }
         }
       }
@@ -1624,6 +1936,16 @@
         }
       }
     },
+    "A hub brings devices of every brand that speak its language.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une passerelle apporte les appareils de toutes les marques qui parlent sa langue."
+          }
+        }
+      }
+    },
     "A measurement crosses a value": {
       "localizations": {
         "fr": {
@@ -1634,12 +1956,72 @@
         }
       }
     },
+    "A measurement’s value": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valeur d’une mesure"
+          }
+        }
+      }
+    },
+    "A rule: %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une règle : %@"
+          }
+        }
+      }
+    },
+    "A scene": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une scène"
+          }
+        }
+      }
+    },
+    "A script": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un script"
+          }
+        }
+      }
+    },
     "A small reader, then nothing to set up": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Un petit lecteur, puis rien à régler"
+          }
+        }
+      }
+    },
+    "A specific person": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une personne précise"
+          }
+        }
+      }
+    },
+    "A usual range, until Maison learns yours" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une plage courante, le temps que Maison apprenne la vôtre"
           }
         }
       }
@@ -1714,6 +2096,36 @@
         }
       }
     },
+    "Add a Device": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter un appareil"
+          }
+        }
+      }
+    },
+    "Add a Room": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter une pièce"
+          }
+        }
+      }
+    },
+    "Add a Source": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter une source"
+          }
+        }
+      }
+    },
     "Add a Trigger": {
       "localizations": {
         "fr": {
@@ -1734,6 +2146,16 @@
         }
       }
     },
+    "Add the Internet Check": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter le test de connexion"
+          }
+        }
+      }
+    },
     "Add to Favorites": {
       "localizations": {
         "fr": {
@@ -1750,6 +2172,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ajoutez votre prix du kWh pour voir le coût"
+          }
+        }
+      }
+    },
+    "Added to Your Home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouté à votre maison"
+          }
+        }
+      }
+    },
+    "Added. Its devices appear in a few seconds.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouté. Ses appareils apparaissent dans quelques secondes."
+          }
+        }
+      }
+    },
+    "Adding a source needs an administrator of the household.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter une source demande un administrateur du foyer."
           }
         }
       }
@@ -1824,12 +2276,32 @@
         }
       }
     },
+    "Air quality": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Qualité de l’air"
+          }
+        }
+      }
+    },
     "Air, %@": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Air, %@"
+          }
+        }
+      }
+    },
+    "Alarms, detectors, locks": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alarmes, détecteurs, serrures"
           }
         }
       }
@@ -1864,6 +2336,16 @@
         }
       }
     },
+    "All Sources": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes les sources"
+          }
+        }
+      }
+    },
     "All lights are off.": {
       "localizations": {
         "fr": {
@@ -1894,12 +2376,72 @@
         }
       }
     },
+    "Already added": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Déjà ajoutée"
+          }
+        }
+      }
+    },
     "Also play in": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Écouter aussi dans"
+          }
+        }
+      }
+    },
+    "An administrator can add it": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un administrateur peut l’ajouter"
+          }
+        }
+      }
+    },
+    "An administrator of your home adds them from Maison.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un administrateur de votre maison les ajoute depuis Maison."
+          }
+        }
+      }
+    },
+    "And %lld more: search for their name.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Et %lld autres : cherchez leur nom."
+          }
+        }
+      }
+    },
+    "Another Brand": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une autre marque"
+          }
+        }
+      }
+    },
+    "Another rule": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une autre règle"
           }
         }
       }
@@ -1994,6 +2536,16 @@
         }
       }
     },
+    "At a regular interval": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À intervalle régulier"
+          }
+        }
+      }
+    },
     "At a time": {
       "localizations": {
         "fr": {
@@ -2010,6 +2562,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "À la maison, Maison parle directement au serveur sur le Wi-Fi, trouvé automatiquement avec Bonjour. Rien ne passe par internet."
+          }
+        }
+      }
+    },
+    "At home, Maison talks to the server directly. Away, it switches to this address on its own.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À la maison, Maison parle directement au serveur. Ailleurs, elle passe d’elle-même par cette adresse."
           }
         }
       }
@@ -2044,6 +2606,26 @@
         }
       }
     },
+    "At the end": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À la fin"
+          }
+        }
+      }
+    },
+    "At the start": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Au début"
+          }
+        }
+      }
+    },
     "Auto": {
       "localizations": {
         "fr": {
@@ -2074,12 +2656,12 @@
         }
       }
     },
-    "Automation · “%@”": {
+    "Automation “%@”": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Automatisation · « %@ »"
+            "value": "Automatisation « %@ »"
           }
         }
       }
@@ -2090,16 +2672,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Automatisations"
-          }
-        }
-      }
-    },
-    "Automations run on your server, even when your iPhone is off.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les automatisations s’exécutent sur votre serveur, même quand votre iPhone est éteint."
           }
         }
       }
@@ -2134,12 +2706,12 @@
         }
       }
     },
-    "At home, Maison talks to the server directly. Away, it switches to this address on its own.": {
+    "Away mode notes when you left.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "À la maison, Maison parle directement au serveur. Ailleurs, elle passe d’elle-même par cette adresse."
+            "value": "Le mode absent note l’heure de votre départ."
           }
         }
       }
@@ -2174,6 +2746,16 @@
         }
       }
     },
+    "Bathroom above 70 %": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salle de bain au-dessus de 70 %"
+          }
+        }
+      }
+    },
     "Battery": {
       "localizations": {
         "fr": {
@@ -2200,6 +2782,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Chambre"
+          }
+        }
+      }
+    },
+    "Before Leaving": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avant de partir"
           }
         }
       }
@@ -2240,6 +2832,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Volets et stores"
+          }
+        }
+      }
+    },
+    "Box or router": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Box ou routeur"
+          }
+        }
+      }
+    },
+    "Box, router, connection": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Box, routeur, connexion"
+          }
+        }
+      }
+    },
+    "Brand, device or service": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marque, appareil ou service"
           }
         }
       }
@@ -2304,6 +2926,16 @@
         }
       }
     },
+    "Calendar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agenda"
+          }
+        }
+      }
+    },
     "Cameras": {
       "localizations": {
         "fr": {
@@ -2344,12 +2976,62 @@
         }
       }
     },
+    "Change": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Changer"
+          }
+        }
+      }
+    },
+    "Change Your Tariff": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifier votre tarif"
+          }
+        }
+      }
+    },
+    "Check the device": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifiez l’appareil"
+          }
+        }
+      }
+    },
+    "Checked every minute": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifié chaque minute"
+          }
+        }
+      }
+    },
     "Checking…": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Vérification…"
+          }
+        }
+      }
+    },
+    "Choose Yours": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez le vôtre"
           }
         }
       }
@@ -2520,6 +3202,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Connectez-le à votre Wi-Fi"
+          }
+        }
+      }
+    },
+    "Connected": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Branché"
           }
         }
       }
@@ -2744,6 +3436,16 @@
         }
       }
     },
+    "Couldn’t add the room. It needs an administrator account.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’ajouter la pièce. Il faut un compte administrateur."
+          }
+        }
+      }
+    },
     "Couldn’t create the rule. Editing automations needs an administrator account.": {
       "localizations": {
         "fr": {
@@ -2814,12 +3516,32 @@
         }
       }
     },
+    "Create a Rule": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Créer une règle"
+          }
+        }
+      }
+    },
     "Create and edit rules": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Créer et modifier les règles"
+          }
+        }
+      }
+    },
+    "Created %@ from a finding": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Créée %@ depuis un constat"
           }
         }
       }
@@ -2840,6 +3562,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Créé par l’app Maison."
+          }
+        }
+      }
+    },
+    "Created today from a finding": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Créée aujourd’hui depuis un constat"
           }
         }
       }
@@ -2884,12 +3616,12 @@
         }
       }
     },
-    "Daylight": {
+    "Day or night": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Jour et nuit"
+            "value": "Jour ou nuit"
           }
         }
       }
@@ -2920,6 +3652,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Supprimer la règle"
+          }
+        }
+      }
+    },
+    "Delete Step": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer l’étape"
           }
         }
       }
@@ -3034,6 +3776,16 @@
         }
       }
     },
+    "Devices and rooms": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appareils et pièces"
+          }
+        }
+      }
+    },
     "Dining Room": {
       "localizations": {
         "fr": {
@@ -3114,6 +3866,16 @@
         }
       }
     },
+    "During off-peak hours": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pendant les heures creuses"
+          }
+        }
+      }
+    },
     "Edit": {
       "localizations": {
         "fr": {
@@ -3130,16 +3892,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Modifier les favoris"
-          }
-        }
-      }
-    },
-    "Edit Rule": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Modifier la règle"
           }
         }
       }
@@ -3170,6 +3922,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Électricité du réseau"
+          }
+        }
+      }
+    },
+    "Electricity meter": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compteur électrique"
           }
         }
       }
@@ -3274,6 +4036,16 @@
         }
       }
     },
+    "Enter Your Tariff": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saisir votre tarif"
+          }
+        }
+      }
+    },
     "Enter an email address or a phone number.": {
       "localizations": {
         "fr": {
@@ -3344,6 +4116,36 @@
         }
       }
     },
+    "Every": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fréquence"
+          }
+        }
+      }
+    },
+    "Every %lld hours": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes les %lld heures"
+          }
+        }
+      }
+    },
+    "Every %lld minutes": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes les %lld minutes"
+          }
+        }
+      }
+    },
     "Every day at %@": {
       "localizations": {
         "fr": {
@@ -3364,6 +4166,16 @@
         }
       }
     },
+    "Every hour": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes les heures"
+          }
+        }
+      }
+    },
     "Everyone leaves": {
       "localizations": {
         "fr": {
@@ -3380,6 +4192,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tout se fait tout seul. Vous pourrez tout modifier ensuite."
+          }
+        }
+      }
+    },
+    "Everything is already off": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tout est déjà éteint"
           }
         }
       }
@@ -3434,12 +4256,32 @@
         }
       }
     },
+    "Finish Editing": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terminé"
+          }
+        }
+      }
+    },
     "Fixed time": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Heure fixe"
+          }
+        }
+      }
+    },
+    "Floor lamp, turn on at 60 %": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lampadaire, allumer à 60 %"
           }
         }
       }
@@ -3494,6 +4336,26 @@
         }
       }
     },
+    "Found at Home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trouvé chez vous"
+          }
+        }
+      }
+    },
+    "Found by your server. Maison adds them without asking anything, except a code when the device shows one.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Repérés par votre serveur. Maison les ajoute sans rien vous demander, sauf un code si l’appareil en affiche un."
+          }
+        }
+      }
+    },
     "Found on Your Network": {
       "localizations": {
         "fr": {
@@ -3504,12 +4366,32 @@
         }
       }
     },
+    "Found, waiting for a pairing code: %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trouvés, en attente d’un code d’appairage : %@"
+          }
+        }
+      }
+    },
     "From": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "De"
+          }
+        }
+      }
+    },
+    "From the tariff you entered in Maison.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "D’après le tarif saisi dans Maison."
           }
         }
       }
@@ -3634,6 +4516,16 @@
         }
       }
     },
+    "Heating, sensors, weather": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chauffage, capteurs, météo"
+          }
+        }
+      }
+    },
     "High": {
       "localizations": {
         "fr": {
@@ -3744,12 +4636,12 @@
         }
       }
     },
-    "Home Assistant · %@": {
+    "Home Assistant, %@": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Home Assistant · %@"
+            "value": "Home Assistant, %@"
           }
         }
       }
@@ -3794,12 +4686,32 @@
         }
       }
     },
+    "Household presence": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Présence du foyer"
+          }
+        }
+      }
+    },
     "How you use Maison. Never your home.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Comment vous utilisez Maison. Jamais votre maison."
+          }
+        }
+      }
+    },
+    "Hubs and Protocols": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Passerelles et protocoles"
           }
         }
       }
@@ -3840,6 +4752,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Humidité %@"
+          }
+        }
+      }
+    },
+    "Humidity in each room": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’humidité de chaque pièce"
+          }
+        }
+      }
+    },
+    "I Closed It": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Je l’ai fermée"
           }
         }
       }
@@ -3904,6 +4836,16 @@
         }
       }
     },
+    "In Place": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En place"
+          }
+        }
+      }
+    },
     "In your own words, as you’d say it to someone. Maison shows you the rule before saving it.": {
       "localizations": {
         "fr": {
@@ -3950,6 +4892,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Box internet"
+          }
+        }
+      }
+    },
+    "Internet Check": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Test de connexion"
+          }
+        }
+      }
+    },
+    "Internet check": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Test de connexion"
+          }
+        }
+      }
+    },
+    "Internet is down": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Internet est coupé"
           }
         }
       }
@@ -4094,6 +5066,16 @@
         }
       }
     },
+    "It needs an account link your server doesn’t have yet, so it can’t be added from Maison for now.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elle demande un compte que votre serveur n’a pas encore : impossible de l’ajouter depuis Maison pour l’instant."
+          }
+        }
+      }
+    },
     "It plugs into your smart meter’s customer port.": {
       "localizations": {
         "fr": {
@@ -4110,6 +5092,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Il se branche sur les bornes client de votre Linky, sous son capot."
+          }
+        }
+      }
+    },
+    "It reports a problem": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il signale un problème"
           }
         }
       }
@@ -4134,12 +5126,12 @@
         }
       }
     },
-    "It’s %@ · %@ %%": {
+    "It’s %@, %@ %%": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Il fait %1$@ · %2$@ %%"
+            "value": "Il fait %1$@, %2$@ %%"
           }
         }
       }
@@ -4174,12 +5166,42 @@
         }
       }
     },
+    "It’s already added.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "C’est déjà ajouté."
+          }
+        }
+      }
+    },
+    "I’m Leaving": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Je pars"
+          }
+        }
+      }
+    },
     "I’m adding you to %@, you’ll see, it’s simple.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Je t’ajoute à %@, tu verras, c’est simple."
+          }
+        }
+      }
+    },
+    "I’ve Signed In": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Je me suis connecté"
           }
         }
       }
@@ -4274,16 +5296,6 @@
         }
       }
     },
-    "Learning Your Range": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Maison apprend votre plage"
-          }
-        }
-      }
-    },
     "Leave Household": {
       "localizations": {
         "fr": {
@@ -4364,12 +5376,52 @@
         }
       }
     },
+    "Lights %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lumières %@"
+          }
+        }
+      }
+    },
+    "Lights of a room": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lumières d’une pièce"
+          }
+        }
+      }
+    },
+    "Lights, media, services: not used by the scores": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lumières, médias, services : pas utilisés par les scores"
+          }
+        }
+      }
+    },
     "Lights, plugs, fans and speakers. Devices set to “Never Turn Off” stay on.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Lumières, prises, ventilateurs et enceintes. Les appareils réglés sur « Ne jamais couper » restent allumés."
+          }
+        }
+      }
+    },
+    "Link %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Relier %@"
           }
         }
       }
@@ -4414,12 +5466,32 @@
         }
       }
     },
+    "Live, connected to your Wi-Fi": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En direct, relié à votre Wi-Fi"
+          }
+        }
+      }
+    },
     "Living Room": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Salon"
+          }
+        }
+      }
+    },
+    "Living room above 25°": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salon au-dessus de 25°"
           }
         }
       }
@@ -4524,6 +5596,16 @@
         }
       }
     },
+    "Looking for devices on your network…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recherche d’appareils sur votre réseau…"
+          }
+        }
+      }
+    },
     "Looking for your server…": {
       "localizations": {
         "fr": {
@@ -4554,12 +5636,42 @@
         }
       }
     },
+    "Maison adds devices with an administrator’s account. It does so the next time an administrator opens Maison.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maison ajoute les appareils avec un compte administrateur. Elle le fera la prochaine fois qu’un administrateur ouvrira Maison."
+          }
+        }
+      }
+    },
+    "Maison adds it to your server, ready for its devices.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maison l’ajoute à votre serveur, prête pour ses appareils."
+          }
+        }
+      }
+    },
     "Maison adds what your server needs by itself: devices it found on your network, and the check behind the Network score.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Maison ajoute elle-même ce dont votre serveur a besoin : les appareils trouvés sur votre réseau, et la vérification derrière le score Réseau."
+          }
+        }
+      }
+    },
+    "Maison already works with nothing more. Each source makes a score more accurate, and Maison sets it up by itself.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maison marche déjà sans rien de plus. Chaque source rend un score plus juste, et Maison l’installe et la règle elle-même."
           }
         }
       }
@@ -4614,16 +5726,6 @@
         }
       }
     },
-    "Maison needs three days of readings to learn the temperatures you live in. You can set your range now instead.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Maison a besoin de trois jours de mesures pour apprendre les températures où vous vivez. Vous pouvez aussi régler votre plage dès maintenant."
-          }
-        }
-      }
-    },
     "Maison suggests simple rules. Here’s what it understood; you can finish the rule by hand.": {
       "localizations": {
         "fr": {
@@ -4664,22 +5766,22 @@
         }
       }
     },
-    "Maison · %@ open too long": {
+    "Maison: %@ open too long": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Maison · %@ ouverte trop longtemps"
+            "value": "Maison : %@ ouverte trop longtemps"
           }
         }
       }
     },
-    "Maison · Turn off %@": {
+    "Maison: turn off %@": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Maison · Éteindre %@"
+            "value": "Maison : éteindre %@"
           }
         }
       }
@@ -4710,6 +5812,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mesuré"
+          }
+        }
+      }
+    },
+    "Measured, your electricity shows hour by hour, and Maison tells you when it drifts from your habit.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mesurée, votre électricité apparaît heure par heure, et Maison vous prévient quand elle s’écarte de votre habitude."
           }
         }
       }
@@ -4760,6 +5872,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Messages"
+          }
+        }
+      }
+    },
+    "Meters, plugs, solar, prices": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compteurs, prises, solaire, prix"
+          }
+        }
+      }
+    },
+    "Moment": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moment"
           }
         }
       }
@@ -4834,6 +5966,16 @@
         }
       }
     },
+    "Music and TV": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Musique et télé"
+          }
+        }
+      }
+    },
     "My Off-Peak Hours Are Different": {
       "localizations": {
         "fr": {
@@ -4897,6 +6039,10 @@
     "Network at %lld %%: %lld outage today.": {
       "localizations": {
         "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Network at %1$lld %%: %#@count@ today."
+          },
           "substitutions": {
             "count": {
               "argNum": 2,
@@ -4918,13 +6064,13 @@
                 }
               }
             }
-          },
-          "stringUnit": {
-            "state": "translated",
-            "value": "Network at %1$lld %%: %#@count@ today."
           }
         },
         "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réseau à %1$lld %% : %#@count@ aujourd’hui."
+          },
           "substitutions": {
             "count": {
               "argNum": 2,
@@ -4946,10 +6092,6 @@
                 }
               }
             }
-          },
-          "stringUnit": {
-            "state": "translated",
-            "value": "Réseau à %1$lld %% : %#@count@ aujourd’hui."
           }
         }
       }
@@ -5014,16 +6156,6 @@
         }
       }
     },
-    "No Automations": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aucune automatisation"
-          }
-        }
-      }
-    },
     "No LiDAR Sensor": {
       "localizations": {
         "fr": {
@@ -5074,6 +6206,16 @@
         }
       }
     },
+    "No Rules": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune règle"
+          }
+        }
+      }
+    },
     "No Temperature in Your Rooms": {
       "localizations": {
         "fr": {
@@ -5100,6 +6242,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pas d’accès au compteur ? Une pince de mesure Wi-Fi dans votre tableau électrique marche avec n’importe quel compteur."
+          }
+        }
+      }
+    },
+    "No device was found on the network. Check that it’s on, then try again.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun appareil trouvé sur le réseau. Vérifiez qu’il est allumé, puis réessayez."
+          }
+        }
+      }
+    },
+    "No devices yet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas encore d’appareil"
           }
         }
       }
@@ -5194,6 +6356,16 @@
         }
       }
     },
+    "Not available here": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indisponible ici"
+          }
+        }
+      }
+    },
     "Not connected": {
       "localizations": {
         "fr": {
@@ -5254,6 +6426,16 @@
         }
       }
     },
+    "Nothing New on Your Network": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rien de nouveau sur votre réseau"
+          }
+        }
+      }
+    },
     "Nothing is saved until you confirm. Then the rule runs on your server, like the others.": {
       "localizations": {
         "fr": {
@@ -5270,6 +6452,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rien de partagé"
+          }
+        }
+      }
+    },
+    "Nothing to do in Home Assistant. What you enter is a starting point: a sensor replaces it as soon as one appears.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rien à faire dans Home Assistant. Ce que vous saisissez sert de point de départ : un capteur le remplace dès qu’il apparaît."
+          }
+        }
+      }
+    },
+    "Nothing to do yourself. The rest happens on its own.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rien à régler vous-même. Le reste se fera tout seul."
+          }
+        }
+      }
+    },
+    "Nothing to install, nothing to answer": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rien à installer, rien à répondre"
           }
         }
       }
@@ -5304,6 +6516,16 @@
         }
       }
     },
+    "Off while you’re away": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêté pendant votre absence"
+          }
+        }
+      }
+    },
     "Off-Peak Hours": {
       "localizations": {
         "fr": {
@@ -5334,6 +6556,26 @@
         }
       }
     },
+    "Off-peak hours end": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fin des heures creuses"
+          }
+        }
+      }
+    },
+    "Off-peak hours start": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Début des heures creuses"
+          }
+        }
+      }
+    },
     "Off-peak price per kWh": {
       "localizations": {
         "fr": {
@@ -5350,6 +6592,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Allumé"
+          }
+        }
+      }
+    },
+    "On This iPhone": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur cet iPhone"
           }
         }
       }
@@ -5394,12 +6646,12 @@
         }
       }
     },
-    "On · %@": {
+    "On, %@": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Allumé · %@"
+            "value": "Allumé, %@"
           }
         }
       }
@@ -5450,6 +6702,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Seulement"
+          }
+        }
+      }
+    },
+    "Only after sunset": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seulement après le coucher du soleil"
           }
         }
       }
@@ -5574,6 +6836,16 @@
         }
       }
     },
+    "Or Another Way": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ou autrement"
+          }
+        }
+      }
+    },
     "Oscillation": {
       "localizations": {
         "fr": {
@@ -5626,6 +6898,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Propriétaire"
+          }
+        }
+      }
+    },
+    "Page %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Page %lld"
           }
         }
       }
@@ -5700,6 +6982,26 @@
         }
       }
     },
+    "People": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Personnes"
+          }
+        }
+      }
+    },
+    "Person": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Personne"
+          }
+        }
+      }
+    },
     "Place": {
       "localizations": {
         "fr": {
@@ -5760,6 +7062,26 @@
         }
       }
     },
+    "Plug in the device and connect it to your Wi-Fi with its own app. Maison checks your network regularly and adds it by itself.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Branchez l’appareil et connectez-le à votre Wi-Fi avec son app. Maison surveille votre réseau et l’ajoute toute seule."
+          }
+        }
+      }
+    },
+    "Plugs that measure": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prises qui mesurent"
+          }
+        }
+      }
+    },
     "Port": {
       "localizations": {
         "fr": {
@@ -5790,12 +7112,32 @@
         }
       }
     },
+    "Presence": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Présence"
+          }
+        }
+      }
+    },
     "Press": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Appuyer"
+          }
+        }
+      }
+    },
+    "Press the button on the device, or accept on its screen, then tap Add.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appuyez sur le bouton de l’appareil, ou acceptez sur son écran, puis touchez Ajouter."
           }
         }
       }
@@ -5820,12 +7162,32 @@
         }
       }
     },
+    "Proposed by Maison from a finding": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proposée par Maison depuis un constat"
+          }
+        }
+      }
+    },
     "Putting the plan together…": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Assemblage du plan…"
+          }
+        }
+      }
+    },
+    "Quick Actions": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actions rapides"
           }
         }
       }
@@ -5906,6 +7268,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Actualiser"
+          }
+        }
+      }
+    },
+    "Regular interval": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intervalle régulier"
           }
         }
       }
@@ -6060,6 +7432,16 @@
         }
       }
     },
+    "Room": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pièce"
+          }
+        }
+      }
+    },
     "Room %lld": {
       "localizations": {
         "fr": {
@@ -6080,12 +7462,12 @@
         }
       }
     },
-    "Rooms will be imported from Home Assistant.": {
+    "Rule": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les pièces seront importées depuis Home Assistant."
+            "value": "Règle"
           }
         }
       }
@@ -6106,6 +7488,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Règles"
+          }
+        }
+      }
+    },
+    "Rules run in the home, even when your iPhone is off.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les règles sont exécutées par la maison, même quand votre iPhone est éteint."
+          }
+        }
+      }
+    },
+    "Rules when you leave or come home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les règles quand vous partez ou rentrez"
           }
         }
       }
@@ -6140,7 +7542,7 @@
         }
       }
     },
-    "Run a scene": {
+    "Run a Scene": {
       "localizations": {
         "fr": {
           "stringUnit": {
@@ -6150,12 +7552,32 @@
         }
       }
     },
-    "Run by your server": {
+    "Run by the home": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Exécutées par votre serveur"
+            "value": "Exécutées par la maison"
+          }
+        }
+      }
+    },
+    "Run by the home, even when the iPhone is off": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exécutée par la maison, même quand l’iPhone est éteint"
+          }
+        }
+      }
+    },
+    "Run it, turn it on or off": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’exécuter, l’activer ou la désactiver"
           }
         }
       }
@@ -6180,6 +7602,16 @@
         }
       }
     },
+    "Run “%@”": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lancer « %@ »"
+          }
+        }
+      }
+    },
     "Running": {
       "localizations": {
         "fr": {
@@ -6196,6 +7628,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Exécutions aujourd’hui"
+          }
+        }
+      }
+    },
+    "Safety": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sécurité"
           }
         }
       }
@@ -6236,16 +7678,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Enregistrer"
-          }
-        }
-      }
-    },
-    "Saved on your server and shared with the household": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enregistrée sur votre serveur et partagée avec le foyer"
           }
         }
       }
@@ -6350,6 +7782,16 @@
         }
       }
     },
+    "Search": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rechercher"
+          }
+        }
+      }
+    },
     "Secure": {
       "localizations": {
         "fr": {
@@ -6416,6 +7858,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Capteurs"
+          }
+        }
+      }
+    },
+    "Sequence": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Déroulé"
           }
         }
       }
@@ -6540,6 +7992,26 @@
         }
       }
     },
+    "Set to away": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En mode absent"
+          }
+        }
+      }
+    },
+    "Set to eco": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En éco"
+          }
+        }
+      }
+    },
     "Setpoint": {
       "localizations": {
         "fr": {
@@ -6596,6 +8068,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Partage avec le foyer"
+          }
+        }
+      }
+    },
+    "Shortcuts": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Raccourcis"
           }
         }
       }
@@ -6736,16 +8218,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Quelqu’un arrive"
-          }
-        }
-      }
-    },
-    "Someone at home": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Présence à la maison"
           }
         }
       }
@@ -7010,12 +8482,12 @@
         }
       }
     },
-    "Tap to unlock · Face ID required": {
+    "Tap to unlock with Face ID": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Touchez pour déverrouiller · Face ID demandé"
+            "value": "Touchez pour déverrouiller avec Face ID"
           }
         }
       }
@@ -7070,6 +8542,66 @@
         }
       }
     },
+    "Test the Internet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tester internet"
+          }
+        }
+      }
+    },
+    "That didn’t work. Try again.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ça n’a pas marché. Réessayez."
+          }
+        }
+      }
+    },
+    "The Comfort score": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le score Confort"
+          }
+        }
+      }
+    },
+    "The Energy score": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le score Énergie"
+          }
+        }
+      }
+    },
+    "The Network score": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le score Réseau"
+          }
+        }
+      }
+    },
+    "The Water tab": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’onglet Eau de la fiche Énergie"
+          }
+        }
+      }
+    },
     "The address you use to open Home Assistant in a browser at home.": {
       "localizations": {
         "fr": {
@@ -7080,12 +8612,82 @@
         }
       }
     },
+    "The battery is running low": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La pile est presque vide"
+          }
+        }
+      }
+    },
     "The camera isn’t available. Paste the link instead.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "L’appareil photo n’est pas disponible. Collez plutôt le lien."
+          }
+        }
+      }
+    },
+    "The cost, and the off-peak findings": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le coût, et les constats heures creuses"
+          }
+        }
+      }
+    },
+    "The device didn’t authorise your server. Press its button, then tap Add again.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’appareil n’a pas autorisé votre serveur. Appuyez sur son bouton, puis touchez à nouveau Ajouter."
+          }
+        }
+      }
+    },
+    "The device doesn’t answer. Check that it’s on and on the same network, then try again.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’appareil ne répond pas. Vérifiez qu’il est allumé et sur le même réseau, puis réessayez."
+          }
+        }
+      }
+    },
+    "The filter needs cleaning": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le filtre est à nettoyer"
+          }
+        }
+      }
+    },
+    "The front door is locked": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La porte d’entrée est verrouillée"
+          }
+        }
+      }
+    },
+    "The front door opens": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La porte d’entrée s’ouvre"
           }
         }
       }
@@ -7106,6 +8708,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Le foyer, le plan et les favoris restent dans iCloud."
+          }
+        }
+      }
+    },
+    "The internet answers": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Internet répond"
+          }
+        }
+      }
+    },
+    "The internet answers in %lld ms": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Internet répond en %lld ms"
+          }
+        }
+      }
+    },
+    "The internet doesn’t answer": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Internet ne répond pas"
           }
         }
       }
@@ -7160,6 +8792,16 @@
         }
       }
     },
+    "The prices on your bill": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les prix de votre facture"
+          }
+        }
+      }
+    },
     "The prices on your bill, taxes included.": {
       "localizations": {
         "fr": {
@@ -7210,6 +8852,16 @@
         }
       }
     },
+    "The username or password was refused.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’identifiant ou le mot de passe a été refusé."
+          }
+        }
+      }
+    },
     "Their iCloud account": {
       "localizations": {
         "fr": {
@@ -7236,6 +8888,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Alors"
+          }
+        }
+      }
+    },
+    "Thermometers": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thermomètres"
           }
         }
       }
@@ -7300,6 +8962,16 @@
         }
       }
     },
+    "This device isn’t supported.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cet appareil n’est pas pris en charge."
+          }
+        }
+      }
+    },
     "This integration doesn’t provide devices shown in Maison.": {
       "localizations": {
         "fr": {
@@ -7360,6 +9032,16 @@
         }
       }
     },
+    "This step asks for a setting Maison can’t show yet.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette étape demande un réglage que Maison ne sait pas encore afficher."
+          }
+        }
+      }
+    },
     "This trigger was set up in Home Assistant. Maison keeps it as it is.": {
       "localizations": {
         "fr": {
@@ -7380,6 +9062,16 @@
         }
       }
     },
+    "Throughput, and the devices connected": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le débit, et les appareils connectés"
+          }
+        }
+      }
+    },
     "Time": {
       "localizations": {
         "fr": {
@@ -7390,7 +9082,7 @@
         }
       }
     },
-    "Time of day": {
+    "Time range": {
       "localizations": {
         "fr": {
           "stringUnit": {
@@ -7416,6 +9108,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "À"
+          }
+        }
+      }
+    },
+    "To %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur %@"
           }
         }
       }
@@ -7446,6 +9148,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aujourd’hui"
+          }
+        }
+      }
+    },
+    "Today at %@, from the tariff you entered in Maison.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aujourd’hui à %@, d’après le tarif saisi dans Maison."
           }
         }
       }
@@ -7610,6 +9322,16 @@
         }
       }
     },
+    "Turn On Away Mode": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activer le mode absent"
+          }
+        }
+      }
+    },
     "Turn everything off when everyone leaves": {
       "localizations": {
         "fr": {
@@ -7646,6 +9368,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Éteindre automatiquement dans"
+          }
+        }
+      }
+    },
+    "Turn off the lights %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Éteindre les lumières %@"
           }
         }
       }
@@ -7770,6 +9502,16 @@
         }
       }
     },
+    "Up to 12 shortcuts on two pages. Drag a row to change the order.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jusqu’à 12 raccourcis sur deux pages. Glissez une ligne pour changer l’ordre."
+          }
+        }
+      }
+    },
     "Updated": {
       "localizations": {
         "fr": {
@@ -7786,6 +9528,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Utiliser cette adresse"
+          }
+        }
+      }
+    },
+    "Use by device, and the findings": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La conso par appareil, et les constats"
           }
         }
       }
@@ -7910,12 +9662,42 @@
         }
       }
     },
+    "Wait for off-peak hours to end": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Attendre la fin des heures creuses"
+          }
+        }
+      }
+    },
+    "Waiting for a Reading" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En attente d’un relevé"
+          }
+        }
+      }
+    },
     "Waiting for an Administrator": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "En attente d’un administrateur"
+          }
+        }
+      }
+    },
+    "Waiting for the device… Do it on the device now.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En attente de l’appareil… Faites-le maintenant sur l’appareil."
           }
         }
       }
@@ -8000,6 +9782,16 @@
         }
       }
     },
+    "Water meter": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compteur d’eau"
+          }
+        }
+      }
+    },
     "Water today": {
       "localizations": {
         "fr": {
@@ -8016,6 +9808,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Eau hier"
+          }
+        }
+      }
+    },
+    "Weather": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Météo"
           }
         }
       }
@@ -8050,6 +9852,36 @@
         }
       }
     },
+    "What Maison Measures": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce que Maison mesure"
+          }
+        }
+      }
+    },
+    "What Maison Will Do": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce que Maison fera"
+          }
+        }
+      }
+    },
+    "What Maison knows": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce que Maison sait"
+          }
+        }
+      }
+    },
     "What’s Wrong?": {
       "localizations": {
         "fr": {
@@ -8070,12 +9902,52 @@
         }
       }
     },
+    "When an event ends": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À la fin d’un événement"
+          }
+        }
+      }
+    },
+    "When an event of “%@” starts": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Au début d’un événement de « %@ »"
+          }
+        }
+      }
+    },
+    "When an event starts": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Au début d’un événement"
+          }
+        }
+      }
+    },
     "When everyone leaves": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Quand tout le monde part"
+          }
+        }
+      }
+    },
+    "When it ends": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À la fin"
           }
         }
       }
@@ -8090,6 +9962,16 @@
         }
       }
     },
+    "When it starts": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Au début"
+          }
+        }
+      }
+    },
     "When someone arrives": {
       "localizations": {
         "fr": {
@@ -8100,12 +9982,42 @@
         }
       }
     },
+    "When to air": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quand aérer"
+          }
+        }
+      }
+    },
+    "When to air, and the weather outside": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quand aérer, et la météo dehors"
+          }
+        }
+      }
+    },
     "White": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Blanc"
+          }
+        }
+      }
+    },
+    "Who is home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Qui est à la maison"
           }
         }
       }
@@ -8140,16 +10052,6 @@
         }
       }
     },
-    "Measured, your electricity shows hour by hour, and Maison tells you when it drifts from your habit.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mesurée, votre électricité apparaît heure par heure, et Maison vous prévient quand elle s’écarte de votre habitude."
-          }
-        }
-      }
-    },
     "With the reader’s own app, once.": {
       "localizations": {
         "fr": {
@@ -8166,6 +10068,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sans matériel"
+          }
+        }
+      }
+    },
+    "Without hardware, the day after": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sans matériel, le lendemain"
           }
         }
       }
@@ -8450,12 +10362,52 @@
         }
       }
     },
+    "Your server couldn’t add it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre serveur n’a pas pu l’ajouter."
+          }
+        }
+      }
+    },
+    "Your server didn’t answer. Try again in a moment.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre serveur n’a pas répondu. Réessayez dans un instant."
+          }
+        }
+      }
+    },
     "Your server has no remote access yet, so Maison only reaches it at home. When Home Assistant Cloud is signed in, Maison turns its remote access on by itself.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Votre serveur n’a pas encore d’accès à distance : Maison ne le joint qu’à la maison. Quand Home Assistant Cloud est connecté, Maison active elle-même son accès à distance."
+          }
+        }
+      }
+    },
+    "Your server is setting it up…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre serveur l’installe…"
+          }
+        }
+      }
+    },
+    "Your thermometers haven’t sent a temperature in the last 24 hours. The score appears with the next one. You can set your range now." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vos thermomètres n’ont envoyé aucune température depuis 24 heures. Le score apparaît avec le prochain relevé. Vous pouvez régler votre plage dès maintenant."
           }
         }
       }
@@ -8506,6 +10458,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vous êtes invité à rejoindre « %@ »"
+          }
+        }
+      }
+    },
+    "Zigbee, Matter, Z-Wave: devices of every kind": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zigbee, Matter, Z-Wave : des appareils de toutes sortes"
           }
         }
       }
@@ -8642,6 +10604,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "pendant %lld min"
+          }
+        }
+      }
+    },
+    "for more than 2 minutes": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "plus de 2 minutes"
           }
         }
       }
@@ -9017,6 +10989,16 @@
         }
       }
     },
+    "turns off the lights %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "éteint les lumières %@"
+          }
+        }
+      }
+    },
     "turns on %@": {
       "localizations": {
         "fr": {
@@ -9047,12 +11029,38 @@
         }
       }
     },
+    "turns on the lights %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "allume les lumières %@"
+          }
+        }
+      }
+    },
     "unlocks %@": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "déverrouille %@"
+          }
+        }
+      }
+    },
+    "upkeep.done": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "C’est fait"
           }
         }
       }
@@ -9073,6 +11081,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "hier, journée entière"
+          }
+        }
+      }
+    },
+    "your server": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "votre serveur"
           }
         }
       }
@@ -9170,22 +11188,12 @@
         }
       }
     },
-    "%@: mostly in peak hours": {
+    "“Add”": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ : surtout en heures pleines"
-          }
-        }
-      }
-    },
-    "%@ %@ more per day": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@ %2$@ de plus par jour"
+            "value": "« Ajouter »"
           }
         }
       }

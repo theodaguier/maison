@@ -298,7 +298,7 @@ private struct TooComplexView: View {
 
     private var rows: [(understood: Bool, title: String, detail: String?)] {
         let rule = proposal.rule
-        let understood = rule.triggers.map(store.describe) + rule.conditions.map(store.describe) + rule.actions.map(store.describe)
+        let understood = rule.triggers.map(store.describe) + rule.conditions.map(store.describe) + rule.actions.map { store.describe($0, in: rule) }
         return understood.map { (true, $0.title, $0.detail) }
             + proposal.unsupported.map { (false, $0, String(localized: "Not supported yet")) }
             + proposal.unmatched.map { (false, $0, String(localized: "No matching device")) }

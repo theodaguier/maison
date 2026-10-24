@@ -23,11 +23,12 @@ struct ConfigFlowClient: Sendable {
     }
 
     /// Confirms a flow Home Assistant started on its own (a device it found on the network) when its
-    /// current step asks for nothing but a confirmation. Returns `nil` when the step needs answers.
+    /// current step asks nothing the server doesn't already know. Returns `nil` when it needs answers.
     func confirmIfNothingToAsk(flowID: String) async throws -> Outcome? {
-        let step = try await request("GET", "api/config/config_entries/flow/\(flowID)")
-        guard step["type"]?.stringValue == "form", step["data_schema"]?.arrayValue?.isEmpty ?? true else { return nil }
-        return try await outcome(of: post("api/config/config_entries/flow/\(flowID)", body: [:]))
+        // A step whose fields all have their answer (a default, a constant) asks nothing either.
+        guard case .form(let form) = FlowStep.parse(try await request("GET", "api/config/config_entries/flow/\(flowID)")),
+              form.asksNothing else { return nil }
+        return try await outcome(of: post("api/config/config_entries/flow/\(flowID)", body: .object(form.defaultAnswers)))
     }
 
     /// Reloads an integration that failed to set up, as its "Reload" menu does.
@@ -54,9 +55,11 @@ struct ConfigFlowClient: Sendable {
         try await request("POST", path, body: body)
     }
 
-    private func request(_ method: String, _ path: String, body: JSONValue? = nil) async throws -> JSONValue {
+    func request(_ method: String, _ path: String, body: JSONValue? = nil) async throws -> JSONValue {
         var request = URLRequest(url: serverURL.appending(path: path))
         request.httpMethod = method
+        // A step can wait for the person at the device (a button to press on a box) before it answers.
+        request.timeoutInterval = 120
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
         if let body {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
