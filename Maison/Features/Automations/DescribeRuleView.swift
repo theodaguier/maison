@@ -115,6 +115,7 @@ struct DescribeRuleView: View {
                     .background(Theme.pillActive, in: .capsule)
                 }
                 .buttonStyle(.plain)
+                .tapFeedback(.impact(weight: .light))
                 .disabled(request.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isThinking)
                 .opacity(request.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.4 : 1)
             }
@@ -148,6 +149,7 @@ struct DescribeRuleView: View {
                     .background(Theme.pill, in: .rect(cornerRadius: 18))
                 }
                 .buttonStyle(.plain)
+                .tapFeedback(.selection)
                 .disabled(isThinking)
             }
         }
@@ -166,8 +168,11 @@ struct DescribeRuleView: View {
         let notify = await store.notifyServices().first { $0.hasPrefix("mobile_app") }
         do {
             let proposal = try await RuleWriter.propose(text, devices: store.ruleDevices, notifyService: notify)
+            // The answer is felt: a rule ready to review, or a request that needs a hand.
+            if proposal.needsHelp { Haptics.warning() } else { Haptics.success() }
             withAnimation(.smooth) { phase = proposal.needsHelp ? .needsHelp(proposal) : .proposed(proposal) }
         } catch {
+            Haptics.error()
             phase = .failed
         }
     }
@@ -280,6 +285,7 @@ private struct TooComplexView: View {
                     }
                     .font(.roundedHeadline)
                     .buttonStyle(.plain)
+                    .tapFeedback(.impact(weight: .light))
                     .padding(.top, 6)
                 }
                 .padding(.horizontal, Theme.screenPadding)
@@ -345,6 +351,7 @@ private struct IntelligenceUnavailableView: View {
                 }
                 .font(.roundedHeadline)
                 .buttonStyle(.plain)
+                .tapFeedback(.impact(weight: .light))
                 .padding(.top, 22)
                 Spacer()
             }

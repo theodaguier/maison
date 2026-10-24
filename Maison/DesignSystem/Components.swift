@@ -136,6 +136,7 @@ struct SummaryCard: View {
                             .contentShape(.rect)
                     }
                     .buttonStyle(.plain)
+                    .tapFeedback(.impact(flexibility: .soft, intensity: 0.6))
                     .padding(-7)
                     .accessibilityLabel(isExpanded ? "Show Less" : "Show More")
                 }
@@ -443,6 +444,24 @@ extension View {
     }
 }
 
+/// Haptics for the moments a view can't play them itself, typically because it closes right after
+/// (a rule saved, someone removed). Elsewhere `.sensoryFeedback` stays the way to go.
+@MainActor
+enum Haptics {
+    static func success() { UINotificationFeedbackGenerator().notificationOccurred(.success) }
+    static func warning() { UINotificationFeedbackGenerator().notificationOccurred(.warning) }
+    static func error() { UINotificationFeedbackGenerator().notificationOccurred(.error) }
+    static func selection() { UISelectionFeedbackGenerator().selectionChanged() }
+    static func impact(_ style: UIImpactFeedbackGenerator.FeedbackStyle = .light) { UIImpactFeedbackGenerator(style: style).impactOccurred() }
+}
+
+extension View {
+    /// `.increase` or `.decrease` as a stepped value goes up or down.
+    func stepFeedback<Value: Comparable & Equatable>(_ value: Value) -> some View {
+        sensoryFeedback(trigger: value) { old, new in new > old ? .increase : .decrease }
+    }
+}
+
 private struct TapFeedback: ViewModifier {
     let feedback: SensoryFeedback
     @State private var taps = 0
@@ -504,6 +523,8 @@ struct WideButton: View {
             .frame(maxWidth: .infinity)
         }
         .modifier(GlassStyle(prominent: style == .primary || style == .destructiveProminent))
+        // Every wide button is felt; a destructive one a little heavier.
+        .tapFeedback(.impact(weight: style.isDestructive ? .medium : .light))
         .tint(style == .destructiveProminent ? .red : nil)
         .controlSize(.large)
         .disabled(isBusy)

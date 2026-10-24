@@ -4,7 +4,7 @@ import Foundation
 // `StateChange`, so the same code can run in the add-on later. Wording stays in the views.
 
 /// Where a value comes from. Every number Maison shows carries one.
-enum ValueOrigin: String, Sendable, Equatable {
+enum ValueOrigin: String, Sendable, Hashable, Codable {
     case measured
     case estimated
     case entered
