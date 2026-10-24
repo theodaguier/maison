@@ -22,6 +22,7 @@ final class HomeStore {
     private(set) var layout = HomeLayout() {
         didSet { noteRoomsSeen() }
     }
+
     /// The chores done in each room, kept on this iPhone.
     private(set) var housekeepingLog: HousekeepingLog
     private(set) var serverURL: URL?
