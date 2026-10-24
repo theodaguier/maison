@@ -111,6 +111,7 @@ struct HouseholdSection: View {
             presenting: memberToRemove
         ) { member in
             Button("Remove", role: .destructive) {
+                Haptics.impact(.medium)
                 Task { await run { try await household.remove(member) } }
             }
         } message: { _ in
@@ -118,6 +119,7 @@ struct HouseholdSection: View {
         }
         .confirmationDialog("Leave this household?", isPresented: $isConfirmingLeave, titleVisibility: .visible) {
             Button("Leave Household", role: .destructive) {
+                Haptics.impact(.medium)
                 Task { await run { try await household.leave() } }
             }
         } message: {
@@ -200,4 +202,5 @@ extension HouseholdRole {
     }
     .background(Theme.background)
     .environment(DemoHome.store())
+        .environment(BelongingsStore.demo())
 }

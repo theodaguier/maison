@@ -57,4 +57,5 @@ struct RootView: View {
 #Preview {
     RootView()
         .environment(DemoHome.store())
+        .environment(BelongingsStore.demo())
 }

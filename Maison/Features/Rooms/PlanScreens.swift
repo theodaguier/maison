@@ -67,7 +67,7 @@ struct PlanTab: View {
                                     }
                                 }
                                 Spacer()
-                                Button("Place") { placing = true }
+                                Button("Place") { Haptics.impact(); placing = true }
                                     .font(.roundedSubheadlineEmphasized)
                             }
                             .padding(.horizontal, 16)
@@ -152,6 +152,7 @@ struct ScanIntro: View {
             }
             .buttonStyle(.glassProminent)
             .controlSize(.large)
+            .tapFeedback(.impact(weight: .medium))
             .disabled(!isSupported)
         }
     }
@@ -236,6 +237,7 @@ struct ScanScreen: View {
                         Text("Next Room").font(.roundedHeadline).frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.glass)
+                    .tapFeedback(.impact(weight: .light))
                     .controlSize(.large)
                     Button {
                         Task {
@@ -248,6 +250,7 @@ struct ScanScreen: View {
                         Text("Done").font(.roundedHeadline).frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.glassProminent)
+                    .tapFeedback(.impact(weight: .medium))
                     .controlSize(.large)
                 }
                 .disabled(scan.isProcessing)
@@ -270,6 +273,8 @@ struct ScanScreen: View {
             .interactiveDismissDisabled()
         }
         .errorFeedback(scan.error)
+        // A tick each time the scan finds a wall, a door or a window.
+        .sensoryFeedback(.selection, trigger: scan.walls + scan.doors + scan.windows)
     }
 }
 
@@ -453,6 +458,7 @@ struct PlanReview: View {
                                 Menu {
                                     ForEach(store.layout.areas) { area in
                                         Button(area.name) {
+                                            Haptics.selection()
                                             room.areaID = area.id
                                             room.name = area.name
                                         }
@@ -509,6 +515,7 @@ struct PlanReview: View {
         isSaving = true
         do {
             try await store.household.saveFloorPlan(plan)
+            Haptics.success()
             onSave()
         } catch {
             self.error = String(localized: "The plan is saved on this iPhone but couldn’t be shared through iCloud.")
@@ -542,6 +549,7 @@ struct PlacementSheet: View {
                         ForEach(candidates) { entity in
                             if entity.entityID != candidates.first?.entityID { Theme.separator.frame(height: 1) }
                             Button {
+                                Haptics.selection()
                                 commitCurrent()
                                 selected = entity.entityID
                                 position = plan.devices[entity.entityID]
@@ -585,6 +593,7 @@ struct PlacementSheet: View {
                         commitCurrent()
                         Task {
                             try? await store.household.saveFloorPlan(plan)
+                            Haptics.success()
                             dismiss()
                         }
                     }

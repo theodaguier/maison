@@ -26,6 +26,8 @@ final class HomeStore {
     private(set) var currentUser: HomeAssistantUser?
     private(set) var serverConfig: ServerConfig?
     private(set) var integrations: [Integration] = []
+    /// Names of the NFC tags, by id, once `tags()` has listed them.
+    private(set) var tagNames: [String: String] = [:]
     /// Recent round-trip times to the server, oldest first.
     private(set) var latencies: [Duration] = []
     let discovery = ServerDiscovery()
@@ -284,6 +286,20 @@ final class HomeStore {
         if isDemo { return ["mobile_app_iphone"] }
         guard let connection, let services = try? await connection.send(["type": "get_services"]) else { return [] }
         return services["notify"]?.objectValue.map { Array($0.keys).sorted() } ?? []
+    }
+
+    /// NFC tags registered in Home Assistant, by id, with their name when they have one.
+    func tags() async -> [(id: String, name: String)] {
+        var tags: [(id: String, name: String)] = [("entree", "Entrée"), ("table-de-nuit", "Table de nuit")]
+        if !isDemo {
+            guard let connection, let list = try? await connection.send(["type": "tag/list"]) else { return [] }
+            tags = (list.arrayValue ?? []).compactMap { tag in
+                guard let id = tag["id"]?.stringValue else { return nil }
+                return (id, tag["name"]?.stringValue ?? id)
+            }
+        }
+        tagNames = Dictionary(tags.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
+        return tags
     }
 
     func runScript(_ scriptID: String, variables: [String: JSONValue] = [:]) async throws {

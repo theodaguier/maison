@@ -40,6 +40,8 @@ struct RoomView: View {
                         }
                     }
                 }
+                RoomItemsSection(room: room)
+                    .padding(.top, 10)
             }
             .padding(.horizontal, Theme.screenPadding)
             .padding(.bottom, 24)
@@ -190,4 +192,5 @@ enum RoomCategory: CaseIterable {
         RoomView(room: Area(id: "living_room", name: "Salon"))
     }
     .environment(DemoHome.store())
+        .environment(BelongingsStore.demo())
 }

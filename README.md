@@ -1,6 +1,6 @@
 # Maison
 
-A native iOS app (SwiftUI, Liquid Glass) that understands your home and acts for you, on top of [Home Assistant](https://www.home-assistant.io): Home Assistant collects, Maison understands and acts. The direction is in [`ROADMAP.md`](ROADMAP.md).
+A native iOS app (SwiftUI, Liquid Glass) that understands your home and acts for you: comfort, energy and the network first, with the bills and devices that serve them. [Home Assistant](https://www.home-assistant.io) is the memory of everything measured; Maison understands and acts, connected or not. The direction is in [`ROADMAP.md`](ROADMAP.md).
 
 - **Local first**: the app talks directly to the household's Home Assistant server; away from home it uses the external URL set in Home Assistant (Tailscale, a domain, Nabu Casa).
 - **Automations run on the server**, not on the iPhone.

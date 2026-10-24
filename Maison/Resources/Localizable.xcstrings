@@ -31,6 +31,16 @@
         }
       }
     },
+    "%@ arrives home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ arrive à la maison"
+          }
+        }
+      }
+    },
     "%@ becomes %@": {
       "localizations": {
         "fr": {
@@ -111,6 +121,26 @@
         }
       }
     },
+    "%@ is away": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ n’est pas à la maison"
+          }
+        }
+      }
+    },
+    "%@ is home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ est à la maison"
+          }
+        }
+      }
+    },
     "%@ is locked.": {
       "localizations": {
         "fr": {
@@ -167,6 +197,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@ est déverrouillée."
+          }
+        }
+      }
+    },
+    "%@ leaves home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ quitte la maison"
           }
         }
       }
@@ -807,6 +847,26 @@
         }
       }
     },
+    "%lld min after the event ends": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min après la fin de l’événement"
+          }
+        }
+      }
+    },
+    "%lld min after the event starts": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min après le début de l’événement"
+          }
+        }
+      }
+    },
     "%lld min before sunrise": {
       "localizations": {
         "fr": {
@@ -823,6 +883,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld min avant le coucher du soleil"
+          }
+        }
+      }
+    },
+    "%lld min before the event ends": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min avant la fin de l’événement"
+          }
+        }
+      }
+    },
+    "%lld min before the event starts": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min avant le début de l’événement"
           }
         }
       }
@@ -1247,12 +1327,32 @@
         }
       }
     },
+    "30 min before sunset": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "30 min avant le coucher du soleil"
+          }
+        }
+      }
+    },
     "30°": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "30°"
+          }
+        }
+      }
+    },
+    "5 min before the next step": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5 min avant l’étape suivante"
           }
         }
       }
@@ -1273,6 +1373,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "7 jours"
+          }
+        }
+      }
+    },
+    "A calendar event": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un événement d’agenda"
           }
         }
       }
@@ -1303,6 +1413,56 @@
           "stringUnit": {
             "state": "translated",
             "value": "Une mesure franchit un seuil"
+          }
+        }
+      }
+    },
+    "A measurement’s value": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valeur d’une mesure"
+          }
+        }
+      }
+    },
+    "A person arrives or leaves": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une personne arrive ou part"
+          }
+        }
+      }
+    },
+    "A scene": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une scène"
+          }
+        }
+      }
+    },
+    "A script": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un script"
+          }
+        }
+      }
+    },
+    "A specific person": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une personne précise"
           }
         }
       }
@@ -1427,6 +1587,16 @@
         }
       }
     },
+    "After a power cut or an update": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Après une coupure de courant ou une mise à jour"
+          }
+        }
+      }
+    },
     "After sunset": {
       "localizations": {
         "fr": {
@@ -1517,6 +1687,26 @@
         }
       }
     },
+    "An NFC tag is scanned": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un tag NFC est scanné"
+          }
+        }
+      }
+    },
+    "Another rule": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une autre règle"
+          }
+        }
+      }
+    },
     "Any change": {
       "localizations": {
         "fr": {
@@ -1587,6 +1777,16 @@
         }
       }
     },
+    "Arrives home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrive"
+          }
+        }
+      }
+    },
     "At %@": {
       "localizations": {
         "fr": {
@@ -1617,6 +1817,16 @@
         }
       }
     },
+    "At home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À la maison"
+          }
+        }
+      }
+    },
     "At home, Maison talks to the server directly on the Wi-Fi, found automatically with Bonjour. Nothing goes through the internet.": {
       "localizations": {
         "fr": {
@@ -1627,12 +1837,32 @@
         }
       }
     },
+    "At night": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La nuit"
+          }
+        }
+      }
+    },
     "At night, turn the hallway on at 20% when there’s motion": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "La nuit, allume le couloir à 20 % s’il y a du mouvement"
+          }
+        }
+      }
+    },
+    "At regular intervals": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À intervalle régulier"
           }
         }
       }
@@ -1827,6 +2057,16 @@
         }
       }
     },
+    "Between 22:00 and 6:00": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entre 22:00 et 6:00"
+          }
+        }
+      }
+    },
     "Blinds & Shutters": {
       "localizations": {
         "fr": {
@@ -1887,6 +2127,16 @@
         }
       }
     },
+    "Calendar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agenda"
+          }
+        }
+      }
+    },
     "Cameras": {
       "localizations": {
         "fr": {
@@ -1923,6 +2173,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Annuler l’invitation"
+          }
+        }
+      }
+    },
+    "Change": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Changer"
           }
         }
       }
@@ -2337,6 +2597,16 @@
         }
       }
     },
+    "Day or night": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jour ou nuit"
+          }
+        }
+      }
+    },
     "Daylight": {
       "localizations": {
         "fr": {
@@ -2517,6 +2787,16 @@
         }
       }
     },
+    "Do": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Action"
+          }
+        }
+      }
+    },
     "Done": {
       "localizations": {
         "fr": {
@@ -2563,6 +2843,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Déshumidifie"
+          }
+        }
+      }
+    },
+    "During the day": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En journée"
           }
         }
       }
@@ -2697,12 +2987,62 @@
         }
       }
     },
+    "Every": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fréquence"
+          }
+        }
+      }
+    },
+    "Every %lld hours": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes les %lld heures"
+          }
+        }
+      }
+    },
+    "Every %lld min": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes les %lld min"
+          }
+        }
+      }
+    },
+    "Every 15 minutes": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes les 15 minutes"
+          }
+        }
+      }
+    },
     "Every day at %@": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Tous les jours à %@"
+          }
+        }
+      }
+    },
+    "Every day at 7:30": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tous les jours à 7:30"
           }
         }
       }
@@ -2717,12 +3057,32 @@
         }
       }
     },
+    "Every hour": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes les heures"
+          }
+        }
+      }
+    },
     "Everyone leaves": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Tout le monde part"
+          }
+        }
+      }
+    },
+    "Everyone leaves, someone arrives": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tout le monde part, quelqu’un arrive"
           }
         }
       }
@@ -2787,12 +3147,32 @@
         }
       }
     },
+    "Floor lamp · Turn on": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lampadaire · Allumer"
+          }
+        }
+      }
+    },
     "Floor plan": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Plan"
+          }
+        }
+      }
+    },
+    "Flow": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Déroulé"
           }
         }
       }
@@ -3467,6 +3847,16 @@
         }
       }
     },
+    "Leaves home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Part"
+          }
+        }
+      }
+    },
     "Left out: %@.": {
       "localizations": {
         "fr": {
@@ -3517,6 +3907,16 @@
         }
       }
     },
+    "Lights in a room": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lumières d’une pièce"
+          }
+        }
+      }
+    },
     "Lights, plugs, fans and speakers. Devices set to “Never Turn Off” stay on.": {
       "localizations": {
         "fr": {
@@ -3553,6 +3953,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Salon"
+          }
+        }
+      }
+    },
+    "Living room above 25°": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salon au-dessus de 25°"
           }
         }
       }
@@ -3787,6 +4197,16 @@
         }
       }
     },
+    "Moment": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moment"
+          }
+        }
+      }
+    },
     "More": {
       "localizations": {
         "fr": {
@@ -3813,6 +4233,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Approchez-vous du mur"
+          }
+        }
+      }
+    },
+    "Movie night": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Soirée cinéma"
           }
         }
       }
@@ -4257,6 +4687,16 @@
         }
       }
     },
+    "Only after sunset": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seulement après le coucher du soleil"
+          }
+        }
+      }
+    },
     "Only if": {
       "localizations": {
         "fr": {
@@ -4417,6 +4857,16 @@
         }
       }
     },
+    "Outside below 0°": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dehors en dessous de 0°"
+          }
+        }
+      }
+    },
     "Owner": {
       "localizations": {
         "fr": {
@@ -4483,6 +4933,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pic de %1$@ %2$@"
+          }
+        }
+      }
+    },
+    "People": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Personnes"
+          }
+        }
+      }
+    },
+    "Person": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Personne"
           }
         }
       }
@@ -4747,6 +5217,16 @@
         }
       }
     },
+    "Repeats": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Répétition"
+          }
+        }
+      }
+    },
     "Rephrase": {
       "localizations": {
         "fr": {
@@ -4837,6 +5317,16 @@
         }
       }
     },
+    "Rule": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Règle"
+          }
+        }
+      }
+    },
     "Rules": {
       "localizations": {
         "fr": {
@@ -4887,6 +5377,26 @@
         }
       }
     },
+    "Run it": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’exécuter"
+          }
+        }
+      }
+    },
+    "Run it, turn it on or off": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’exécuter, l’activer ou la désactiver"
+          }
+        }
+      }
+    },
     "Run scenes and see automations": {
       "localizations": {
         "fr": {
@@ -4897,12 +5407,32 @@
         }
       }
     },
+    "Run the rule": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exécuter la règle"
+          }
+        }
+      }
+    },
     "Run the scene": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Lancer la scène"
+          }
+        }
+      }
+    },
+    "Run the script": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lancer le script"
           }
         }
       }
@@ -4923,6 +5453,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Exécutions aujourd’hui"
+          }
+        }
+      }
+    },
+    "Runs its actions right away, without checking its conditions.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exécute ses actions tout de suite, sans vérifier ses conditions."
           }
         }
       }
@@ -5197,6 +5737,16 @@
         }
       }
     },
+    "Set speed": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Régler la vitesse"
+          }
+        }
+      }
+    },
     "Set temperature": {
       "localizations": {
         "fr": {
@@ -5213,6 +5763,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Régler sur %@"
+          }
+        }
+      }
+    },
+    "Set volume": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Régler le volume"
           }
         }
       }
@@ -5457,6 +6017,26 @@
         }
       }
     },
+    "Speed %@ %%": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vitesse %@ %%"
+          }
+        }
+      }
+    },
+    "Speed %lld %%": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vitesse %lld %%"
+          }
+        }
+      }
+    },
     "Standard": {
       "localizations": {
         "fr": {
@@ -5627,6 +6207,26 @@
         }
       }
     },
+    "Tag": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tag"
+          }
+        }
+      }
+    },
+    "Tags are written and named from the Home Assistant companion app.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les tags s’écrivent et se nomment depuis l’app compagnon de Home Assistant."
+          }
+        }
+      }
+    },
     "Tap the link received in Messages again, or scan the code shown on the iPhone of the person who invited you.": {
       "localizations": {
         "fr": {
@@ -5717,12 +6317,42 @@
         }
       }
     },
+    "The front door is locked": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La porte d’entrée est verrouillée"
+          }
+        }
+      }
+    },
+    "The front door opens": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La porte d’entrée s’ouvre"
+          }
+        }
+      }
+    },
     "The home card tells how your day went, written on this iPhone by Apple Intelligence. Nothing leaves the iPhone. Takes effect next time the app opens.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "La carte de l’accueil raconte votre journée, écrite sur cet iPhone par Apple Intelligence. Rien ne quitte l’iPhone. Prend effet à la prochaine ouverture de l’app."
+          }
+        }
+      }
+    },
+    "The household leaves or returns": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le foyer part ou rentre"
           }
         }
       }
@@ -5797,12 +6427,32 @@
         }
       }
     },
+    "The server starts": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le serveur démarre"
+          }
+        }
+      }
+    },
     "The summary couldn’t be written this time.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Le résumé n’a pas pu être rédigé cette fois-ci."
+          }
+        }
+      }
+    },
+    "The “Entrance” tag": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le tag « Entrée »"
           }
         }
       }
@@ -5937,6 +6587,26 @@
         }
       }
     },
+    "Théo gets home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Théo arrive à la maison"
+          }
+        }
+      }
+    },
+    "Théo is away": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Théo est absent"
+          }
+        }
+      }
+    },
     "Time": {
       "localizations": {
         "fr": {
@@ -5957,12 +6627,32 @@
         }
       }
     },
+    "Timing": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moment"
+          }
+        }
+      }
+    },
     "To": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "À"
+          }
+        }
+      }
+    },
+    "To Théo’s iPhone": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur l’iPhone de Théo"
           }
         }
       }
@@ -6127,6 +6817,26 @@
         }
       }
     },
+    "Turn it off": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La désactiver"
+          }
+        }
+      }
+    },
+    "Turn it on": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’activer"
+          }
+        }
+      }
+    },
     "Turn it on in Settings › Apple Intelligence & Siri. It works on iPhone 15 Pro and later.\n\nYou can still create a rule step by step.": {
       "localizations": {
         "fr": {
@@ -6157,6 +6867,26 @@
         }
       }
     },
+    "Turn off every light in the bedroom": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Éteindre toutes les lumières de la chambre"
+          }
+        }
+      }
+    },
+    "Turn off the lights": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Éteindre les lumières"
+          }
+        }
+      }
+    },
     "Turn on": {
       "localizations": {
         "fr": {
@@ -6173,6 +6903,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Allumez une lumière"
+          }
+        }
+      }
+    },
+    "Turn on the lights": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allumer les lumières"
+          }
+        }
+      }
+    },
+    "Turn the rule off": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Désactiver la règle"
+          }
+        }
+      }
+    },
+    "Turn the rule on": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activer la règle"
           }
         }
       }
@@ -6307,6 +7067,26 @@
         }
       }
     },
+    "Useful to put things back in order after a power cut or an update.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utile pour tout remettre en ordre après une coupure de courant ou une mise à jour."
+          }
+        }
+      }
+    },
+    "Uses the calendars connected to Home Assistant: work, family, holidays…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utilise les agendas connectés à Home Assistant : travail, famille, jours fériés…"
+          }
+        }
+      }
+    },
     "Uses the people Home Assistant tracks, usually through its companion app.": {
       "localizations": {
         "fr": {
@@ -6363,6 +7143,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Via %@"
+          }
+        }
+      }
+    },
+    "Volume %@ %%": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Volume %@ %%"
+          }
+        }
+      }
+    },
+    "Volume %lld %%": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Volume %lld %%"
           }
         }
       }
@@ -6467,6 +7267,16 @@
         }
       }
     },
+    "Water the garden": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arroser le jardin"
+          }
+        }
+      }
+    },
     "Welcome to Maison": {
       "localizations": {
         "fr": {
@@ -6507,12 +7317,32 @@
         }
       }
     },
+    "When Home Assistant starts": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Au démarrage de Home Assistant"
+          }
+        }
+      }
+    },
     "When everyone leaves": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Quand tout le monde part"
+          }
+        }
+      }
+    },
+    "When it ends": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À la fin"
           }
         }
       }
@@ -6527,6 +7357,16 @@
         }
       }
     },
+    "When it starts": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Au début"
+          }
+        }
+      }
+    },
     "When someone arrives": {
       "localizations": {
         "fr": {
@@ -6537,12 +7377,72 @@
         }
       }
     },
+    "When the event ends": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À la fin de l’événement"
+          }
+        }
+      }
+    },
+    "When the event starts": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Au début de l’événement"
+          }
+        }
+      }
+    },
+    "When the server starts": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Au démarrage du serveur"
+          }
+        }
+      }
+    },
+    "When “Remote work” starts": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Au début de « Télétravail »"
+          }
+        }
+      }
+    },
+    "Where": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Où"
+          }
+        }
+      }
+    },
     "White": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Blanc"
+          }
+        }
+      }
+    },
+    "Whole home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toute la maison"
           }
         }
       }
@@ -7280,6 +8180,26 @@
         }
       }
     },
+    "turns off the lights": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "éteint les lumières"
+          }
+        }
+      }
+    },
+    "turns off the rule “%@”": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "désactive la règle « %@ »"
+          }
+        }
+      }
+    },
     "turns on %@": {
       "localizations": {
         "fr": {
@@ -7306,6 +8226,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "allume %lld lumières"
+          }
+        }
+      }
+    },
+    "turns on all the lights": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "allume toutes les lumières"
+          }
+        }
+      }
+    },
+    "turns on the lights": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "allume les lumières"
+          }
+        }
+      }
+    },
+    "turns on the rule “%@”": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "active la règle « %@ »"
           }
         }
       }

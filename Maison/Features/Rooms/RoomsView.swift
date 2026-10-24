@@ -46,7 +46,7 @@ struct RoomsView: View {
             .toolbar {
                 if mode == .plan, store.household.floorPlan != nil {
                     ToolbarItemGroup(placement: .topBarTrailing) {
-                        Button("Scan Again", systemImage: "viewfinder") { isScanning = true }
+                        Button("Scan Again", systemImage: "viewfinder") { Haptics.impact(); isScanning = true }
                     }
                 }
             }
@@ -112,4 +112,5 @@ private struct RoomCard: View {
 #Preview {
     RoomsView()
         .environment(DemoHome.store())
+        .environment(BelongingsStore.demo())
 }

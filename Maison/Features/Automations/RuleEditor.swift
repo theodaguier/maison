@@ -111,6 +111,7 @@ struct RuleEditor: View {
         error = nil
         do {
             try await store.save(rule)
+            Haptics.success()
             dismiss()
         } catch {
             self.error = String(localized: "Couldn’t save the rule. Editing automations needs an administrator account in Home Assistant.")
@@ -121,6 +122,7 @@ struct RuleEditor: View {
     private func delete() async {
         do {
             try await store.delete(rule)
+            Haptics.impact(.medium)
             dismiss()
         } catch {
             self.error = String(localized: "Couldn’t delete the rule.")
@@ -152,7 +154,10 @@ struct RuleEditor: View {
                 }
                 .buttonStyle(.plain)
                 .contextMenu {
-                    Button("Delete", systemImage: "trash", role: .destructive) { remove(step.1) }
+                    Button("Delete", systemImage: "trash", role: .destructive) {
+                        remove(step.1)
+                        Haptics.impact(.medium)
+                    }
                 }
             }
             Button {
@@ -232,6 +237,7 @@ struct RuleStepRow: View {
 
 // MARK: - Step editor
 
+/// A new step starts on the catalogue of every kind, then opens its settings; an existing step opens on its settings.
 private struct StepEditor: View {
     @Environment(HomeStore.self) private var store
     @Environment(\.dismiss) private var dismiss
@@ -242,42 +248,99 @@ private struct StepEditor: View {
     @State private var condition = AutomationRule.Condition.afterSunset
     @State private var action = AutomationRule.Action.wait(minutes: 5)
     @State private var notifyServices: [String] = []
+    @State private var tags: [(id: String, name: String)] = []
+    @State private var path: [Page] = []
+
+    private enum Page: Hashable { case settings }
 
     var body: some View {
-        NavigationStack {
-            Form {
-                switch step {
-                case .trigger: TriggerFields(trigger: $trigger)
-                case .condition: ConditionFields(condition: $condition)
-                case .action: ActionFields(action: $action, notifyServices: notifyServices)
-                }
+        NavigationStack(path: $path) {
+            Group {
                 if isExisting {
-                    Section {
-                        Button("Delete", role: .destructive) {
-                            remove()
-                            dismiss()
-                        }
-                    }
-                }
-            }
-            .navigationTitle(title)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(role: .cancel) { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(role: .confirm) {
-                        apply()
-                        dismiss()
-                    }
-                    .disabled(!isValid)
+                    settings
+                } else {
+                    catalog
+                        .navigationDestination(for: Page.self) { _ in settings }
                 }
             }
         }
-        .presentationDetents([.medium, .large])
+        .presentationDetents(isExisting ? [.medium, .large] : [.large])
         .onAppear(perform: load)
-        .task { notifyServices = await store.notifyServices() }
+        .task {
+            notifyServices = await store.notifyServices()
+            tags = await store.tags()
+        }
+    }
+
+    // MARK: Catalogue
+
+    @ViewBuilder private var catalog: some View {
+        Group {
+            switch step {
+            case .trigger: StepCatalog(groups: TriggerKind.groups) { trigger = TriggerFields.initial($0); open() }
+            case .condition: StepCatalog(groups: ConditionKind.groups) { condition = ConditionFields.initial($0); open() }
+            case .action:
+                StepCatalog(groups: ActionKind.groups) { action = ActionFields.initial($0, notifyServices: notifyServices); open() }
+            }
+        }
+        .navigationTitle(addTitle)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button(role: .close) { dismiss() }
+            }
+        }
+    }
+
+    private func open() {
+        Haptics.selection()
+        path.append(.settings)
+    }
+
+    private var addTitle: LocalizedStringKey {
+        switch step {
+        case .trigger: "Add a Trigger"
+        case .condition: "Add a Condition"
+        case .action: "Add an Action"
+        }
+    }
+
+    // MARK: Settings
+
+    private var settings: some View {
+        Form {
+            switch step {
+            case .trigger: TriggerFields(trigger: $trigger, tags: tags)
+            case .condition: ConditionFields(condition: $condition)
+            case .action: ActionFields(action: $action, notifyServices: notifyServices)
+            }
+            if isExisting {
+                Section {
+                    Button("Delete", role: .destructive) {
+                        remove()
+                        Haptics.impact(.medium)
+                        dismiss()
+                    }
+                }
+            }
+        }
+        .navigationTitle(title)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if isExisting {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(role: .cancel) { dismiss() }
+                }
+            }
+            ToolbarItem(placement: .confirmationAction) {
+                Button(role: .confirm) {
+                    apply()
+                    Haptics.impact()
+                    dismiss()
+                }
+                .disabled(!isValid)
+            }
+        }
     }
 
     private var title: LocalizedStringKey {
@@ -297,18 +360,24 @@ private struct StepEditor: View {
     private var isValid: Bool {
         switch step {
         case .trigger:
-            if case .state(let id, _, _) = trigger { return !id.isEmpty }
-            if case .threshold(let id, let above, let below) = trigger { return !id.isEmpty && (above != nil || below != nil) }
-            return true
+            switch trigger {
+            case .state(let id, _, _), .calendar(let id, _, _), .person(let id, _), .tag(let id): return !id.isEmpty
+            case .threshold(let id, let above, let below): return !id.isEmpty && (above != nil || below != nil)
+            default: return true
+            }
         case .condition:
-            if case .state(let id, _) = condition { return !id.isEmpty }
-            if case .weekdays(let days) = condition { return !days.isEmpty }
-            return true
+            switch condition {
+            case .state(let id, _), .person(let id, _): return !id.isEmpty
+            case .threshold(let id, let above, let below): return !id.isEmpty && (above != nil || below != nil)
+            case .weekdays(let days): return !days.isEmpty
+            default: return true
+            }
         case .action:
-            if case .device(let id, _, _) = action { return !id.isEmpty }
-            if case .scene(let id) = action { return !id.isEmpty }
-            if case .notify(let service, let message) = action { return !service.isEmpty && !message.isEmpty }
-            return true
+            switch action {
+            case .device(let id, _, _), .scene(let id), .script(let id), .rule(let id, _): return !id.isEmpty
+            case .notify(let service, let message): return !service.isEmpty && !message.isEmpty
+            default: return true
+            }
         }
     }
 
@@ -356,25 +425,57 @@ private struct EntityPicker: View {
     }
 }
 
+/// Above or below a value, for a measurement.
+private struct ThresholdFields: View {
+    let above: Double?
+    let below: Double?
+    let onChange: (Double?, Double?) -> Void
+
+    var body: some View {
+        Picker("When it goes", selection: Binding(get: { above != nil }, set: { isAbove in
+            let value = above ?? below
+            isAbove ? onChange(value, nil) : onChange(nil, value)
+        })) {
+            Text("Above").tag(true)
+            Text("Below").tag(false)
+        }
+        .pickerStyle(.segmented)
+        TextField("Value", value: Binding(get: { above ?? below }, set: { value in
+            above != nil || below == nil ? onChange(value, nil) : onChange(nil, value)
+        }), format: .number)
+        .keyboardType(.decimalPad)
+    }
+}
+
 private struct TriggerFields: View {
     @Environment(HomeStore.self) private var store
     @Binding var trigger: AutomationRule.Trigger
+    let tags: [(id: String, name: String)]
 
-    enum Kind: Hashable { case time, sun, device, threshold, presence, other }
+    static let intervals = [5, 10, 15, 30, 60, 120, 180, 360, 720]
+
+    static func initial(_ kind: TriggerKind) -> AutomationRule.Trigger {
+        switch kind {
+        case .time: .time(at: "19:00:00")
+        case .sun: .sun(.sunset, offset: 0)
+        case .every: .every(minutes: 15)
+        case .calendar: .calendar(entityID: "", start: true, offset: 0)
+        case .device: .state(entityID: "", to: nil, forMinutes: nil)
+        case .threshold: .threshold(entityID: "", above: 25, below: nil)
+        case .tag: .tag(id: "")
+        case .serverStarts: .serverStarts
+        case .household: .everyoneLeaves
+        case .person: .person(entityID: "", arrives: true)
+        }
+    }
 
     var body: some View {
         Section {
-            if kind == .other {
+            if let kind = TriggerKind(trigger) {
+                StepKindMenu(groups: TriggerKind.groups, kind: Binding(get: { kind }, set: { if $0 != kind { trigger = Self.initial($0) } }))
+            } else {
                 Text("This trigger was set up in Home Assistant. Maison keeps it as it is.")
                     .foregroundStyle(.secondary)
-            } else {
-                Picker("Type", selection: Binding(get: { kind }, set: { setKind($0) })) {
-                    Text("At a time").tag(Kind.time)
-                    Text("Sunrise or sunset").tag(Kind.sun)
-                    Text("A device changes").tag(Kind.device)
-                    Text("A measurement crosses a value").tag(Kind.threshold)
-                    Text("Arrivals and departures").tag(Kind.presence)
-                }
             }
         }
         Section {
@@ -391,6 +492,25 @@ private struct TriggerFields: View {
                 Stepper(value: Binding(get: { offset }, set: { trigger = .sun(event, offset: $0) }), in: -180...180, step: 15) {
                     Text(RuleTime.sunText(event, offset: offset))
                 }
+                .stepFeedback(offset)
+            case .every(let minutes):
+                Picker("Every", selection: Binding(get: { minutes }, set: { trigger = .every(minutes: $0) })) {
+                    ForEach(Self.intervals.contains(minutes) ? Self.intervals : [minutes] + Self.intervals, id: \.self) {
+                        Text(RuleTime.everyText($0)).tag($0)
+                    }
+                }
+            case .calendar(let id, let start, let offset):
+                EntityPicker(title: "Calendar", entityID: Binding(get: { id }, set: { trigger = .calendar(entityID: $0, start: start, offset: offset) }),
+                             filter: { $0.domain == "calendar" })
+                Picker("Moment", selection: Binding(get: { start }, set: { trigger = .calendar(entityID: id, start: $0, offset: offset) })) {
+                    Text("When it starts").tag(true)
+                    Text("When it ends").tag(false)
+                }
+                .pickerStyle(.segmented)
+                Stepper(value: Binding(get: { offset }, set: { trigger = .calendar(entityID: id, start: start, offset: $0) }), in: -240...240, step: 5) {
+                    Text(RuleTime.calendarText(start: start, offset: offset))
+                }
+                .stepFeedback(offset)
             case .state(let id, let to, let forMinutes):
                 EntityPicker(title: "Device", entityID: Binding(get: { id }, set: { trigger = .state(entityID: $0, to: nil, forMinutes: forMinutes) }),
                              filter: { [.light, .switch, .cover, .lock, .binarySensor, .mediaPlayer, .fan, .climate].contains($0.kind) })
@@ -406,21 +526,18 @@ private struct TriggerFields: View {
                         in: 0...240, step: 5) {
                     Text(forMinutes.map { String(localized: "For \($0) min") } ?? String(localized: "Right away"))
                 }
+                .stepFeedback(forMinutes ?? 0)
             case .threshold(let id, let above, let below):
                 EntityPicker(title: "Measurement", entityID: Binding(get: { id }, set: { trigger = .threshold(entityID: $0, above: above, below: below) }),
                              filter: { $0.kind == .sensor && $0.numericState != nil })
-                Picker("When it goes", selection: Binding(get: { above != nil }, set: { isAbove in
-                    let value = above ?? below
-                    trigger = isAbove ? .threshold(entityID: id, above: value, below: nil) : .threshold(entityID: id, above: nil, below: value)
-                })) {
-                    Text("Above").tag(true)
-                    Text("Below").tag(false)
+                ThresholdFields(above: above, below: below) { trigger = .threshold(entityID: id, above: $0, below: $1) }
+            case .tag(let id):
+                Picker("Tag", selection: Binding(get: { id }, set: { trigger = .tag(id: $0) })) {
+                    Text("Choose…").tag("")
+                    ForEach(tags, id: \.id) { Text($0.name).tag($0.id) }
                 }
-                .pickerStyle(.segmented)
-                TextField("Value", value: Binding(get: { above ?? below }, set: { value in
-                    trigger = above != nil || below == nil ? .threshold(entityID: id, above: value, below: nil) : .threshold(entityID: id, above: nil, below: value)
-                }), format: .number)
-                .keyboardType(.decimalPad)
+            case .serverStarts:
+                Text("When Home Assistant starts")
             case .everyoneLeaves, .someoneArrives:
                 Picker("When", selection: Binding(get: { trigger == .everyoneLeaves }, set: { trigger = $0 ? .everyoneLeaves : .someoneArrives })) {
                     Text("Everyone leaves").tag(true)
@@ -428,36 +545,25 @@ private struct TriggerFields: View {
                 }
                 .pickerStyle(.inline)
                 .labelsHidden()
+            case .person(let id, let arrives):
+                EntityPicker(title: "Person", entityID: Binding(get: { id }, set: { trigger = .person(entityID: $0, arrives: arrives) }),
+                             filter: { $0.domain == "person" })
+                Picker("When", selection: Binding(get: { arrives }, set: { trigger = .person(entityID: id, arrives: $0) })) {
+                    Text("Arrives home").tag(true)
+                    Text("Leaves home").tag(false)
+                }
+                .pickerStyle(.segmented)
             case .other:
                 EmptyView()
             }
         } footer: {
-            if kind == .presence {
-                Text("Uses the people Home Assistant tracks, usually through its companion app.")
+            switch TriggerKind(trigger) {
+            case .household?, .person?: Text("Uses the people Home Assistant tracks, usually through its companion app.")
+            case .calendar?: Text("Uses the calendars connected to Home Assistant: work, family, holidays…")
+            case .tag?: Text("Tags are written and named from the Home Assistant companion app.")
+            case .serverStarts?: Text("Useful to put things back in order after a power cut or an update.")
+            default: EmptyView()
             }
-        }
-    }
-
-    private var kind: Kind {
-        switch trigger {
-        case .time: .time
-        case .sun: .sun
-        case .state: .device
-        case .threshold: .threshold
-        case .everyoneLeaves, .someoneArrives: .presence
-        case .other: .other
-        }
-    }
-
-    private func setKind(_ kind: Kind) {
-        guard kind != self.kind else { return }
-        switch kind {
-        case .time: trigger = .time(at: "19:00:00")
-        case .sun: trigger = .sun(.sunset, offset: 0)
-        case .device: trigger = .state(entityID: "", to: nil, forMinutes: nil)
-        case .threshold: trigger = .threshold(entityID: "", above: 25, below: nil)
-        case .presence: trigger = .everyoneLeaves
-        case .other: break
         }
     }
 }
@@ -466,29 +572,35 @@ private struct ConditionFields: View {
     @Environment(HomeStore.self) private var store
     @Binding var condition: AutomationRule.Condition
 
-    enum Kind: Hashable { case sun, presence, time, days, device, other }
+    static func initial(_ kind: ConditionKind) -> AutomationRule.Condition {
+        switch kind {
+        case .sun: .afterSunset
+        case .time: .between(after: "22:00:00", before: "06:00:00")
+        case .days: .weekdays(["mon", "tue", "wed", "thu", "fri"])
+        case .household: .someoneHome
+        case .person: .person(entityID: "", isHome: true)
+        case .device: .state(entityID: "", state: "on")
+        case .threshold: .threshold(entityID: "", above: 25, below: nil)
+        }
+    }
 
     var body: some View {
         Section {
-            if kind == .other {
+            if let kind = ConditionKind(condition) {
+                StepKindMenu(groups: ConditionKind.groups, kind: Binding(get: { kind }, set: { if $0 != kind { condition = Self.initial($0) } }))
+            } else {
                 Text("This condition was set up in Home Assistant. Maison keeps it as it is.")
                     .foregroundStyle(.secondary)
-            } else {
-                Picker("Type", selection: Binding(get: { kind }, set: { setKind($0) })) {
-                    Text("Daylight").tag(Kind.sun)
-                    Text("Someone at home").tag(Kind.presence)
-                    Text("Time of day").tag(Kind.time)
-                    Text("Days of the week").tag(Kind.days)
-                    Text("A device’s state").tag(Kind.device)
-                }
             }
         }
         Section {
             switch condition {
-            case .afterSunset, .beforeSunrise:
-                Picker("Only", selection: Binding(get: { condition == .afterSunset }, set: { condition = $0 ? .afterSunset : .beforeSunrise })) {
-                    Text("After sunset").tag(true)
-                    Text("Before sunrise").tag(false)
+            case .afterSunset, .beforeSunrise, .daytime, .nighttime:
+                let options: [(AutomationRule.Condition, LocalizedStringKey)] = [
+                    (.afterSunset, "After sunset"), (.beforeSunrise, "Before sunrise"), (.daytime, "During the day"), (.nighttime, "At night"),
+                ]
+                Picker("Only", selection: Binding(get: { options.firstIndex { $0.0 == condition } ?? 0 }, set: { condition = options[$0].0 })) {
+                    ForEach(options.indices, id: \.self) { Text(options[$0].1).tag($0) }
                 }
                 .pickerStyle(.inline)
                 .labelsHidden()
@@ -499,6 +611,14 @@ private struct ConditionFields: View {
                 }
                 .pickerStyle(.inline)
                 .labelsHidden()
+            case .person(let id, let isHome):
+                EntityPicker(title: "Person", entityID: Binding(get: { id }, set: { condition = .person(entityID: $0, isHome: isHome) }),
+                             filter: { $0.domain == "person" })
+                Picker("Is", selection: Binding(get: { isHome }, set: { condition = .person(entityID: id, isHome: $0) })) {
+                    Text("At home").tag(true)
+                    Text("Away").tag(false)
+                }
+                .pickerStyle(.segmented)
             case .between(let after, let before):
                 DatePicker("From", selection: Binding(get: { RuleTime.date(after) }, set: { condition = .between(after: RuleTime.text($0), before: before) }),
                            displayedComponents: .hourAndMinute)
@@ -510,6 +630,7 @@ private struct ConditionFields: View {
                         get: { days.contains(day) },
                         set: { on in condition = .weekdays(on ? days + [day] : days.filter { $0 != day }) }
                     ))
+                    .sensoryFeedback(.selection, trigger: days.contains(day))
                 }
             case .state(let id, let state):
                 EntityPicker(title: "Device", entityID: Binding(get: { id }, set: { condition = .state(entityID: $0, state: state) }),
@@ -521,32 +642,13 @@ private struct ConditionFields: View {
                         }
                     }
                 }
+            case .threshold(let id, let above, let below):
+                EntityPicker(title: "Measurement", entityID: Binding(get: { id }, set: { condition = .threshold(entityID: $0, above: above, below: below) }),
+                             filter: { $0.kind == .sensor && $0.numericState != nil })
+                ThresholdFields(above: above, below: below) { condition = .threshold(entityID: id, above: $0, below: $1) }
             case .other:
                 EmptyView()
             }
-        }
-    }
-
-    private var kind: Kind {
-        switch condition {
-        case .afterSunset, .beforeSunrise: .sun
-        case .someoneHome, .nobodyHome: .presence
-        case .between: .time
-        case .weekdays: .days
-        case .state: .device
-        case .other: .other
-        }
-    }
-
-    private func setKind(_ kind: Kind) {
-        guard kind != self.kind else { return }
-        switch kind {
-        case .sun: condition = .afterSunset
-        case .presence: condition = .someoneHome
-        case .time: condition = .between(after: "22:00:00", before: "06:00:00")
-        case .days: condition = .weekdays(["mon", "tue", "wed", "thu", "fri"])
-        case .device: condition = .state(entityID: "", state: "on")
-        case .other: break
         }
     }
 }
@@ -556,20 +658,27 @@ private struct ActionFields: View {
     @Binding var action: AutomationRule.Action
     let notifyServices: [String]
 
-    enum Kind: Hashable { case device, scene, wait, notify, other }
+    static func initial(_ kind: ActionKind, notifyServices: [String]) -> AutomationRule.Action {
+        switch kind {
+        case .device: .device(entityID: "", service: "", data: [:])
+        case .lights: .lights(areaID: nil, on: false)
+        case .scene: .scene(entityID: "")
+        case .script: .script(entityID: "")
+        case .rule: .rule(entityID: "", command: .trigger)
+        case .wait: .wait(minutes: 5)
+        case .notify: .notify(service: notifyServices.first { $0.hasPrefix("mobile_app_") } ?? notifyServices.first ?? "", message: "")
+        }
+    }
 
     var body: some View {
         Section {
-            if kind == .other {
+            if let kind = ActionKind(action) {
+                StepKindMenu(groups: ActionKind.groups, kind: Binding(get: { kind }, set: {
+                    if $0 != kind { action = Self.initial($0, notifyServices: notifyServices) }
+                }))
+            } else {
                 Text("This action was set up in Home Assistant. Maison keeps it as it is.")
                     .foregroundStyle(.secondary)
-            } else {
-                Picker("Type", selection: Binding(get: { kind }, set: { setKind($0) })) {
-                    Text("Control a device").tag(Kind.device)
-                    Text("Run a scene").tag(Kind.scene)
-                    Text("Wait").tag(Kind.wait)
-                    Text("Send a notification").tag(Kind.notify)
-                }
             }
         }
         Section {
@@ -582,13 +691,35 @@ private struct ActionFields: View {
                 if let entity = store.states[id] {
                     DeviceChoices(entity: entity, service: service, data: data) { action = .device(entityID: id, service: $0, data: $1) }
                 }
+            case .lights(let areaID, let on):
+                Picker("Lights", selection: Binding(get: { on }, set: { action = .lights(areaID: areaID, on: $0) })) {
+                    Text("Turn on").tag(true)
+                    Text("Turn off").tag(false)
+                }
+                .pickerStyle(.segmented)
+                Picker("Where", selection: Binding(get: { areaID ?? "" }, set: { action = .lights(areaID: $0.isEmpty ? nil : $0, on: on) })) {
+                    Text("Whole home").tag("")
+                    ForEach(store.rooms) { Text($0.name).tag($0.id) }
+                }
             case .scene(let id):
                 EntityPicker(title: "Scene", entityID: Binding(get: { id }, set: { action = .scene(entityID: $0) }),
                              filter: { $0.kind == .scene })
+            case .script(let id):
+                EntityPicker(title: "Script", entityID: Binding(get: { id }, set: { action = .script(entityID: $0) }),
+                             filter: { $0.kind == .script })
+            case .rule(let id, let command):
+                EntityPicker(title: "Rule", entityID: Binding(get: { id }, set: { action = .rule(entityID: $0, command: command) }),
+                             filter: { $0.kind == .automation })
+                Picker("Do", selection: Binding(get: { command }, set: { action = .rule(entityID: id, command: $0) })) {
+                    Text("Run it").tag(AutomationRule.RuleCommand.trigger)
+                    Text("Turn it on").tag(AutomationRule.RuleCommand.turnOn)
+                    Text("Turn it off").tag(AutomationRule.RuleCommand.turnOff)
+                }
             case .wait(let minutes):
                 Stepper(value: Binding(get: { minutes }, set: { action = .wait(minutes: $0) }), in: 1...600) {
                     Text("Wait \(minutes) min")
                 }
+                .stepFeedback(minutes)
             case .notify(let service, let message):
                 Picker("Send to", selection: Binding(get: { service }, set: { action = .notify(service: $0, message: message) })) {
                     Text("Choose…").tag("")
@@ -598,27 +729,10 @@ private struct ActionFields: View {
             case .other:
                 EmptyView()
             }
-        }
-    }
-
-    private var kind: Kind {
-        switch action {
-        case .device: .device
-        case .scene: .scene
-        case .wait: .wait
-        case .notify: .notify
-        case .other: .other
-        }
-    }
-
-    private func setKind(_ kind: Kind) {
-        guard kind != self.kind else { return }
-        switch kind {
-        case .device: action = .device(entityID: "", service: "", data: [:])
-        case .scene: action = .scene(entityID: "")
-        case .wait: action = .wait(minutes: 5)
-        case .notify: action = .notify(service: notifyServices.first { $0.hasPrefix("mobile_app_") } ?? notifyServices.first ?? "", message: "")
-        case .other: break
+        } footer: {
+            if case .rule(_, .trigger) = action {
+                Text("Runs its actions right away, without checking its conditions.")
+            }
         }
     }
 }
@@ -644,6 +758,7 @@ private struct DeviceChoices: View {
             }), in: 5...100, step: 5) {
                 Text("Brightness \(Int(data["brightness_pct"]?.doubleValue ?? 100)) %")
             }
+            .stepFeedback(Int(data["brightness_pct"]?.doubleValue ?? 100))
             if entity.attributes["supported_color_modes"]?.arrayValue?.contains(.string("color_temp")) == true {
                 Picker("White", selection: Binding(get: { data["color_temp_kelvin"]?.doubleValue ?? 0 }, set: { kelvin in
                     var data = data
@@ -663,6 +778,7 @@ private struct DeviceChoices: View {
             }), in: 0...100, step: 5) {
                 Text("Open \(Int(data["position"]?.doubleValue ?? 50)) %")
             }
+            .stepFeedback(Int(data["position"]?.doubleValue ?? 50))
         }
         if service == "climate.set_temperature" {
             Stepper(value: Binding(get: { data["temperature"]?.doubleValue ?? 21 }, set: { value in
@@ -670,18 +786,36 @@ private struct DeviceChoices: View {
             }), in: 10...30, step: entity.temperatureStep) {
                 Text(EntityState.degrees(data["temperature"]?.doubleValue ?? 21))
             }
+            .stepFeedback(data["temperature"]?.doubleValue ?? 21)
+        }
+        if service == "media_player.volume_set" {
+            Stepper(value: Binding(get: { Int((data["volume_level"]?.doubleValue ?? 0.3) * 100) }, set: { value in
+                onChange(service, ["volume_level": .number(Double(value) / 100)])
+            }), in: 0...100, step: 5) {
+                Text("Volume \(Int((data["volume_level"]?.doubleValue ?? 0.3) * 100)) %")
+            }
+            .stepFeedback(Int((data["volume_level"]?.doubleValue ?? 0.3) * 100))
+        }
+        if service == "fan.set_percentage" {
+            Stepper(value: Binding(get: { Int(data["percentage"]?.doubleValue ?? 50) }, set: { value in
+                onChange(service, ["percentage": .number(Double(value))])
+            }), in: 0...100, step: 10) {
+                Text("Speed \(Int(data["percentage"]?.doubleValue ?? 50)) %")
+            }
+            .stepFeedback(Int(data["percentage"]?.doubleValue ?? 50))
         }
     }
 
     static func services(for entity: EntityState) -> [String] {
         let domain = entity.domain
         switch entity.kind {
-        case .light: return ["light.turn_on", "light.turn_off"]
-        case .cover: return ["cover.open_cover", "cover.close_cover", "cover.set_cover_position"]
+        case .light: return ["light.turn_on", "light.turn_off", "light.toggle"]
+        case .cover: return ["cover.open_cover", "cover.close_cover", "cover.stop_cover", "cover.set_cover_position"]
         case .lock: return ["lock.lock", "lock.unlock"]
         case .climate: return ["climate.set_temperature", "climate.turn_off"]
-        case .mediaPlayer: return ["media_player.media_play", "media_player.media_pause", "media_player.turn_off"]
-        default: return ["\(domain).turn_on", "\(domain).turn_off"]
+        case .mediaPlayer: return ["media_player.media_play", "media_player.media_pause", "media_player.volume_set", "media_player.turn_off"]
+        case .fan: return ["fan.turn_on", "fan.turn_off", "fan.set_percentage", "fan.toggle"]
+        default: return ["\(domain).turn_on", "\(domain).turn_off", "\(domain).toggle"]
         }
     }
 
@@ -699,6 +833,10 @@ private struct DeviceChoices: View {
         switch service.split(separator: ".").last ?? "" {
         case "turn_on": String(localized: "Turn on")
         case "turn_off": String(localized: "Turn off")
+        case "toggle": String(localized: "Toggle")
+        case "stop_cover": String(localized: "Stop")
+        case "volume_set": String(localized: "Set volume")
+        case "set_percentage": String(localized: "Set speed")
         case "open_cover": String(localized: "action.open", defaultValue: "Open")
         case "close_cover": String(localized: "Close")
         case "set_cover_position": String(localized: "Set position")

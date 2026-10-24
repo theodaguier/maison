@@ -69,6 +69,7 @@ struct InviteSheet: View {
             .safeAreaInset(edge: .bottom) {
                 VStack(spacing: 12) {
                     Button {
+                        Haptics.impact()
                         Task { if await prepare() { sharing = true } }
                     } label: {
                         ZStack {
@@ -145,6 +146,7 @@ struct InviteSheet: View {
 
     private func roleCard(_ value: HouseholdRole, detail: LocalizedStringKey) -> some View {
         Button {
+            if role != value { Haptics.selection() }
             role = value
             link = nil
         } label: {
@@ -335,6 +337,7 @@ struct InvitationView: View {
             }
             VStack(spacing: 10) {
                 Button {
+                    Haptics.impact()
                     Task {
                         isJoining = true
                         await store.household.accept(metadata)

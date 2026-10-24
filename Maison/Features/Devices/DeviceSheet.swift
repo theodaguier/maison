@@ -391,7 +391,10 @@ private struct ClimateControls: View {
                             Spacer()
                             Picker("Fan", selection: Binding(
                                 get: { entity.attributes["fan_mode"]?.stringValue ?? "" },
-                                set: { mode in Task { await store.call("climate", "set_fan_mode", on: entity, data: ["fan_mode": .string(mode)]) } }
+                                set: { mode in
+                                    Haptics.selection()
+                                    Task { await store.call("climate", "set_fan_mode", on: entity, data: ["fan_mode": .string(mode)]) }
+                                }
                             )) {
                                 ForEach(fanModes, id: \.self) { Text($0.capitalized).tag($0) }
                             }
@@ -406,7 +409,10 @@ private struct ClimateControls: View {
                     if swingModes.contains("on") {
                         Toggle("Swing", isOn: Binding(
                             get: { entity.attributes["swing_mode"]?.stringValue == "on" },
-                            set: { on in Task { await store.call("climate", "set_swing_mode", on: entity, data: ["swing_mode": .string(on ? "on" : "off")]) } }
+                            set: { on in
+                                Haptics.impact()
+                                Task { await store.call("climate", "set_swing_mode", on: entity, data: ["swing_mode": .string(on ? "on" : "off")]) }
+                            }
                         ))
                         .font(.roundedBody)
                         .tint(.green)

@@ -23,6 +23,7 @@ enum Appearance: String, CaseIterable {
 struct SettingsView: View {
     @Environment(HomeStore.self) private var store
     @Environment(\.setDemoMode) private var setDemoMode
+    @Environment(BelongingsStore.self) private var belongings
     @AppStorage("appearance") private var appearance: Appearance = .system
     @AppStorage(DaySummarySetting.key) private var daySummary = true
 
@@ -89,6 +90,14 @@ struct SettingsView: View {
                             .buttonStyle(.plain)
                         }
                     }
+                    SettingsGroup("Paperwork") {
+                        NavigationLink { DocumentsPage() } label: {
+                            SettingsRow(symbol: "doc.text.fill", color: .indigo, title: "Documents",
+                                        value: belongings.documents.isEmpty ? nil : "\(belongings.documents.count)",
+                                        showsChevron: true)
+                        }
+                    }
+                    .buttonStyle(.plain)
                     SettingsGroup("Appearance") {
                         HStack(spacing: 12) {
                             SettingsIcon(symbol: "sun.max.fill", color: .orange)
@@ -99,6 +108,7 @@ struct SettingsView: View {
                                 Picker("Theme", selection: $appearance) {
                                     ForEach(Appearance.allCases, id: \.self) { Text($0.title).tag($0) }
                                 }
+                                .sensoryFeedback(.selection, trigger: appearance)
                             } label: {
                                 HStack(spacing: 4) {
                                     Text(appearance.title)
@@ -399,6 +409,7 @@ struct SignOutButton: View {
         }
         .confirmationDialog("Sign out of Home Assistant?", isPresented: $confirms, titleVisibility: .visible) {
             Button("Sign Out", role: .destructive) {
+                Haptics.impact(.medium)
                 Task { await store.signOut() }
             }
         } message: {
@@ -469,4 +480,5 @@ extension Bundle {
 #Preview {
     SettingsView()
         .environment(DemoHome.store())
+        .environment(BelongingsStore.demo())
 }

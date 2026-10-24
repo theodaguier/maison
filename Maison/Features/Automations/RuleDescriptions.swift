@@ -29,12 +29,23 @@ extension HomeStore {
             return StepDescription(symbol: states[id]?.symbolName ?? "sensor.fill", color: .teal, title: title,
                                    detail: area(of: states[id])?.name ?? String(localized: "Device"))
         case .threshold(let id, let above, let below):
-            let unit = states[id]?.unit ?? ""
-            let title: String
-            if let above { title = String(localized: "\(entityName(id)) above \(Self.number(above))\(unit)") }
-            else { title = String(localized: "\(entityName(id)) below \(Self.number(below ?? 0))\(unit)") }
-            return StepDescription(symbol: "thermometer.medium", color: .orange, title: title,
+            return StepDescription(symbol: "thermometer.medium", color: .orange, title: thresholdText(id, above: above, below: below),
                                    detail: area(of: states[id])?.name ?? String(localized: "Measurement"))
+        case .every(let minutes):
+            return StepDescription(symbol: "repeat", color: .blue, title: RuleTime.everyText(minutes), detail: String(localized: "Repeats"))
+        case .calendar(let id, let start, let offset):
+            return StepDescription(symbol: "calendar", color: .red, title: RuleTime.calendarText(start: start, offset: offset),
+                                   detail: entityName(id))
+        case .person(let id, let arrives):
+            return StepDescription(symbol: arrives ? "figure.walk.arrival" : "figure.walk.departure", color: .indigo,
+                                   title: arrives ? String(localized: "\(entityName(id)) arrives home") : String(localized: "\(entityName(id)) leaves home"),
+                                   detail: String(localized: "Household members"))
+        case .tag(let id):
+            return StepDescription(symbol: "sensor.tag.radiowaves.forward.fill", color: .green,
+                                   title: String(localized: "An NFC tag is scanned"), detail: tagNames[id] ?? id)
+        case .serverStarts:
+            return StepDescription(symbol: "power", color: .gray, title: String(localized: "When the server starts"),
+                                   detail: "Home Assistant")
         case .everyoneLeaves:
             return StepDescription(symbol: "figure.walk.departure", color: .indigo, title: String(localized: "When everyone leaves"),
                                    detail: String(localized: "Household members"))
@@ -69,6 +80,17 @@ extension HomeStore {
             StepDescription(symbol: states[id]?.symbolName ?? "sensor.fill", color: .purple,
                             title: String(localized: "\(entityName(id)) is \(stateName(state, of: id))"),
                             detail: area(of: states[id])?.name)
+        case .daytime:
+            StepDescription(symbol: "sun.max.fill", color: .purple, title: String(localized: "During the day"))
+        case .nighttime:
+            StepDescription(symbol: "moon.stars.fill", color: .purple, title: String(localized: "At night"))
+        case .person(let id, let isHome):
+            StepDescription(symbol: isHome ? "person.fill.checkmark" : "person.fill.xmark", color: .purple,
+                            title: isHome ? String(localized: "\(entityName(id)) is home") : String(localized: "\(entityName(id)) is away"),
+                            detail: String(localized: "Household members"))
+        case .threshold(let id, let above, let below):
+            StepDescription(symbol: "gauge.with.dots.needle.50percent", color: .purple, title: thresholdText(id, above: above, below: below),
+                            detail: area(of: states[id])?.name)
         case .other(let raw):
             StepDescription(symbol: "gearshape.fill", color: .gray, title: String(localized: "Condition set up in Home Assistant"),
                             detail: raw["condition"]?.stringValue)
@@ -87,6 +109,19 @@ extension HomeStore {
             return StepDescription(symbol: "hourglass", color: .orange, title: String(localized: "Wait \(minutes) min"))
         case .notify(_, let message):
             return StepDescription(symbol: "bell.fill", color: .red, title: String(localized: "Send a notification"), detail: message)
+        case .lights(let areaID, let on):
+            return StepDescription(symbol: "lightbulb.2.fill", color: .yellow,
+                                   title: on ? String(localized: "Turn on the lights") : String(localized: "Turn off the lights"),
+                                   detail: areaID.map(areaName) ?? String(localized: "Whole home"))
+        case .script(let id):
+            return StepDescription(symbol: "scroll.fill", color: .teal, title: entityName(id), detail: String(localized: "Run the script"))
+        case .rule(let id, let command):
+            let detail = switch command {
+            case .trigger: String(localized: "Run the rule")
+            case .turnOn: String(localized: "Turn the rule on")
+            case .turnOff: String(localized: "Turn the rule off")
+            }
+            return StepDescription(symbol: "arrow.triangle.branch", color: .purple, title: entityName(id), detail: detail)
         case .other(let raw):
             return StepDescription(symbol: "gearshape.fill", color: .gray, title: String(localized: "Action set up in Home Assistant"),
                                    detail: raw["action"]?.stringValue ?? raw["service"]?.stringValue)
@@ -101,6 +136,9 @@ extension HomeStore {
         case "turn_on": parts.append(String(localized: "Turn on"))
         case "turn_off": parts.append(String(localized: "Turn off"))
         case "toggle": parts.append(String(localized: "Toggle"))
+        case "stop_cover": parts.append(String(localized: "Stop"))
+        case "volume_set": parts.append(String(localized: "Volume \(Self.number((data["volume_level"]?.doubleValue ?? 0) * 100)) %"))
+        case "set_percentage": parts.append(String(localized: "Speed \(Self.number(data["percentage"]?.doubleValue ?? 0)) %"))
         case "open_cover": parts.append(String(localized: "action.open", defaultValue: "Open"))
         case "close_cover": parts.append(String(localized: "Close"))
         case "set_cover_position": parts.append(String(localized: "Position \(Self.number(data["position"]?.doubleValue ?? 0)) %"))
@@ -171,11 +209,29 @@ extension HomeStore {
             }
         }
         for action in actions {
-            if case .scene(let id) = action { phrases.append(String(localized: "runs “\(entityName(id))”")) }
-            if case .notify = action { phrases.append(String(localized: "sends a notification")) }
+            switch action {
+            case .scene(let id), .script(let id), .rule(let id, .trigger): phrases.append(String(localized: "runs “\(entityName(id))”"))
+            case .rule(let id, .turnOn): phrases.append(String(localized: "turns on the rule “\(entityName(id))”"))
+            case .rule(let id, .turnOff): phrases.append(String(localized: "turns off the rule “\(entityName(id))”"))
+            case .lights(nil, let on): phrases.append(on ? String(localized: "turns on all the lights") : String(localized: "turns off all the lights"))
+            case .lights(let areaID?, let on):
+                phrases.append((on ? String(localized: "turns on the lights") : String(localized: "turns off the lights")) + " " + Phrasing.location(areaName(areaID)))
+            case .notify: phrases.append(String(localized: "sends a notification"))
+            default: break
+            }
         }
         let text = phrases.formatted(.list(type: .and))
         return text.prefix(1).uppercased() + text.dropFirst()
+    }
+
+    func thresholdText(_ id: String, above: Double?, below: Double?) -> String {
+        let unit = states[id]?.unit ?? ""
+        if let above { return String(localized: "\(entityName(id)) above \(Self.number(above))\(unit)") }
+        return String(localized: "\(entityName(id)) below \(Self.number(below ?? 0))\(unit)")
+    }
+
+    func areaName(_ id: String) -> String {
+        layout.areas.first { $0.id == id }?.name ?? id
     }
 
     func stateName(_ state: String, of id: String) -> String {
@@ -216,6 +272,22 @@ enum RuleTime {
         case (.sunrise, ..<0): String(localized: "\(-offset) min before sunrise")
         case (.sunset, _): String(localized: "\(offset) min after sunset")
         case (.sunrise, _): String(localized: "\(offset) min after sunrise")
+        }
+    }
+
+    static func everyText(_ minutes: Int) -> String {
+        guard minutes >= 60, minutes % 60 == 0 else { return String(localized: "Every \(minutes) min") }
+        return minutes == 60 ? String(localized: "Every hour") : String(localized: "Every \(minutes / 60) hours")
+    }
+
+    static func calendarText(start: Bool, offset: Int) -> String {
+        switch (start, offset) {
+        case (true, 0): String(localized: "When the event starts")
+        case (false, 0): String(localized: "When the event ends")
+        case (true, ..<0): String(localized: "\(-offset) min before the event starts")
+        case (false, ..<0): String(localized: "\(-offset) min before the event ends")
+        case (true, _): String(localized: "\(offset) min after the event starts")
+        case (false, _): String(localized: "\(offset) min after the event ends")
         }
     }
 

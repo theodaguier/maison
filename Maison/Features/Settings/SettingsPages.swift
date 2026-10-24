@@ -88,6 +88,7 @@ struct ServerPage: View {
                     Label("Reconnect", systemImage: "arrow.clockwise").frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.glass)
+                .tapFeedback(.impact(weight: .light))
                 if let url = store.serverURL {
                     Button {
                         openURL(url)
@@ -254,6 +255,7 @@ struct DaySummaryPage: View {
                     .labelStyle(.compact)
                 }
                 .tint(.green)
+                .sensoryFeedback(.impact(weight: .light), trigger: isOn)
                 .disabled(!DayDigest.isAvailable)
                 .padding(.vertical, 8)
             }
@@ -295,6 +297,7 @@ struct MemberPage: View {
                     ForEach([HouseholdRole.resident, .administrator], id: \.self) { role in
                         if role == .administrator { SettingsDivider() }
                         Button {
+                            Haptics.selection()
                             Task { await run { try await household.setRole(role, of: member) } }
                         } label: {
                             SettingsRow(symbol: role == .administrator ? "person.badge.key.fill" : "person.fill",
@@ -321,7 +324,10 @@ struct MemberPage: View {
             Button("Remove", role: .destructive) {
                 Task {
                     await run { try await household.remove(member) }
-                    if error == nil { dismiss() }
+                    if error == nil {
+                        Haptics.success()
+                        dismiss()
+                    }
                 }
             }
         } message: {
