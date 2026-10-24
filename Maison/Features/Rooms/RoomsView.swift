@@ -9,6 +9,8 @@ struct RoomsView: View {
     @State private var path: [Area] = []
     @State private var newRoom = ""
     @State private var error: String?
+    @State private var showsHousekeeping = false
+    @State private var namedRoom: Area?
 
     enum Mode: Hashable { case list, plan }
 
@@ -28,6 +30,10 @@ struct RoomsView: View {
                             switch mode {
                             case .list:
                                 FavoritesSection(opened: $opened)
+                                if let question = store.roomToConfirm {
+                                    RoomKindQuestion(room: question.area, guess: question.guess) { namedRoom = question.area }
+                                }
+                                HousekeepingWeekCard { showsHousekeeping = true }
                                 RoomList()
                                 if store.currentUser?.isAdmin == true || store.isDemoHome {
                                     Button("Add a Room", systemImage: "plus") { addsRoom = true }
@@ -59,6 +65,8 @@ struct RoomsView: View {
                 }
             }
             .sheet(item: $opened) { DeviceSheet(entityID: $0.id) }
+            .sheet(isPresented: $showsHousekeeping) { HousekeepingSheet() }
+            .sheet(item: $namedRoom) { RoomKindPicker(room: $0) }
             .fullScreenCover(isPresented: $isScanning) { ScanScreen() }
             .alert("Add a Room", isPresented: $addsRoom) {
                 TextField("Name", text: $newRoom)
@@ -81,6 +89,8 @@ struct RoomsView: View {
             .onAppear {
                 // `-plan` opens the plan straight away, to check its design.
                 if UserDefaults.standard.bool(forKey: "plan") { mode = .plan }
+                // `-housekeeping` opens the housekeeping sheet, to check its design.
+                if UserDefaults.standard.bool(forKey: "housekeeping") { showsHousekeeping = true }
                 #if DEBUG
                 // `-room bedroom` opens a room, to check its design.
                 if let id = UserDefaults.standard.string(forKey: "room"), let room = store.layout.areas.first(where: { $0.id == id }) {
@@ -105,12 +115,13 @@ private struct RoomList: View {
                 NavigationLink(value: room) {
                     let count = store.devices(in: room).count
                     let upkeep = store.maintenance(in: room).count
+                    let kind = store.roomKind(room)
                     HStack(spacing: 14) {
-                        Image(systemName: room.symbol)
+                        Image(systemName: kind.symbol)
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(.white)
                             .frame(width: 34, height: 34)
-                            .background(room.color, in: .rect(cornerRadius: 9))
+                            .background(kind.color, in: .rect(cornerRadius: 9))
                         VStack(alignment: .leading, spacing: 2) {
                             Text(room.name).font(.roundedBody).foregroundStyle(.primary)
                             Text(caption(devices: count, upkeep: upkeep))
@@ -139,33 +150,8 @@ private struct RoomList: View {
 }
 
 extension Area {
-    /// A symbol guessed from the room's name.
-    var symbol: String {
-        let name = name.lowercased()
-        if ["salon", "living", "séjour"].contains(where: name.contains) { return "sofa.fill" }
-        if ["chambre", "bedroom"].contains(where: name.contains) { return "bed.double.fill" }
-        if ["cuisine", "kitchen"].contains(where: name.contains) { return "fork.knife" }
-        if ["bain", "bath", "douche"].contains(where: name.contains) { return "shower.fill" }
-        if ["bureau", "office"].contains(where: name.contains) { return "desktopcomputer" }
-        if ["entrée", "entrance", "couloir", "hall"].contains(where: name.contains) { return "door.left.hand.closed" }
-        if ["jardin", "garden", "terrasse", "balcon"].contains(where: name.contains) { return "leaf.fill" }
-        if ["garage"].contains(where: name.contains) { return "car.fill" }
-        return "square.split.bottomrightquarter.fill"
-    }
-
-    /// The room's colour in lists, after its kind.
-    var color: Color {
-        switch symbol {
-        case "sofa.fill": .orange
-        case "bed.double.fill": .indigo
-        case "fork.knife": .yellow
-        case "shower.fill": .cyan
-        case "desktopcomputer": .teal
-        case "door.left.hand.closed": .blue
-        case "leaf.fill": .green
-        default: .gray
-        }
-    }
+    /// A symbol from the room's icon and name, for rows that don't read the store.
+    var symbol: String { RoomKind.recognize(name: name, icon: icon).kind.symbol }
 }
 
 #Preview {

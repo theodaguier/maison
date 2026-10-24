@@ -4,6 +4,8 @@ import SwiftUI
 struct RoomView: View {
     /// Upkeep marked done here, hidden right away.
     @State private var done: Set<String> = []
+    /// The chore just marked done, for the banner and its Undo.
+    @State private var choreDone: ChoreDone?
     @Environment(HomeStore.self) private var store
     let room: Area
     @State private var opened: OpenedDevice?
@@ -31,6 +33,7 @@ struct RoomView: View {
                 ForEach(store.maintenance(in: room).filter { !done.contains($0.id) }) { item in
                     MaintenanceCard(item: item) { done.insert(item.id) }
                 }
+                RoomHousekeepingSection(room: room) { choreDone = $0 }
                 ForEach(RoomCategory.allCases, id: \.self) { category in
                     let members = devices.filter { category.contains($0) }
                     if !members.isEmpty {
@@ -86,6 +89,14 @@ struct RoomView: View {
         .navigationBarTitleDisplayMode(.large)
         .toolbarBackgroundVisibility(.hidden, for: .navigationBar)
         .sheet(item: $opened) { DeviceSheet(entityID: $0.id) }
+        .overlay(alignment: .bottom) {
+            if let choreDone {
+                ChoreDoneBanner(done: choreDone) { withAnimation(.smooth) { self.choreDone = nil } }
+                    .padding(.bottom, 12)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .animation(.smooth, value: choreDone?.id)
         .trackScreen(.room)
     }
 
