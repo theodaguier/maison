@@ -603,6 +603,11 @@ final class HomeStore {
     func save(_ rule: AutomationRule) async throws {
         if isDemo {
             DemoHome.rules[rule.id] = rule.config
+            // A new rule shows in the list, as the server would add its automation.
+            if !states.values.contains(where: { $0.domain == "automation" && $0.attributes["id"]?.stringValue == rule.id }) {
+                states["automation.\(rule.id)"] = EntityState(entityID: "automation.\(rule.id)", state: "on",
+                                                              attributes: ["friendly_name": .string(rule.name), "id": .string(rule.id)])
+            }
             return
         }
         guard let editor = try await configEditor() else { throw HomeAssistantError.connectionClosed }
@@ -610,7 +615,11 @@ final class HomeStore {
     }
 
     func delete(_ rule: AutomationRule) async throws {
-        if isDemo { return }
+        if isDemo {
+            DemoHome.rules[rule.id] = nil
+            states = states.filter { !($0.value.domain == "automation" && $0.value.attributes["id"]?.stringValue == rule.id) }
+            return
+        }
         guard let editor = try await configEditor() else { throw HomeAssistantError.connectionClosed }
         try await editor.delete(.automation, id: rule.id)
     }
@@ -689,6 +698,10 @@ extension HomeStore {
     func area(of entity: EntityState) -> Area? {
         guard let id = layout.areaByEntity[entity.entityID] else { return nil }
         return layout.areas.first { $0.id == id }
+    }
+
+    func area(id: String) -> Area? {
+        layout.areas.first { $0.id == id }
     }
 
     func devices(in area: Area) -> [EntityState] {
