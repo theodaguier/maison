@@ -12,6 +12,9 @@ packages:
   GRDB:
     url: https://github.com/groue/GRDB.swift
     from: 7.0.0
+  PostHog:
+    url: https://github.com/PostHog/posthog-ios
+    exactVersion: 3.92.0
 
 settings:
   base:
@@ -31,8 +34,6 @@ targets:
     platform: iOS
     sources:
       - path: Maison
-    dependencies:
-      - package: GRDB
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.theodaguier.maison
@@ -62,6 +63,17 @@ targets:
         # Significant location changes wake the app to tell Home Assistant you left or came home.
         UIBackgroundModes:
           - location
+        # Filled from POSTHOG_API_KEY (xcconfig or xcodebuild). Empty leaves analytics off.
+        PostHogAPIKey: "$(POSTHOG_API_KEY)"
+        # Maison's relay (https), which holds the grid operators' client credentials. Empty: none offered.
+        MaisonRelayURL: "$(MAISON_RELAY_URL)"
+    dependencies:
+      - package: GRDB
+      - package: PostHog
+        product: PostHog
+    configFiles:
+      Debug: Config/Maison.xcconfig
+      Release: Config/Maison.xcconfig
     entitlements:
       path: Maison/Maison.entitlements
       properties:
@@ -69,16 +81,29 @@ targets:
           - iCloud.com.theodaguier.maison
         com.apple.developer.icloud-services:
           - CloudKit
+        # iOS 26 hides the share owner's name unless this is set. Display only; never stored.
+        com.apple.developer.icloud-extended-share-access:
+          - InProcessShareOwnerParticipantInfo
     scheme:
       testTargets:
         - MaisonTests
       gatherCoverageData: true
+      # User schemes live in xcuserdata and are invisible on CI. This writes
+      # Maison.xcscheme under xcshareddata, which is what xcodebuild loads.
+      management:
+        shared: true
 
   MaisonTests:
     type: bundle.unit-test
     platform: iOS
     sources:
       - path: MaisonTests
+        excludes:
+          - "Fixtures/**"
+      # Folder reference so recorded JSON keeps its directory in the test bundle.
+      - path: MaisonTests/Fixtures
+        type: folder
+        buildPhase: resources
     dependencies:
       - target: Maison
     settings:

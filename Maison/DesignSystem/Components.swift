@@ -29,10 +29,10 @@ struct NumberLabel: View {
     let value: String
     var unit: String?
     var size: NumberSize = .medium
-    var unitStyle: AnyShapeStyle = AnyShapeStyle(.tertiary)
+    var unitStyle: AnyShapeStyle = .init(.tertiary)
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: size == .large ? 1 : 4) {
+        HStack(alignment: .firstTextBaseline, spacing: size == .large || size == .small ? 1 : 4) {
             Text(value)
                 .font(size.value)
                 .monospacedDigit()

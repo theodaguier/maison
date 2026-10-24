@@ -21,9 +21,9 @@ struct AutomationsView: View {
             Group {
                 if store.automations.isEmpty {
                     ContentUnavailableView {
-                        Label("No Automations", systemImage: "clock")
+                        Label("No Rules", systemImage: "clock")
                     } description: {
-                        Text("Automations run on your server, even when your iPhone is off.")
+                        Text("Rules run in the home, even when your iPhone is off.")
                     } actions: {
                         Button("New Rule") { editor = EditorTarget(rule: .new(), isNew: true) }
                             .buttonStyle(.glassProminent)
@@ -36,7 +36,7 @@ struct AutomationsView: View {
                             HStack(alignment: .firstTextBaseline) {
                                 Text("Rules").font(.roundedTitle3)
                                 Spacer()
-                                Text("Run by your server")
+                                Text("Run by the home")
                                     .font(.roundedFootnote)
                                     .foregroundStyle(.tertiary)
                             }
@@ -60,7 +60,7 @@ struct AutomationsView: View {
                     .scrollEdgeEffectStyle(.hard, for: .top)
                 }
             }
-            .navigationTitle("Automations")
+            .navigationTitle("Rules")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     IntelligenceButton("Describe a Rule") { describes = true }
@@ -78,9 +78,22 @@ struct AutomationsView: View {
             .sheet(isPresented: $describes, onDismiss: { Task { await load() } }) {
                 DescribeRuleView()
             }
-            .task(id: store.automations.map(\.entityID)) { await load() }
+            .task(id: store.automations.map(\.entityID)) {
+                await load()
+                #if DEBUG
+                // `-rule lumieres_du_soir` opens a rule at launch, to check its design; `-rule offpeak` the one a finding proposes.
+                guard editor == nil, let id = UserDefaults.standard.string(forKey: "rule") else { return }
+                if id == "offpeak", let rule = await store.findings().first?.rule {
+                    ProposedRules.add(rule.id)
+                    editor = EditorTarget(rule: rule, isNew: false)
+                } else if let rule = rules[id] {
+                    editor = EditorTarget(rule: rule, isNew: false)
+                }
+                #endif
+            }
             .refreshable { await load() }
         }
+        .trackScreen(.automations)
     }
 
     private func load() async {
@@ -258,6 +271,11 @@ private struct AutomationCard: View {
         }
         if runsToday.count > 1 {
             return String(localized: "Ran \(runsToday.count) times today")
+        }
+        if let id = rule?.id, let created = ProposedRules.createdAt(id), automation.lastTriggered.map({ $0 < created }) ?? true {
+            return Calendar.current.isDateInToday(created)
+                ? String(localized: "Created today from a finding")
+                : String(localized: "Created \(created.formatted(.relative(presentation: .named))) from a finding")
         }
         guard let last = automation.lastTriggered else { return String(localized: "Never run") }
         if Calendar.current.isDateInToday(last) {

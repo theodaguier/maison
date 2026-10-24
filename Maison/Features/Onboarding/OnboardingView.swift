@@ -36,7 +36,7 @@ struct OnboardingView: View {
                         ServerFoundStep(
                             server: server,
                             joinedHousehold: store.household.location?.isShared == true ? store.household.household?.name : nil,
-                            onSignIn: { signIn(to: server.url) },
+                            onSignIn: { signIn(to: server) },
                             onPickAnother: { showsServerPicker = true }
                         )
                     }
@@ -96,6 +96,7 @@ struct OnboardingView: View {
         .errorFeedback(error)
         // The server found and the home ready are the two moments worth celebrating.
         .sensoryFeedback(trigger: step) { _, new in new == .found || new == .ready ? .success : nil }
+        .trackScreen(.onboarding)
     }
 
     /// The household's server first (when this iPhone joined one through iCloud), then those found on the Wi-Fi.
@@ -128,9 +129,9 @@ struct OnboardingView: View {
         step = candidates.isEmpty ? .searching : .found
     }
 
-    private func signIn(to server: URL) {
+    private func signIn(to server: ServerChoice) {
         Task {
-            await store.signIn(to: server) { url in
+            await store.signIn(to: server.url, remoteURL: server.remoteURL) { url in
                 try await webAuthenticationSession.authenticate(
                     using: url,
                     callbackURLScheme: HomeAssistantAuth.callbackScheme,
@@ -688,7 +689,7 @@ private struct PreparingStep: View {
         return [
             SetupStep(
                 title: String(localized: "Server Connection"),
-                detail: store.serverURL.flatMap { $0.host() }.map { String(localized: "Home Assistant · \($0)") },
+                detail: store.serverURL.flatMap { $0.host() }.map { String(localized: "Home Assistant, \($0)") },
                 isReady: isConnected
             ),
             SetupStep(
@@ -710,7 +711,7 @@ private struct PreparingStep: View {
             ),
             SetupStep(
                 title: String(localized: "Remote Access"),
-                detail: store.serverConfig == nil ? nil : remote?.host() ?? String(localized: "Not set up in Home Assistant"),
+                detail: store.serverConfig == nil ? nil : remote?.host() ?? String(localized: "Not Set Up"),
                 isReady: store.serverConfig != nil
             ),
             SetupStep(
@@ -804,8 +805,6 @@ private struct ReadyStep: View {
 private struct PresenceStep: View {
     @Environment(HomeStore.self) private var store
     let onFinish: () -> Void
-    @State private var presence = PresenceReporter.shared
-    @State private var isWorking = false
     @State private var error: String?
 
     var body: some View {
@@ -825,20 +824,14 @@ private struct PresenceStep: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Location").font(.roundedHeadline)
                     Text(store.isTrackedByHomeAssistant
-                         ? String(localized: "Home Assistant already knows when you’re home, through its own app.")
-                         : String(localized: "For “When everyone leaves”. Shared only with your server."))
+                        ? String(localized: "Home Assistant already knows when you’re home, through its own app.")
+                        : String(localized: "For “When everyone leaves”. Shared only with your server."))
                         .font(.roundedSubheadline)
                         .foregroundStyle(.secondary)
                 }
                 Spacer(minLength: 8)
                 if !store.isTrackedByHomeAssistant {
-                    if isWorking {
-                        ProgressView()
-                    } else {
-                        Toggle("Location", isOn: Binding(get: { presence.isEnabled }, set: { on in Haptics.impact(); Task { await toggle(on) } }))
-                            .labelsHidden()
-                            .tint(.green)
-                    }
+                    PresenceToggle(error: $error)
                 }
             }
             .padding(16)
@@ -855,13 +848,30 @@ private struct PresenceStep: View {
         }
         .errorFeedback(error)
     }
+}
+
+/// Turns location reporting on or off; asking for the permission and registering take a moment.
+struct PresenceToggle: View {
+    @Environment(HomeStore.self) private var store
+    @Binding var error: String?
+    @State private var isWorking = false
+
+    var body: some View {
+        if isWorking {
+            ProgressView()
+        } else {
+            Toggle("Location", isOn: Binding(get: { store.presence.isEnabled }, set: { on in Task { await toggle(on) } }))
+                .labelsHidden()
+                .tint(.green)
+        }
+    }
 
     private func toggle(_ on: Bool) async {
         error = nil
-        guard on else { presence.disable(); return }
+        guard on else { store.presence.disable(); return }
         isWorking = true
         do {
-            try await presence.enable(with: store)
+            try await store.presence.enable(with: store)
         } catch {
             self.error = error.localizedDescription
         }

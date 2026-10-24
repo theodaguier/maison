@@ -232,7 +232,6 @@ struct CheckNote: View {
 private struct TooComplexView: View {
     @Environment(HomeStore.self) private var store
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.openURL) private var openURL
     let proposal: RuleProposal
     let onRephrase: () -> Void
     let onContinue: () -> Void
@@ -283,16 +282,6 @@ private struct TooComplexView: View {
                                 .padding(.vertical, 15)
                                 .background(Theme.pillActive, in: .capsule)
                         }
-                        if let serverURL = store.serverURL {
-                            Button {
-                                openURL(serverURL.appending(path: "config/automation/edit/new"))
-                            } label: {
-                                Text("Open Home Assistant’s Editor")
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 15)
-                                    .background(Theme.pill, in: .capsule)
-                            }
-                        }
                     }
                     .font(.roundedHeadline)
                     .buttonStyle(.plain)
@@ -315,7 +304,7 @@ private struct TooComplexView: View {
 
     private var rows: [(understood: Bool, title: String, detail: String?)] {
         let rule = proposal.rule
-        let understood = rule.triggers.map(store.describe) + rule.conditions.map(store.describe) + rule.actions.map(store.describe)
+        let understood = rule.triggers.map(store.describe) + rule.conditions.map(store.describe) + rule.actions.map { store.describe($0, in: rule) }
         return understood.map { (true, $0.title, $0.detail) }
             + proposal.unsupported.map { (false, $0, String(localized: "Not supported yet")) }
             + proposal.unmatched.map { (false, $0, String(localized: "No matching device")) }

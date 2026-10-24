@@ -26,6 +26,10 @@ struct SettingsView: View {
     @Environment(BelongingsStore.self) private var belongings
     @AppStorage("appearance") private var appearance: Appearance = .system
     @AppStorage(DaySummarySetting.key) private var daySummary = true
+    @AppStorage(Analytics.enabledKey) private var analyticsEnabled = false
+    #if DEBUG
+    @State private var opensSources = UserDefaults.standard.bool(forKey: "sources") || UserDefaults.standard.string(forKey: "source") != nil
+    #endif
 
     var body: some View {
         NavigationStack {
@@ -47,8 +51,36 @@ struct SettingsView: View {
                     if store.serverURL != nil {
                         NavigationLink { ProfilePage() } label: { ProfileCard() }
                             .buttonStyle(.plain)
-                        NavigationLink { ServerPage() } label: { ServerCard(showsArrow: true) }
-                            .buttonStyle(.plain)
+                        SettingsGroup("Sources") {
+                            NavigationLink { ServerPage() } label: {
+                                SettingsRow(title: "Home Assistant", detail: homeAssistantDetail, showsChevron: true) {
+                                    HomeAssistantTile(size: 30)
+                                }
+                            }
+                            SettingsDivider()
+                            NavigationLink { IPhoneSourcePage() } label: {
+                                SettingsRow(title: "iPhone", detail: iPhoneDetail, showsChevron: true) {
+                                    Image(systemName: "apple.logo")
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundStyle(.primary)
+                                        .frame(width: 30, height: 30)
+                                        .background(Theme.card, in: .rect(cornerRadius: 8))
+                                        .overlay { RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.cardBorder, lineWidth: 1) }
+                                }
+                            }
+                            SettingsDivider()
+                            NavigationLink { AllSourcesPage() } label: {
+                                HStack(spacing: 12) {
+                                    SettingsIcon(symbol: "plus", color: .blue)
+                                    Text("Add a Source").font(.roundedBody).foregroundStyle(.blue)
+                                    Spacer()
+                                }
+                                .padding(.vertical, 10)
+                                .contentShape(.rect)
+                            }
+                        }
+                        .buttonStyle(.plain)
+                        .task { await store.measureLatency() }
                     }
                     SettingsGroup("Household") {
                         HouseholdSection()
@@ -65,30 +97,8 @@ struct SettingsView: View {
                                 SettingsRow(symbol: "wifi", color: .teal, title: "Local Network",
                                             value: store.serverURL?.host() ?? "", showsChevron: true)
                             }
-                            SettingsDivider()
-                            NavigationLink { PermissionsPage() } label: {
-                                SettingsRow(title: "Home Assistant Permissions",
-                                            value: store.currentUser?.isAdmin == true ? String(localized: "Full") : String(localized: "Standard"),
-                                            showsChevron: true) {
-                                    HomeAssistantTile(size: 30)
-                                }
-                            }
                         }
                         .buttonStyle(.plain)
-                        if !store.integrationSummaries.isEmpty {
-                            SettingsGroup("Integrations") {
-                                ForEach(Array(store.integrationSummaries.prefix(8).enumerated()), id: \.element.domain) { index, item in
-                                    if index > 0 { SettingsDivider() }
-                                    NavigationLink { IntegrationPage(integration: item) } label: {
-                                        SettingsRow(title: LocalizedStringKey(stringLiteral: item.title), detail: store.integrationDetail(item),
-                                                    showsChevron: true) {
-                                            IntegrationLogo(domain: item.domain)
-                                        }
-                                    }
-                                }
-                            }
-                            .buttonStyle(.plain)
-                        }
                     }
                     SettingsGroup("Paperwork") {
                         NavigationLink { DocumentsPage() } label: {
@@ -133,6 +143,28 @@ struct SettingsView: View {
                         .buttonStyle(.plain)
                     }
                     SettingsGroup("App") {
+                        HStack(spacing: 12) {
+                            SettingsIcon(symbol: "chart.bar.fill", color: .purple)
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text("Share Usage Data")
+                                    .font(.roundedBody)
+                                Text("How you use Maison. Never your home.")
+                                    .font(.roundedFootnote)
+                                    .foregroundStyle(.tertiary)
+                            }
+                            Spacer(minLength: 8)
+                            Toggle("Share Usage Data", isOn: Binding(
+                                get: { analyticsEnabled },
+                                set: { enabled in
+                                    analyticsEnabled = enabled
+                                    Analytics.shared.setEnabled(enabled)
+                                }
+                            ))
+                            .labelsHidden()
+                            .tint(.green)
+                        }
+                        .padding(.vertical, 6)
+                        SettingsDivider()
                         SettingsRow(symbol: "info.circle.fill", color: .gray, title: "Version", value: Bundle.main.versionString)
                     }
                     if store.serverURL != nil, !store.isDemoHome {
@@ -146,7 +178,30 @@ struct SettingsView: View {
             .background(Theme.background)
             .scrollEdgeEffectStyle(.hard, for: .top)
             .navigationTitle("Settings")
+            #if DEBUG
+            // `-sources YES` opens All Sources, to check its design; `-source meter` one of them.
+            .navigationDestination(isPresented: $opensSources) { AllSourcesPage() }
+            #endif
         }
+        .trackScreen(.settings)
+    }
+
+    /// "Connected locally, 34 ms".
+    private var homeAssistantDetail: String {
+        guard store.phase == .connected else { return String(localized: "Not connected") }
+        let local = store.serverURL?.isLocalNetwork == true
+        guard let latency = store.latencies.last else {
+            return local ? String(localized: "Connected locally") : String(localized: "Connected remotely")
+        }
+        let milliseconds = Int(latency.milliseconds)
+        return local ? String(localized: "Connected locally, \(milliseconds) ms") : String(localized: "Connected remotely, \(milliseconds) ms")
+    }
+
+    /// What the iPhone gives the home.
+    private var iPhoneDetail: String {
+        if store.presence.isEnabled { return String(localized: "Location") }
+        if store.isTrackedByHomeAssistant { return String(localized: "Location, through the Home Assistant app") }
+        return String(localized: "Nothing shared")
     }
 }
 
@@ -193,6 +248,35 @@ struct SettingsGroup<Content: View>: View {
 struct SettingsDivider: View {
     var body: some View {
         Theme.separator.frame(height: 1).padding(.leading, 42)
+    }
+}
+
+/// Whether Maison tells Home Assistant when you leave or come home; switched off here as well as turned on.
+struct PresenceRow: View {
+    @Environment(HomeStore.self) private var store
+    @State private var error: String?
+
+    var body: some View {
+        HStack(spacing: 12) {
+            SettingsIcon(symbol: "location.fill", color: .blue)
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Location")
+                    .font(.roundedBody)
+                if let error {
+                    Text(error)
+                        .font(.roundedFootnote)
+                        .foregroundStyle(.orange)
+                } else if store.isTrackedByHomeAssistant, !store.presence.isEnabled {
+                    Text("Home Assistant already knows when you’re home, through its own app.")
+                        .font(.roundedFootnote)
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            Spacer(minLength: 8)
+            PresenceToggle(error: $error)
+        }
+        .padding(.vertical, 6)
+        .errorFeedback(error)
     }
 }
 
@@ -357,8 +441,8 @@ struct ServerCard: View {
 
     private var footer: String {
         store.household.status == .ready && store.household.household != nil
-            ? String(localized: "Home Assistant \(store.serverVersion ?? "") · synced with iCloud")
-            : String(localized: "Home Assistant \(store.serverVersion ?? "") · \(store.serverURL?.host() ?? "")")
+            ? String(localized: "Home Assistant \(store.serverVersion ?? ""), synced with iCloud")
+            : String(localized: "Home Assistant \(store.serverVersion ?? ""), \(store.serverURL?.host() ?? "")")
     }
 
     private var connectionText: String {
@@ -424,12 +508,12 @@ extension HomeStore {
     /// "Administrator · Apple Account"
     var profileSubtitle: String {
         let rights = currentUser?.isAdmin == true ? String(localized: "Administrator") : String(localized: "Resident")
-        return household.status == .ready ? String(localized: "\(rights) · Apple Account") : rights
+        return household.status == .ready ? String(localized: "\(rights), Apple Account") : rights
     }
 
-    /// "Tailscale", "Nabu Casa" or the remote host; `nil` when the server has no external address.
+    /// "Tailscale", "Nabu Casa" or the remote host; `nil` when the server has no address away from home.
     var remoteAccessName: String? {
-        guard let host = serverConfig?.externalURL.flatMap({ URL(string: $0)?.host() }), !host.isEmpty else { return nil }
+        guard let host = remoteURL?.host(), !host.isEmpty else { return nil }
         if host.hasSuffix(".ts.net") { return "Tailscale" }
         if host.hasSuffix(".ui.nabu.casa") { return "Nabu Casa" }
         return host

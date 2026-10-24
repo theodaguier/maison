@@ -47,7 +47,7 @@ extension EntityState {
     // MARK: Appearance
 
     var symbolName: String {
-        let name = self.name.lowercased()
+        let name = name.lowercased()
         switch kind {
         case .light:
             if name.contains("lampadaire") || name.contains("floor") { return "lamp.floor.fill" }
@@ -131,7 +131,7 @@ extension EntityState {
     /// The short status shown under the name, without the room.
     var statusText: String {
         // "Allumé · 40 %" agrees with the device's name, like the state label.
-        rawStatusText.components(separatedBy: " · ").map { Phrasing.agree($0, with: name) }.joined(separator: " · ")
+        rawStatusText.components(separatedBy: ", ").map { Phrasing.agree($0, with: name) }.joined(separator: ", ")
     }
 
     private var rawStatusText: String {
@@ -139,7 +139,7 @@ extension EntityState {
         switch kind {
         case .light, .fan:
             guard state == "on" else { return String(localized: "Off") }
-            if let level, supportsLevel { return String(localized: "On · \(level.formatted(.percent.precision(.fractionLength(0))))") }
+            if let level, supportsLevel { return String(localized: "On, \(level.formatted(.percent.precision(.fractionLength(0))))") }
             return String(localized: "On")
         case .switch, .valve:
             return state == "on" || state == "open" ? String(localized: "On") : String(localized: "Off")
@@ -158,12 +158,12 @@ extension EntityState {
             case "idle": String(localized: "Idle")
             default: nil
             }
-            return [action, measured].compactMap { $0 }.joined(separator: " · ")
+            return [action, measured].compactMap(\.self).joined(separator: ", ")
         case .mediaPlayer:
             let title = attributes["media_title"]?.stringValue
             let artist = attributes["media_artist"]?.stringValue
             if state == "playing" || state == "paused", let title {
-                return [title, artist].compactMap { $0 }.joined(separator: " · ")
+                return [title, artist].compactMap(\.self).joined(separator: ", ")
             }
             return state == "off" ? String(localized: "Off") : mediaStateText
         case .lock:

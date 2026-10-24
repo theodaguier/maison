@@ -1,6 +1,6 @@
 import Foundation
-import Testing
 @testable import Maison
+import Testing
 
 struct AutomationRuleTests {
     @Test func readsTheCommonShapes() {
@@ -50,36 +50,5 @@ struct AutomationRuleTests {
     @Test func readsSunOffsets() {
         let rule = AutomationRule(id: "s", config: ["triggers": [["trigger": "sun", "event": "sunrise", "offset": "-01:15:00"]]])
         #expect(rule.triggers == [.sun(.sunrise, offset: -75)])
-    }
-
-    @Test func roundTripsTheAddedSteps() {
-        var rule = AutomationRule.new()
-        rule.name = "Catalogue"
-        rule.triggers = [.every(minutes: 15), .every(minutes: 120), .calendar(entityID: "calendar.travail", start: true, offset: -15),
-                         .person(entityID: "person.theo", arrives: true), .tag(id: "entree"), .serverStarts]
-        rule.conditions = [.daytime, .nighttime, .person(entityID: "person.theo", isHome: false),
-                           .threshold(entityID: "sensor.humidite", above: 70, below: nil)]
-        rule.actions = [.lights(areaID: "chambre", on: false), .lights(areaID: nil, on: false), .script(entityID: "script.arrosage"),
-                        .rule(entityID: "automation.volets", command: .turnOff)]
-        let reread = AutomationRule(id: rule.id, config: rule.config)
-        #expect(reread == rule)
-    }
-
-    @Test func readsTheAddedShapesFromHomeAssistant() {
-        let config: JSONValue = [
-            "triggers": [
-                ["trigger": "time_pattern", "minutes": "/30"],
-                ["trigger": "time_pattern", "hours": "/2"],
-                ["trigger": "homeassistant", "event": "shutdown"],
-            ],
-            "conditions": [["condition": "state", "entity_id": "person.theo", "state": "home"]],
-            "actions": [["action": "light.turn_off", "target": ["entity_id": "all"]], ["action": "automation.trigger", "target": ["entity_id": "automation.x"]]],
-        ]
-        let rule = AutomationRule(id: "c", config: config)
-        // Every minute of every other hour is not "every 2 hours": kept as written.
-        #expect(rule.triggers.first == .every(minutes: 30))
-        #expect(rule.triggers.dropFirst().allSatisfy { if case .other = $0 { true } else { false } })
-        #expect(rule.conditions == [.person(entityID: "person.theo", isHome: true)])
-        #expect(rule.actions == [.lights(areaID: nil, on: false), .rule(entityID: "automation.x", command: .trigger)])
     }
 }

@@ -1,7 +1,7 @@
 import CloudKit
 import Foundation
-import Testing
 @testable import Maison
+import Testing
 
 struct HouseholdMappingTests {
     let zoneID = HouseholdLocation.owned.zoneID
@@ -137,5 +137,124 @@ struct HouseholdMappingTests {
         ]
 
         #expect(members.sortedForDisplay().map(\.id) == ["3", "4", "5", "1", "2"])
+    }
+
+    @Test func theCurrentUserAndTheOwnerAreNeverInvitations() {
+        let currentUser = HouseholdMember(
+            participantID: "_me", nameComponents: nil, email: nil, phoneNumber: nil,
+            role: .owner, acceptance: .pending, isCurrentUser: true
+        )
+        #expect(!currentUser.isPending)
+        #expect(!currentUser.showsAsInvitation)
+        #expect(currentUser.resolvedName(accountName: "Théo") == "Théo")
+        #expect(currentUser.initials(accountName: "Théo") == "T")
+        #expect(currentUser.resolvedName(accountName: "  ") == nil)
+        #expect(currentUser.initials(accountName: nil) == nil)
+
+        // CloudKit often reports the owner as unknown, and on iOS 26 their name is missing.
+        let owner = HouseholdMember(
+            participantID: "owner", nameComponents: nil, email: nil, phoneNumber: nil,
+            role: .owner, acceptance: .unknown, isCurrentUser: false
+        )
+        #expect(!owner.isPending)
+        #expect(!owner.showsAsInvitation)
+        #expect(owner.resolvedName(accountName: "Théo") == nil)
+
+        var name = PersonNameComponents()
+        name.givenName = "Camille"
+        name.familyName = "Martin"
+        let joined = HouseholdMember(
+            participantID: "c", nameComponents: name, email: "camille@icloud.com", phoneNumber: nil,
+            role: .privateUser, acceptance: .pending, isCurrentUser: true
+        )
+        #expect(!joined.isPending)
+        #expect(joined.name?.contains("Camille") == true)
+        #expect(joined.contact == "camille@icloud.com")
+        #expect(HouseholdMember(id: "named", name: "Camille Martin", role: .resident).initials(accountName: nil) == "CM")
+
+        let accepted = HouseholdMember(
+            participantID: "a", nameComponents: nil, email: nil, phoneNumber: nil,
+            role: .administrator, acceptance: .accepted, isCurrentUser: false
+        )
+        #expect(!accepted.isPending)
+        #expect(!accepted.showsAsInvitation)
+        #expect(accepted.resolvedName(accountName: "Théo") == nil)
+
+        #expect(!HouseholdMember.isPendingInvitation(role: .administrator, acceptance: .pending, isCurrentUser: true))
+        #expect(!HouseholdMember.isPendingInvitation(role: .owner, acceptance: .pending, isCurrentUser: false))
+        #expect(!HouseholdMember.isPendingInvitation(role: .privateUser, acceptance: .unknown, isCurrentUser: false))
+        #expect(HouseholdMember.isPendingInvitation(role: .privateUser, acceptance: .pending, isCurrentUser: false))
+    }
+
+    @Test func aRealInvitationKeepsItsContactAndStaysPending() {
+        let invite = HouseholdMember(
+            participantID: "j", nameComponents: nil, email: "jules@icloud.com", phoneNumber: nil,
+            role: .privateUser, acceptance: .pending, isCurrentUser: false
+        )
+        let byPhone = HouseholdMember(
+            participantID: "p", nameComponents: nil, email: nil, phoneNumber: "+33612345678",
+            role: .privateUser, acceptance: .pending, isCurrentUser: false
+        )
+
+        #expect(invite.isPending)
+        #expect(invite.showsAsInvitation)
+        #expect(invite.name == "jules@icloud.com")
+        #expect(invite.invitationContact == "jules@icloud.com")
+        #expect(invite.initials(accountName: "Théo") == "J")
+        #expect(invite.resolvedName(accountName: "Théo") == "jules@icloud.com")
+        #expect(byPhone.invitationContact == "+33612345678")
+        #expect(byPhone.initials(accountName: nil) == "3")
+    }
+
+    @Test func aStoredPendingFlagOnTheCurrentUserIsCorrected() {
+        let wrong = HouseholdMember(id: "me", name: nil, role: .administrator, isPending: true, isCurrentUser: true)
+        let owner = HouseholdMember(id: "owner", name: nil, role: .owner, isPending: true)
+        let invite = HouseholdMember(id: "j", name: "jules@icloud.com", role: .resident, isPending: true)
+
+        #expect(!wrong.normalized.isPending)
+        #expect(!wrong.showsAsInvitation)
+        #expect(wrong.resolvedName(accountName: "Ada Lovelace") == "Ada Lovelace")
+        #expect(wrong.initials(accountName: "Ada Lovelace") == "AL")
+        #expect(!owner.showsAsInvitation)
+        #expect(invite.normalized.isPending)
+        #expect([owner, invite].sortedForDisplay().map(\.id) == ["owner", "j"])
+    }
+
+    @Test func removedParticipantsLeaveAndThePrivateOwnerIsTheCurrentUser() {
+        #expect(!HouseholdMember.belongsInHousehold(role: .privateUser, acceptance: .removed, isCurrentUser: false))
+        #expect(HouseholdMember.belongsInHousehold(role: .owner, acceptance: .removed, isCurrentUser: false))
+        #expect(HouseholdMember.belongsInHousehold(role: .privateUser, acceptance: .accepted, isCurrentUser: false))
+
+        #expect(HouseholdMember.matchesCurrentUser(
+            role: .owner, participantRecordName: nil, currentUserRecordName: nil,
+            matchesCurrentParticipant: false, inPrivateDatabase: true
+        ))
+        #expect(!HouseholdMember.matchesCurrentUser(
+            role: .owner, participantRecordName: nil, currentUserRecordName: nil,
+            matchesCurrentParticipant: false, inPrivateDatabase: false
+        ))
+        #expect(HouseholdMember.matchesCurrentUser(
+            role: .privateUser, participantRecordName: "_me", currentUserRecordName: "_me",
+            matchesCurrentParticipant: false, inPrivateDatabase: false
+        ))
+        #expect(!HouseholdMember.matchesCurrentUser(
+            role: .administrator, participantRecordName: nil, currentUserRecordName: "_me",
+            matchesCurrentParticipant: false, inPrivateDatabase: false
+        ))
+        #expect(HouseholdMember.matchesCurrentUser(
+            role: .privateUser, participantRecordName: "other", currentUserRecordName: "_me",
+            matchesCurrentParticipant: true, inPrivateDatabase: false
+        ))
+    }
+
+    @Test func aChosenDisplayNameRoundTrips() {
+        let record = MemberProfile.record("Théo", for: "_me", in: zoneID)
+        #expect(record.recordType == "MemberProfile")
+        #expect(record.recordID.recordName == "profile-_me")
+        #expect(MemberProfile.displayName(from: record) == "Théo")
+
+        let cleared = MemberProfile.record("   ", for: "_me", updating: record, in: zoneID)
+        #expect(MemberProfile.displayName(from: cleared) == nil)
+        #expect(MemberProfile.displayName(from: household.record(in: zoneID)) == nil)
     }
 }

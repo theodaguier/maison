@@ -55,8 +55,8 @@ struct DeviceRow: View {
     private var detail: String? {
         let room = showsRoom ? store.area(of: entity)?.name : nil
         let status = usesStateLabel ? nil : entity.statusText
-        let parts = [room, status].compactMap { $0 }.filter { !$0.isEmpty }
-        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+        let parts = [room, status].compactMap(\.self).filter { !$0.isEmpty }
+        return parts.isEmpty ? nil : parts.joined(separator: ", ")
     }
 
     /// Rows whose trailing control is a text label don't repeat the status underneath.
@@ -206,7 +206,7 @@ struct SceneTile: View {
     private var subtitle: String {
         let members = entity.attributes["entity_id"]?.arrayValue?.compactMap(\.stringValue) ?? []
         let names = members.compactMap { store.states[$0]?.name }
-        if !names.isEmpty { return names.prefix(3).joined(separator: " · ") }
+        if !names.isEmpty { return names.prefix(3).joined(separator: ", ") }
         return entity.kind == .script ? String(localized: "Script") : String(localized: "Scene")
     }
 

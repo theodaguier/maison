@@ -23,7 +23,7 @@ jobs:
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
       ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Check secrets
         run: |
@@ -79,6 +79,8 @@ jobs:
           echo "BUILD_NUMBER=${{ github.run_number }}" >> "$GITHUB_ENV"
 
       - name: Archive
+        env:
+          POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
         run: |
           mkdir -p build
           set -o pipefail
@@ -95,6 +97,7 @@ jobs:
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
             MARKETING_VERSION="$MARKETING_VERSION" \
             CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
+            POSTHOG_API_KEY="${POSTHOG_API_KEY:-}" \
             2>&1 | tee build/archive.log | xcbeautify --renderer github-actions
 
       - name: Upload to TestFlight
@@ -118,7 +121,7 @@ jobs:
 
       - name: Logs
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-logs
           path: |

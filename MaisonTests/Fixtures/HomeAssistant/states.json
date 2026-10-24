@@ -1,0 +1,41 @@
+[
+  {
+    "entity_id": "light.salon",
+    "state": "on",
+    "attributes": {
+      "friendly_name": "Salon",
+      "brightness": 180,
+      "supported_color_modes": ["xy", "brightness"],
+      "color_mode": "xy"
+    },
+    "last_changed": "2026-10-20T08:12:03.123456+00:00",
+    "last_updated": "2026-10-20T08:12:03.123456+00:00",
+    "context": {"id": "01HZX", "parent_id": null, "user_id": null}
+  },
+  {
+    "entity_id": "sensor.salon_temperature",
+    "state": "21.5",
+    "attributes": {
+      "friendly_name": "Température salon",
+      "device_class": "temperature",
+      "unit_of_measurement": "°C",
+      "state_class": "measurement"
+    },
+    "last_changed": "2026-10-20T07:01:00+00:00"
+  },
+  {
+    "entity_id": "climate.salon",
+    "state": "heat",
+    "attributes": {
+      "friendly_name": "Thermostat",
+      "current_temperature": 21.0,
+      "temperature": 20.0,
+      "hvac_modes": ["off", "heat"]
+    }
+  },
+  {
+    "entity_id": "lock.porte",
+    "state": "locked",
+    "attributes": {"friendly_name": "Porte"}
+  }
+]

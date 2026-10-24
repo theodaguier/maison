@@ -1,0 +1,6 @@
+{
+  "logged_in": true,
+  "cloud": "logged_in",
+  "remote_domain": "abc123.ui.nabu.casa",
+  "prefs": {"remote_enabled": true, "google_enabled": false}
+}

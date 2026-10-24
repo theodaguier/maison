@@ -128,11 +128,12 @@ struct InviteSheet: View {
     private var avatars: some View {
         HStack(spacing: -6) {
             ForEach(store.household.members.prefix(4)) { member in
-                Text(String((member.name ?? "?").prefix(1)))
-                    .font(.roundedHeadline)
-                    .frame(width: 44, height: 44)
-                    .background(Theme.pill, in: .circle)
-                    .overlay { Circle().strokeBorder(Theme.background, lineWidth: 2) }
+                MemberAvatar(
+                    initials: member.initials(accountName: store.currentUser?.name),
+                    pending: member.showsAsInvitation,
+                    size: 44
+                )
+                .overlay { Circle().strokeBorder(Theme.background, lineWidth: 2) }
             }
             Image(systemName: "plus")
                 .font(.system(size: 16, weight: .medium))
@@ -201,7 +202,7 @@ struct InviteSheet: View {
 }
 
 /// The system share sheet, reporting where the invitation went ("Messages").
-private struct ActivitySheet: UIViewControllerRepresentable {
+struct ActivitySheet: UIViewControllerRepresentable {
     let items: [Any]
     let onFinish: (String?) -> Void
 

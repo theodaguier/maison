@@ -1,6 +1,6 @@
 import Foundation
-import Testing
 @testable import Maison
+import Testing
 
 struct HomeAssistantAuthTests {
     let server = URL(string: "http://192.168.1.179:8123")!

@@ -4,32 +4,9 @@
 
 **Maison understands your home and acts for you, with nothing to set up.**
 
-Running a home is much more than home automation. Maison starts with what can be measured and acted on: comfort, energy and the network. What has no sensor comes in only when it serves that core, such as a bill that gives the price per kWh.
+Home Assistant collects; Maison understands and acts. Going further than Home Assistant doesn't mean collecting more data than it does — it already reads thousands of brands — but doing more with that data: explaining, estimating, learning, and turning what it finds into actions.
 
-Home Assistant is the memory of everything that is measured; Maison understands and acts. Going further than Home Assistant doesn't mean collecting more data than it does — it already reads thousands of brands — but doing more with that data, and with what no sensor sees: explaining, estimating, learning, and turning what it finds into actions.
-
-## The core
-
-Maison is first about what is measured in the home and what Maison can act on. Each core domain has one sheet: one number with its usual range, what Maison found, and one action.
-
-1. **Comfort:** temperature, humidity, air quality, when to air, and the bedroom at night, crossed with sleep from Health.
-2. **Energy and water:** electricity, gas, water, heating, solar production, the cost of the day and the month.
-3. **Network:** internet, Wi-Fi, devices on the network, outages, speed.
-
-Control (devices, scenes, rules) and safety (doors, locks, leaks, smoke) stay the base the app already has.
-
-## Around the core
-
-What has no sensor comes in only when it serves the core:
-
-- **Documents:** any document can be scanned, recognised, filed and found again. Energy bills and contracts are also read for the supplier, the price per kWh and the off-peak hours (see Reading paperwork).
-- **Upkeep raised by a device:** a filter to clean, a battery running low, a device offline. No task without a device behind it.
-- **Objects:** every object in the home, durable or consumable, in its room, with its emoji, its price, its warranty and its documents. Consumables (razor blades, filters, bulbs) get a replacement interval learned from the household's own replacements.
-- **Presence and away mode:** for rules, such as not heating water in an empty home.
-
-## Not now
-
-Moments of life (sleep, showers, laundry, airing), acting on other documents (insurance renewals, lease reviews), chores and shared tasks, plants and pets, the household budget, the garden. They may come back once the core is solid; none of them gets its own tab.
+V1 is that core, and that core only: three scores — Comfort, Energy and Network — and housekeeping, room by room, fed through one abstract source boundary that knows no brand.
 
 ## Principles
 
@@ -37,7 +14,7 @@ Moments of life (sleep, showers, laundry, airing), acting on other documents (in
 2. **Nothing to set up, and never a dead end.** Every feature has a path for every user: automatic when it can be, assisted otherwise (Maison suggests, one tap confirms), manual as a last resort (a form, a tap, a drawing). No "not supported", no empty screen.
 3. **Manual stays smart.** What the user enters is a starting point: Maison adjusts it with what it already knows (time spent at home from the iPhone's location, weather, season, household) and recalibrates it with every real value, such as the next bill. A sensor replaces it on its own when one appears.
 4. **Every number says where it comes from:** measured, estimated or entered.
-5. **Local first.** The household's data stays in the home.
+5. **Local first.** The household's data stays in the home. Only what the household shares goes through iCloud: its name, the server's addresses, favourites and the plan, never a device's state or history.
 6. **The best of the iPhone:** a native, polished app, and the data only the iPhone has (location, Health, weather, Focus).
 
 ## How it works
@@ -45,138 +22,109 @@ Moments of life (sleep, showers, laundry, airing), acting on other documents (in
 **Sources → intelligence layer → what the user sees.**
 
 - **Home Assistant is the home's memory.** It is the always-on device that measures and keeps history, which neither the iPhone (no background work) nor HomeKit (no history) can do. Home Assistant is the only source of history for now; HomeKit and Matter will be discussed if Maison opens up to people without Home Assistant.
-- **The iPhone adds what Home Assistant doesn't have:** location and presence, sleep from Health, the weather forecast, Focus modes, and the network as the iPhone sees it.
-- **The main appliances add what isn't measured** (see Appliances for energy).
-- **Maison sets Home Assistant up itself:** history retention, an internet check (Ping), devices Home Assistant discovered, the energy dashboard.
-- **A Maison add-on runs the intelligence layer around the clock** on the household's Home Assistant, installed from the app in one tap (Home Assistant OS and Supervised).
-- **The only thing on our side is a push relay that stores nothing**, because the app's APNs key can't be shipped to every home. Payloads can be end-to-end encrypted.
-- **Where it can, the intelligence layer is one Swift package** built for iOS and for Linux, so the add-on runs the same logic as the app. Wording by the on-device model stays on the iPhone.
+- **The iPhone adds what Home Assistant doesn't have:** location and presence, sleep from Health, the weather forecast, the calendar, and Focus modes. iOS only says whether a Focus is on, not which one: Maison learns "Sleep" or "Work" through a Focus filter the person adds to that Focus once (assisted). The iPhone can't list the devices on the Wi-Fi nor read what other apps play (Apple Music aside); Home Assistant brings those through the router's and the speakers' integrations.
+- **Each source is a connector behind one abstract boundary, and Maison stays brand-agnostic.** Home Assistant is the first connector, not the product, and for now the only one: a box, a router or a meter reaches Maison through its Home Assistant integration, never through a connector written for that brand. Another source could later plug into the same boundary; nothing in it, and nothing V1 shows, depends on the brand behind a value.
+- **Documents feed the scores, and only those.** An energy bill, an internet-box bill, an energy contract or a box contract is analysed on the device and linked to Energy or Network. A warranty, a manual, insurance or a lease waits with the inventory (see Parking).
+- **What isn't connected waits.** An inventory of objects is paused, not dropped (see Parking). V1 does not ask the household to list what it owns.
+- **Maison sets Home Assistant up itself:** an internet check (Ping), devices Home Assistant discovered, the energy dashboard, through the same APIs as Home Assistant's own settings. These need an administrator account; for a resident, Maison asks the administrator in one tap instead. History retention has no API (it is only set in `configuration.yaml`): the add-on sets it.
+- **A Maison add-on runs the intelligence layer around the clock** on the household's Home Assistant, installed from the app in one tap (Home Assistant OS and Supervised). Home Assistant Container and Core have no add-ons: the same package ships as a Docker container to run beside it (assisted), and without either the iPhone computes the findings when the app opens and in background refreshes (manual), with fewer of them and later.
+- **The only thing on our side is a push relay that stores nothing**, because the app's APNs key can't be shipped to every home. It plugs into Home Assistant the way its own app does: Maison registers a `push_url` and a push token as a mobile app, and Home Assistant's `notify.mobile_app_*` service posts to the relay, so any automation can notify through Maison. Payloads can be end-to-end encrypted.
+- **Where it can, the intelligence layer is one Swift package** built for iOS and for Linux, so the add-on runs the same logic as the app. It therefore produces structured facts (a kind, values, units, the entities involved), never sentences: wording and translation happen on the iPhone, by the on-device model or the written form.
 
 ## The intelligence layer
 
-It already exists in pieces: `DayFacts` computes the facts, `DayDigest` has them written, `GroundedNumbers` rejects a text with a number that isn't in the facts, `RuleDraft` turns a sentence into a rule. They are spread out and wired to Home Assistant; they become one module behind the source boundary.
+It already exists in pieces: `DayFacts` computes the facts, `DayDigest` has them written, `GroundedNumbers` rejects a text with a number that isn't in the facts, `RuleDraft` turns a sentence into a rule. They are spread out and wired to Home Assistant: every screen reads `HomeStore.states` directly, and `DayFacts` returns translated sentences from an extension of the store. They become one module behind the source boundary, free of SwiftUI, the main actor and string catalogs, so it builds on Linux.
 
 What it does:
 
 1. **Unify:** one picture of the home, whatever the source, each value keeping its origin.
 2. **Understand the context:** who is home, the weather, the season, the household's habits.
-3. **Estimate what is missing:** from the main appliances, the context, and how long devices ran.
+3. **Estimate what is missing:** from the context, how long devices ran, and the next real bill. The object inventory is paused (see Parking).
 4. **Learn:** the home's usual ranges and habits; a dismissed finding or a corrected estimate counts.
 5. **Explain:** always why, never a bare number.
-6. **Act:** every finding ends in one tap — create a rule, launch a scene, check a device or an object.
+6. **Act:** every finding ends in one tap — create a rule, launch a scene, check a device.
 
 Its rule: **it computes, the language model only words it.** It therefore works without Apple Intelligence: when the model doesn't support the language, the findings show in a short written form instead of disappearing.
 
-### What it is, concretely
+## Moments of life
 
-Mostly ordinary Swift code: statistics and rules over the home's history. A language model is used for three narrow tasks only, and never decides on its own.
+Maison follows what happens in the home, not only its devices. Each moment has three levels; without any equipment, Maison's action becomes advice and reminders instead of commands. A manual entry improves the inference, and a sensor replaces the inference when it arrives.
 
-**Computed by code, no AI:**
+| Moment | With a sensor | Without one (inferred) | By hand |
+|---|---|---|---|
+| Sleeping | Bedroom temperature, CO₂, noise | Health, Sleep Focus, usual bedtime | "Slept well?" in the morning |
+| Waking up | First motion, first light | Wake-up time in Health | — |
+| Showering | Bathroom humidity, water heater | Usual times, presence | One tap, a shortcut, Siri |
+| Cooking | Oven or hob power, particles | Mealtimes, presence | "I'm cooking", a timer |
+| Laundry | The machine's power curve | Usual times, presence | "Machine started": end reminder, cost |
+| Working from home | CO₂ in the office | Weekday presence, Work Focus, calendar | "Working from home today" |
+| Relaxing | TV and music in Home Assistant | Apple Music playing on the iPhone | An "Evening" scene |
+| Cleaning (in V1, see below) | Robot vacuum, the room's humidity and dust | The room's type, when people are usually home, pollen, guests | Tasks per room, recurring reminders |
+| Airing | Window sensors, CO₂ | Outdoor weather and air quality, season: the best time to air today | "I aired": daily reminder |
+| Guests | More devices on the router (its Home Assistant integration) | Calendar | "I have guests" |
+| Leaving and coming back | Locks, windows | The iPhone's location, calendar | A "Before leaving" checklist |
+| Working out | — | A Health workout while at home | — |
 
-- **The facts of the day** (`DayFacts`): what changed, what ran, what stayed open.
-- **Usual ranges:** percentiles of the home's own history, per room and per hour, never fixed thresholds.
-- **The three scores:** comfort is the share of the day each room spent in its range; energy compares use with the usual one at equal weather (higher means more sober); network is internet availability over 24 hours.
-- **Estimates:** a device's power (main appliances, energy label) multiplied by how long it ran; the cost from the price per kWh.
-- **Findings and their order:** each finding is a rule with a threshold learned from the home; the home screen shows one at a time, safety first.
-- **Habits:** a manual action repeated in the same context, counted, then offered as a rule.
+**Inferring, then asking.** When Maison guesses ("Was that a shower?") and the user confirms, it learns; detection improves and the user has less and less to say.
 
-**Where a language model is used:**
+**The sensor that unlocks a moment.** When a moment can't be detected, Maison can say which single sensor would do it.
 
-1. **Wording the day summary** (`DayDigest`): the facts go in, a short text comes out. Any number in the text must be in the facts (`GroundedNumbers`), otherwise the text is rejected.
-2. **Turning a sentence into a rule** (`RuleDraft`): the model fills a typed structure (QUAND, SI, ALORS); the code then finds the real devices and drops any number that wasn't in the sentence.
-3. **Reading a scanned document:** what it is and what it says (product, merchant, amounts, dates, price per kWh), in any language, on the iPhone. The code then checks every value.
-
-The model is Apple's on-device model (the one behind Apple Intelligence), through the Foundation Models framework, with guided generation into Swift types. It runs on the iPhone, offline.
-
-**What it is not:** no cloud language model, no chatbot, nothing sent to a server. Questions in plain language stay in Later.
-
-**Where it runs:** on the iPhone today. The Maison add-on will run the same Swift package on Home Assistant, around the clock, but only the computing part: Apple's model only exists on Apple devices, so notifications sent by the add-on use the short written form, and the iPhone rewords them when it opens.
-
-**Requirements:** a device and a language supported by Apple Intelligence. Without it, Maison keeps every finding in the short written form, rules are built with the step-by-step editor, and a document's fields are entered by hand. An object gets a default emoji for its kind.
-
-**Cost:** Apple's on-device model costs nothing per request. The only running cost on our side is the push relay.
-
-## Objects
-
-An object exists first; documents attach to it. Only the name is required.
-
-- **Fields:** name, emoji, durable or consumable, room, price and date of purchase, brand and model, end of warranty, documents, a parent object (blades belong to a razor, a filter to an air conditioner), and the connected device it is, if any. Each value keeps its origin.
-- **Emoji and kind:** proposed by the on-device model when the object is created or first scanned (🪒 for a razor), changed in one tap; a default per kind without Apple Intelligence. The emoji only identifies the object; the rest of the interface stays in SF Symbols.
-- **Consumables:** each replacement is a date, from a scanned invoice or a tap on "Replaced". Before two replacements, the category's usual lifetime, shown as an estimate; after that, the median gap between replacements. The next date is the last replacement plus that interval, with a reminder a few days before; postponing or ignoring it is remembered.
-- **Storage:** GRDB (SQLite), the project's first dependency, because the same package must build for the add-on on Linux, where SwiftData doesn't exist.
-
-## Appliances for energy
-
-To estimate what has no meter, Maison needs to know the main appliances: water heater, fridge, oven, washing machine, TV.
-
-- **Automatic:** devices Home Assistant already knows, with their power when a plug measures it.
-- **Assisted:** a photo of the appliance, its barcode, or the QR code of the European energy label (official consumption).
-- **Manual:** a short form, with the usual appliances suggested.
-
-It feeds energy estimates without a meter (power multiplied by running time, then the cost) and nothing else for now. Every estimate says it is one.
-
-## Reading paperwork
-
-The household scans any document; Maison first recognises what it is (an energy bill, a contract, a warranty, something else), then reads what that kind of document holds. Every document is kept, filed by kind and searchable: bills of any kind, contracts, warranties, manuals, anything else. Energy bills and contracts also feed the core. By default everything happens on the iPhone.
-
-1. **Capture:** the iOS document scanner (VisionKit) straightens and crops the page; a PDF can be imported instead.
-2. **Text:** on-device text recognition (Vision).
-3. **Understanding:** Apple's on-device model reads the recognised text, whatever the language: the kind of document, the product, the merchant, the amounts and the dates, filled into a typed structure. No rules per language or per kind of document, and nothing leaves the iPhone.
-4. **Checking by code:** formats (amounts, currencies, dates), totals that add up, plausible dates, and every number present in the recognised text. Each value is marked with its origin. The user confirms before saving and corrects any field in one tap. Without Apple Intelligence, the fields are entered by hand.
-5. **Attaching:** a document scanned from an object's sheet goes to that object; scanned from anywhere else, Maison proposes the object it is about, or offers to create it, prefilled. A field already set is never overwritten without confirmation.
-
-**Knowing the energy supplier.** Three sources, combined:
-
-- **A bill or a contract:** the supplier's name is always printed; the model reads it, then it is checked against a list of suppliers shipped with the app, per country (for France: EDF, Engie, TotalEnergies, Ekwateur, Mint, OHM, Vattenfall…), with their spelling variants, so the answer is always a real supplier. The country comes from Home Assistant's configuration, or the iPhone's region. A grid operator, such as Enedis in France, is never taken for the supplier.
-- **Home Assistant, partly:** a smart meter read by Home Assistant gives the tariff option; in France, a Linky meter gives the calendar (base, off-peak, Tempo), and with a TIC module the exact off-peak hours, but never the supplier's name. An installed integration can only hint at a supplier; Maison then suggests, it never asserts.
-- **Asking, in one tap:** a card in the Energy sheet, "Your electricity supplier?" with the main suppliers of the home's country, a search across all countries, and "Other", or "TotalEnergies? Yes / No" when Maison has a hint.
-
-Knowing the supplier doesn't give the price: one brand has many offers. The price comes from a bill or is entered by hand.
-
-What is read feeds Energy: the supplier, the price per kWh and the off-peak hours. When a bill has several prices, Maison asks which one applies instead of guessing, at least the first time for each supplier.
+**Privacy inside the household.** Everyone sees their own activity (sleep, showers); the household sees only totals ("9 showers this week"), never who did what and when. Home Assistant can't enforce this: every account reads the whole history and logbook. So what is personal stays out of it: Health data stays on the person's iPhone, and the add-on keeps per-person moments in its own store, answering each member only about themselves. A sensor's raw history stays visible to anyone with a Home Assistant account.
 
 ## Findings
 
-What the user receives. The first catalogue:
+What the user receives. In V1, three scores and housekeeping:
 
-- **Energy:** standby use, the month's projected cost, the costliest devices, use at equal weather, cheaper hours.
 - **Comfort:** a room out of its range, heating or cooling running in an empty home, a window open while it runs.
-- **Devices:** offline, battery low, a frozen sensor, a device behaving unusually.
-- **Safety:** a door left open, unlocked after everyone left, water leak, smoke.
-- **Habits:** a manual action repeated in the same context, offered as a rule.
-- **Network:** internet down or slow, a device that dropped off the Wi-Fi.
-- **Upkeep:** raised by a device (a filter, a battery).
+- **Energy:** standby use, the month's projected cost, the costliest devices, use at equal weather, cheaper hours. An energy bill or the energy contract, analysed on the device, is linked to this score and recalibrates it.
+- **Network:** whether the connection is up, the devices the router sees, and outages. An internet-box bill or the box contract, analysed on the device, is linked to this score.
 
-Every finding can be dismissed ("Ignore") or corrected ("That's not right"); both are remembered and change the next findings.
+- **Housekeeping:** what each room needs and when, after its type. Every room has a type (living room, kitchen, bedroom, bathroom, entrance, office, laundry, outdoor, other): recognised from its icon and name in the source, asked in one tap when it isn't sure, or chosen. The type gives the room's tasks and their rhythm; the room's own sensors change the rhythm (a bathroom whose humidity stays high is cleaned sooner). "Done" takes one tap, and a robot vacuum starts from Maison. Tasks belong to a room, never to an object: an object's upkeep waits with the inventory (see Parking).
 
-**One finding at a time on the home screen, by priority:** safety first, then network, comfort, energy and upkeep. A rule created from a finding uses what Maison knows, such as the off-peak hours of the contract, rather than a fixed time.
+After V1, still in this product: devices (offline, battery low, a frozen sensor, a device behaving unusually), safety (a door left open, unlocked after everyone left, water leak, smoke), and habits (a manual action repeated in the same context, offered as a rule). Upkeep returns with the inventory (see Parking).
 
-Comfort ranges are never hard-coded: they are learned from the home's history or set by the user. Energy is in the currency set in Home Assistant.
+Comfort ranges are never hard-coded: they are learned from the home's history or set by the user. Energy is in the currency set in Home Assistant, corrected by the next bill.
 
-## MVP
+## V1
 
-1. **The intelligence layer as a module**, with the origin of every value.
-2. **Today:** the day summary and one finding at a time (energy, comfort, network, devices, safety), with its origin, its reason and a one-tap action. The ring on the home screen becomes a score: the share of the day each room spent in its comfort range, measured.
-3. **A useful first launch:** import Home Assistant's existing history (detailed history and long-term statistics), so Maison has something to say within minutes.
-4. **Tidy the setup:** suggest rooms, hide duplicates, clear names.
-5. **Network:** internet latency and speed, outages, devices on the Wi-Fi, from Home Assistant and the iPhone.
-6. **Energy:** read Home Assistant's energy dashboard, suggest the right meter when it isn't set, or a manual entry (bill, price per kWh). Ask for the supplier and the tariff option the first time, prefilled from the meter when it is read.
-7. **Minimal manual entry:** comfort range, usual hours, the main appliances.
-8. **Widgets:** Home Screen, StandBy, Lock Screen.
+The core: the three scores, housekeeping, and the source boundary that feeds them. Brand-agnostic.
+
+1. **Comfort, Energy, Network.** Each score keeps the origin of every value (measured, estimated or entered), says why, and ends in one tap.
+2. **Housekeeping, room by room.** Every room has a type, recognised, suggested in one tap, or chosen; the type gives room-level tasks and their rhythm, and the room's sensors change it. One sheet shows the whole home for the week, each room shows its own tasks with "Done", and Rooms says what is late. Without any device it is a list of reminders that already knows each room; with a robot vacuum, Maison starts it. What was done stays on the iPhone until the add-on keeps it for the household.
+3. **The source boundary.** The intelligence layer is one module behind it, with the origin of every value. Home Assistant is the first and only connector; the boundary stays generic so another source could plug in later. No screen reads a source directly.
+4. **Documents, only when they feed a score.** Energy bills, internet-box bills, energy contracts, box contracts. Analysed on the device, linked to Energy or to Network.
+5. **Today:** the three scores and the day summary. Each finding has its origin, its reason and a one-tap action.
+6. **A useful first launch:** import Home Assistant's existing history (detailed history and long-term statistics), so Maison has something to say within minutes.
+7. **Tidy the setup:** suggest rooms, hide duplicates, clear names.
+8. **No dead end on a score.** Energy reads Home Assistant's energy dashboard, suggests the right meter when it isn't set, or takes a bill and a price per kWh. Comfort ranges and usual hours are learned from the history or set by the user. Network uses the router's integration when there is one.
+9. **Widgets:** Home Screen, StandBy, Lock Screen. They need an App Group and a keychain access group shared with the app, so the extension can read the sign-in and refresh it.
+10. **Validation, before anything paused comes back.** About five testers from outside the project, for two weeks. Success: they open the app on their own, without being reminded.
 
 ## Next
 
-- Appliances for energy in full (photo, barcode, energy label).
-- Reading energy bills and contracts on the iPhone, their values passed to Energy.
+- Housekeeping signals that need a moment first: showers, cooking, working from home, guests from the calendar, pollen.
+- Moments of life, starting with sleep (Health ↔ bedroom), laundry, showering, airing. Inference uses sensors, Health and what the person enters.
+- Device and safety findings, beyond the three scores.
 - The push relay and notifications with actions.
 - The Maison add-on and the automatic Home Assistant setup.
 - Estimates adjusted by presence and weather, recalibrated by real values.
 - Learning from feedback; habits turned into rules.
 - A floor plan without LiDAR: rooms drawn by hand, a photo of the plan to trace, or a plain list of rooms.
-- Before leaving, away mode, getting the home ready for the return, offered by a notification when the iPhone leaves home.
-- Critical alerts for leaks and smoke (Apple entitlement), so they sound even in silent mode or a Focus.
+- Before leaving, away mode, getting the home ready for the return.
 - Control Center, Siri, Shortcuts and App Intents, Focus filters.
 - Week and month reviews.
+
+## Parking
+
+Paused, not abandoned. This waits outside V1. It comes back only after the validation above, and only when the testers use the dashboard on their own for two weeks without being reminded, and/or when they ask to store something like an appliance warranty.
+
+- The inventory of objects, durables and consumables.
+- Consumables and the replacement cycle: the median interval between replacements, and the reminders. Upkeep hangs off the same cycle (filters, descaling, smoke detector batteries).
+- An emoji chosen for the object on its own.
+- General documents attached to an object: warranties, manuals, insurance, leases.
+- Scan from the object, scan from the home: match the object and prefill its sheet (a photo, a barcode, the QR code of the European energy label).
+
+The Belongings code prototyped locally — models, matcher, prefill, the replacement schedule, and the tests — stays on a branch. It stays off V1.
 
 ## Later
 
@@ -188,27 +136,27 @@ Comfort ranges are never hard-coded: they are learned from the home's history or
 
 ## Not this product
 
-A Maison email address. A connection to a bank. Paperwork beyond what serves energy (see Later).
+A Maison email, a bank connection, subscriptions that don't feed a score, a condition report: that is a home-paperwork product, not this one. Energy bills, internet-box bills, and the energy and box contracts are in V1, because they feed a score. Warranties, manuals, insurance and leases wait in Parking, attached to objects.
 
 ## Gaps in the current code
 
 Dead ends that contradict the principles above:
 
-- The energy sensor is picked by its name (English or French words), so a sensor named in another language, or "Linky consumption", is never found (`HomeStore.energyToday`).
+- The energy sensor is picked by its name (English or French words), so a sensor named in another language, or "Linky consumption", is never found (`HomeStore.energyToday`). Indoor temperature sensors are told from outdoor ones the same way, by "ext" or "out" in the name (`HomeStore.indoorTemperatureSensors`).
 - The temperature ring is fixed at 10–30 °C, saturated in a hot climate and wrong in °F (`Components.swift`).
-- Away from home, the app stays on the address it signed in with: the connection, token refresh and rule editing never fall back to `external_url` (only shown in Settings and used by the presence webhook), and Nabu Casa's `remote_ui_url` isn't read at all. Signed in with a local address, the app is offline as soon as you leave (`HomeStore.connect`).
-- Screens read Home Assistant's `EntityState` directly (13 files under `Features/`), so the source boundary of the intelligence layer is still to build; `HomeStore` carries connection, commands, history, presence and favourites in one type.
-- Nothing runs while the app is closed, apart from presence: no finding, no notification until the add-on and the push relay exist.
-- Saving a rule needs a Home Assistant administrator account; other members get an error instead of a path forward (`RuleEditor`).
 - The day summary and rule writing disappear when Apple Intelligence doesn't support the language.
 - The app is in English and French only.
+- A resident (not a Home Assistant administrator) gets errors where an administrator gets the rule editor, timers and door alerts, and attaching the iPhone to their person fails silently. These need a path of their own: read-only rules, and a request to the administrator.
+- Nothing is cached on the iPhone: starting away from any network shows an error instead of the last known home.
+- The connection isn't checked: no periodic ping, no reconnection when the app comes back to the foreground or the network changes, so a dead connection can take a long time to notice.
+- Every `state_changed` event of the server reaches the app and redraws the screens; a home with power sensors updating every second will stutter. `subscribe_entities`, batched updates and precomputed lists per room are the way out.
+- Commands get their id before a separate task sends them, while Home Assistant requires increasing ids: two commands sent at once could arrive out of order and be refused.
+- Signing out stops the location reports, but the Maison device and its tracker stay in Home Assistant until removed there.
 
 ## Open questions
 
-- Where do scanned documents live: only on the iPhone that scanned them, or in the household's iCloud zone so every member can open them?
-- Does Maison work without Home Assistant? The core needs measured history, which only Home Assistant provides today.
-- How far does sleep go inside Comfort: the bedroom only, or sleep itself from Health?
+- Is sleep the heart of the product, or one moment among others?
 - Wording in languages Apple Intelligence doesn't support: a simple written form only, or an optional cloud model?
-- How stable are the Home Assistant APIs Maison relies on to set it up (onboarding, add-on install, energy preferences)?
+- How stable are the Home Assistant APIs Maison relies on to set it up? The config entry flows, `energy/save_prefs`, the mobile app registration and its push are what Home Assistant's own frontend and apps use; onboarding (`/api/onboarding`) and installing an add-on through the Supervisor are internal and change without notice.
 - What does the floor plan bring to the intelligence layer?
 - Pricing: one-off purchase or subscription, given that the push relay has a running cost.

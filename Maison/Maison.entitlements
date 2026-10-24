@@ -10,5 +10,10 @@
 	<array>
 		<string>CloudKit</string>
 	</array>
+	<!-- iOS 26: without this, the share owner's name is nil. Shown only, never stored. -->
+	<key>com.apple.developer.icloud-extended-share-access</key>
+	<array>
+		<string>InProcessShareOwnerParticipantInfo</string>
+	</array>
 </dict>
 </plist>

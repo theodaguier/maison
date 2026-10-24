@@ -1,0 +1,24 @@
+# For Dokploy (or plain Docker Compose). The relay must be public: Enedis redirects to it after the
+# consent, and the app calls it away from home. Point the domain at port 8080 in Dokploy.
+services:
+  relay:
+    build: .
+    restart: always
+    environment:
+      RELAY_SIGNING_KEY: ${RELAY_SIGNING_KEY:?}
+      ENEDIS_CLIENT_ID: ${ENEDIS_CLIENT_ID:?}
+      ENEDIS_CLIENT_SECRET: ${ENEDIS_CLIENT_SECRET:?}
+      ENEDIS_API_URL: ${ENEDIS_API_URL:-https://ext.prod.api.enedis.fr}
+      ENEDIS_AUTHORIZE_URL: ${ENEDIS_AUTHORIZE_URL:-https://mon-compte-particulier.enedis.fr/dataconnect/v1/oauth2/authorize}
+    expose:
+      - "8080"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      # Distroless has no shell or curl: the binary is the only thing in the image.
+      disable: true
+    deploy:
+      resources:
+        limits:
+          memory: 64M

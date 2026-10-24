@@ -19,8 +19,15 @@ final class HomeStore {
     /// Counts service calls the server rejected or couldn't take, so the interface can signal them.
     private(set) var failedCommands = 0
     private(set) var states: [String: EntityState] = [:]
-    private(set) var layout = HomeLayout()
+    private(set) var layout = HomeLayout() {
+        didSet { noteRoomsSeen() }
+    }
+
+    /// The chores done in each room, kept on this iPhone.
+    private(set) var housekeepingLog: HousekeepingLog
     private(set) var serverURL: URL?
+    /// The address that works away from home, `nil` when the server has none.
+    private(set) var remoteURL: URL?
     private(set) var serverVersion: String?
     private(set) var lastUpdate: Date?
     private(set) var currentUser: HomeAssistantUser?
@@ -33,23 +40,43 @@ final class HomeStore {
     let discovery = ServerDiscovery()
     /// The household shared through iCloud, which also keeps the favourites.
     let household: HouseholdStore
+    /// Tells Home Assistant when this iPhone leaves or comes home.
+    let presence: PresenceReporter
 
-    @ObservationIgnored private let credentialStore: CredentialStore
+    @ObservationIgnored private let credentialStore: any CredentialStorage
     @ObservationIgnored private var credentials: Credentials?
-    @ObservationIgnored private var connection: HomeAssistantConnection?
+    @ObservationIgnored private(set) var connection: HomeAssistantConnection?
+    @ObservationIgnored private let connector: ServerConnector
+    /// The address the current connection goes through; REST calls use it too.
+    @ObservationIgnored private(set) var activeURL: URL?
     @ObservationIgnored private var updatesTask: Task<Void, Never>?
     @ObservationIgnored private var retryTask: Task<Void, Never>?
+    /// `source_connected` is sent once per sign-in, not again when a lost connection comes back.
+    @ObservationIgnored private var reportedConnection = false
     @ObservationIgnored private let isDemo: Bool
+    /// Where the housekeeping log and room types are kept; the demo has its own.
+    @ObservationIgnored let housekeepingDefaults: UserDefaults
     /// The sample home, opened from onboarding or with `-demo`.
     var isDemoHome: Bool { isDemo }
 
-    init(credentialStore: CredentialStore = CredentialStore(), defaults: UserDefaults = .standard, household: HouseholdStore? = nil) {
+    init(
+        credentialStore: any CredentialStorage = CredentialStore(),
+        defaults: UserDefaults = .standard,
+        household: HouseholdStore? = nil,
+        presence: PresenceReporter? = nil,
+        connector: ServerConnector = ServerConnector()
+    ) {
         self.credentialStore = credentialStore
         self.household = household ?? HouseholdStore(cloud: CloudKitHousehold.isEntitled ? CloudKitHousehold() : nil, defaults: defaults)
+        self.presence = presence ?? .shared
+        self.connector = connector
         isDemo = false
+        housekeepingDefaults = defaults
+        housekeepingLog = HousekeepingLog.load(from: defaults)
         let credentials = try? credentialStore.load()
         self.credentials = credentials
         serverURL = credentials?.serverURL
+        remoteURL = credentials?.remoteURL
         phase = credentials == nil ? .signedOut : .connecting
     }
 
@@ -57,15 +84,21 @@ final class HomeStore {
     init(demo states: [EntityState], layout: HomeLayout, household: HouseholdStore, phase: Phase = .connected) {
         credentialStore = CredentialStore(service: "com.theodaguier.maison.demo")
         self.household = household
+        // The demo never asks for the location nor registers with a server.
+        presence = PresenceReporter(webhooks: MemoryWebhookStorage(), credentialStore: credentialStore, isDemo: true)
+        connector = ServerConnector()
         isDemo = true
+        housekeepingDefaults = UserDefaults(suiteName: "com.theodaguier.maison.demo") ?? .standard
+        housekeepingLog = DemoHome.housekeepingLog
         self.states = Dictionary(states.map { ($0.entityID, $0) }, uniquingKeysWith: { _, last in last })
         self.layout = layout
         self.phase = phase
+        noteRoomsSeen()
         serverURL = URL(string: "http://homeassistant.local:8123")
         serverVersion = "2026.8.1"
         lastUpdate = .now
         currentUser = HomeAssistantUser(name: "Théo", isAdmin: true)
-        serverConfig = ServerConfig(locationName: "Maison", version: "2026.8.1", externalURL: nil, internalURL: "http://homeassistant.local:8123")
+        serverConfig = ServerConfig(locationName: "Maison", version: "2026.8.1", externalURL: nil, internalURL: "http://homeassistant.local:8123", country: "FR")
         integrations = [
             Integration(domain: "sonos", title: "Sonos", state: "loaded"),
             Integration(domain: "hue", title: "Philips Hue", state: "loaded"),
@@ -87,16 +120,19 @@ final class HomeStore {
 
     /// Runs Home Assistant's sign-in page through `authenticate`, which presents the URL and
     /// returns the callback URL (typically `WebAuthenticationSession.authenticate`).
-    func signIn(to server: URL, authenticate: (URL) async throws -> URL) async {
+    /// `remoteURL`, when the server announced one, works away from home until the server's own settings load.
+    func signIn(to server: URL, remoteURL: URL? = nil, authenticate: (URL) async throws -> URL) async {
         let auth = HomeAssistantAuth(serverURL: server)
         let state = UUID().uuidString
         do {
             let callbackURL = try await authenticate(auth.authorizationURL(state: state))
             let code = try HomeAssistantAuth.authorizationCode(from: callbackURL, expectedState: state)
-            let credentials = try await auth.exchange(code: code)
+            var credentials = try await auth.exchange(code: code)
+            credentials.remoteURL = remoteURL
             try credentialStore.save(credentials)
             self.credentials = credentials
             serverURL = server
+            self.remoteURL = remoteURL
             discovery.stop()
             await connect()
         } catch let error as ASWebAuthenticationSessionError where error.code == .canceledLogin {
@@ -108,7 +144,7 @@ final class HomeStore {
 
     func connect() async {
         guard !isDemo else { return }
-        guard var credentials else {
+        guard let credentials else {
             phase = .signedOut
             return
         }
@@ -117,13 +153,12 @@ final class HomeStore {
             phase = .connecting
         }
         do {
-            if credentials.isExpired() {
-                credentials = try await HomeAssistantAuth(serverURL: credentials.serverURL).refresh(credentials)
-                try credentialStore.save(credentials)
-                self.credentials = credentials
+            // The local address at home, the remote one away.
+            let opened = try await connector.connect(credentials)
+            if opened.credentials != credentials {
+                try keep(opened.credentials)
             }
-            let connection = HomeAssistantConnection(serverURL: credentials.serverURL, accessToken: credentials.accessToken)
-            try await connection.connect()
+            let connection = opened.connection
             async let states = connection.states()
             async let layout = connection.layout()
             let changes = try await connection.stateChanges()
@@ -131,11 +166,17 @@ final class HomeStore {
 
             await self.connection?.disconnect()
             self.connection = connection
+            activeURL = opened.address
             self.states = Dictionary(loadedStates.map { ($0.entityID, $0) }, uniquingKeysWith: { _, last in last })
             self.layout = loadedLayout
             serverVersion = await connection.serverVersion
             lastUpdate = .now
             phase = .connected
+            // Pull to refresh and reconnections are not a new source. The address is not recorded.
+            if !reportedConnection {
+                reportedConnection = true
+                Analytics.shared.track(.sourceConnected(.homeAssistant))
+            }
             Task { await loadServerDetails(from: connection) }
 
             updatesTask?.cancel()
@@ -175,13 +216,38 @@ final class HomeStore {
         currentUser = try? await connection.currentUser()
         serverConfig = try? await connection.serverConfig()
         integrations = (try? await connection.integrations()) ?? []
+        if let serverConfig, var credentials {
+            // Remembered for the next time the app starts away from home. `cloud/status` fails without Home Assistant Cloud.
+            let cloudStatus = try? await connection.send(["type": "cloud/status"])
+            credentials.remoteURL = serverConfig.remoteURL(cloudStatus: cloudStatus)
+            if credentials != self.credentials {
+                try? keep(credentials)
+            }
+        }
         if let serverURL {
             await household.serverConnected(Household(
                 name: serverConfig?.locationName ?? String(localized: "Home"),
                 serverURL: serverURL,
-                remoteURL: serverConfig?.externalURL.flatMap { $0.isEmpty ? nil : URL(string: $0) }
+                remoteURL: remoteURL
             ))
         }
+    }
+
+    /// Saves the sign-in and shows the addresses it holds.
+    private func keep(_ credentials: Credentials) throws {
+        try credentialStore.save(credentials)
+        self.credentials = credentials
+        remoteURL = credentials.remoteURL
+    }
+
+    /// The sign-in, refreshed once its access token has expired (Home Assistant's last 30 minutes).
+    /// The connection keeps working with an old token; REST calls don't.
+    func freshCredentials() async throws -> Credentials {
+        guard !isDemo, let credentials else { throw HomeAssistantError.connectionClosed }
+        guard credentials.isExpired() else { return credentials }
+        let refreshed = try await connector.refresh(credentials, activeURL ?? credentials.serverURL)
+        try keep(refreshed)
+        return refreshed
     }
 
     /// How long the device was on today and yesterday.
@@ -238,11 +304,16 @@ final class HomeStore {
         updatesTask = nil
         await connection?.disconnect()
         connection = nil
+        activeURL = nil
         try? credentialStore.delete()
         credentials = nil
         serverURL = nil
+        remoteURL = nil
+        // The webhook belongs to this server: positions must stop reaching it.
+        presence.forget()
         states = [:]
         layout = HomeLayout()
+        reportedConnection = false
         phase = .signedOut
         discovery.start()
     }
@@ -268,17 +339,215 @@ final class HomeStore {
         return (try? await connection.statistics(of: entityID, since: start, period: period)) ?? []
     }
 
+    #if DEBUG
+    /// The raw entity registry, for the debug report.
+    func registryEntries() async throws -> [JSONValue] {
+        guard let connection else { return [] }
+        return try await connection.send(["type": "config/entity_registry/list"]).arrayValue ?? []
+    }
+    #endif
+
+    /// Adds a room on the server (an area in Home Assistant). Administrators only.
+    func createArea(named name: String) async throws {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        if isDemo {
+            layout.areas.append(Area(id: trimmed.lowercased().replacingOccurrences(of: " ", with: "_"), name: trimmed))
+            return
+        }
+        guard let connection else { throw HomeAssistantError.connectionClosed }
+        _ = try await connection.send(["type": "config/area_registry/create", "name": .string(trimmed)])
+        layout = try await connection.layout()
+    }
+
+    /// Everything Maison sets up on the server by itself, so the person never has to open Home Assistant:
+    /// devices it found, integrations that failed, remote access, the internet check. Administrators only.
+    /// `true` when something changed on the server, and the devices were read again.
+    @discardableResult
+    func setUpServer(now: Date = .now) async -> Bool {
+        guard !isDemo, phase == .connected, let connection else { return false }
+        // The account is read after connecting, in the background: ask for it if it isn't there yet.
+        var user = currentUser
+        if user == nil { user = try? await connection.currentUser() }
+        guard user?.isAdmin == true, let credentials = try? await freshCredentials() else { return false }
+        let flows = ConfigFlowClient(serverURL: activeURL ?? credentials.serverURL, accessToken: credentials.accessToken)
+        var changed = await adoptDiscoveredDevices(flows: flows, connection: connection)
+        changed = await repairIntegrations(flows: flows, now: now) || changed
+        changed = await turnOnCloudRemoteAccess(connection: connection) || changed
+        if await ensureInternetCheck(flows: flows, now: now) {
+            changed = true
+        }
+        changed = await ensureInternetResponseTime(connection: connection) || changed
+        changed = await ensureWeather(flows: flows, now: now) || changed
+        await syncGridConsumption(now: now)
+        // New integrations bring entities and registry entries: reconnecting reads them.
+        if changed { await connect() }
+        return changed
+    }
+
+    /// The kWh price set in Home Assistant's Energy dashboard, if any.
+    func serverEnergyPrice() async -> Double? {
+        guard let connection, let price = try? await connection.gridEnergyPrice() else { return nil }
+        if let fixed = price.fixed, fixed > 0 { return fixed }
+        return price.entityID.flatMap { states[$0]?.numericState }
+    }
+
+    static let gridStatisticID = "maison:grid_consumption"
+
+    /// Brings the grid operator's readings since the last import into the server's statistics. They
+    /// arrive the day after, so this runs with every refresh and only asks for the days not imported yet.
+    @discardableResult
+    func syncGridConsumption(now: Date = .now) async -> Bool {
+        guard !isDemo, var link = GridLink.load(), link.operatorID == "enedis", let relay = MaisonRelay.url, let connection else { return false }
+        let today = Calendar.current.startOfDay(for: now)
+        // Enedis keeps three years; a first import goes back a month, enough for a habit.
+        let start = link.importedUntil ?? today.addingTimeInterval(-30 * 86_400)
+        guard start < today else { return false }
+        do {
+            let hourly = try await EnedisDataConnect(relay: relay)
+                .hourlyConsumption(meter: link.meterID, accessKey: link.accessKey, from: start, to: today)
+            guard let first = hourly.first?.start else { return false }
+            let before = await statistics(of: Self.gridStatisticID, since: first.addingTimeInterval(-3 * 86_400), period: "hour")
+            let previousSum = before.last { $0.start < first }?.sum ?? 0
+            try await connection.importEnergyStatistics(
+                id: Self.gridStatisticID,
+                name: String(localized: "Electricity from the grid"),
+                hourly: hourly,
+                previousSum: previousSum
+            )
+            link.importedUntil = today
+            link.save()
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    /// Confirms the devices Home Assistant found on the network when it only waits for a "Submit".
+    /// Those that need a code or a password stay where they are.
+    private func adoptDiscoveredDevices(flows: ConfigFlowClient, connection: HomeAssistantConnection) async -> Bool {
+        var added = false
+        for flow in (try? await connection.discoveredFlows()) ?? [] {
+            guard case .created? = try? await flows.confirmIfNothingToAsk(flowID: flow.flowID) else { continue }
+            ServerSetupLog.recordAdded(flow.handler)
+            added = true
+        }
+        return added
+    }
+
+    /// "Add a Device" from the +: confirms right away what Home Assistant found on the network, and
+    /// says what still waits for a code. `nil` without an administrator's account.
+    func addFoundDevices() async -> (added: [String], waiting: [String])? {
+        if isDemo { return ([], []) }
+        guard phase == .connected, let connection else { return nil }
+        var user = currentUser
+        if user == nil { user = try? await connection.currentUser() }
+        guard user?.isAdmin == true, let credentials = try? await freshCredentials() else { return nil }
+        let flows = ConfigFlowClient(serverURL: activeURL ?? credentials.serverURL, accessToken: credentials.accessToken)
+        var added: [String] = [], waiting: [String] = []
+        for flow in (try? await connection.discoveredFlows()) ?? [] {
+            if case .created? = try? await flows.confirmIfNothingToAsk(flowID: flow.flowID) {
+                ServerSetupLog.recordAdded(flow.handler)
+                added.append(flow.handler)
+            } else {
+                waiting.append(flow.handler)
+            }
+        }
+        if !added.isEmpty { await connect() }
+        return (added, waiting)
+    }
+
+    /// Reloads integrations that failed to start, once a day each, as one would from their menu.
+    private func repairIntegrations(flows: ConfigFlowClient, now: Date) async -> Bool {
+        var reloaded = false
+        let repaired = ServerSetupLog.repairedAt
+        for integration in integrations where integration.isFailing {
+            guard let entryID = integration.entryID,
+                  repaired[entryID].map({ now.timeIntervalSince($0) >= 86_400 }) ?? true else { continue }
+            ServerSetupLog.recordRepair(entryID, at: now)
+            if (try? await flows.reload(entryID: entryID)) != nil { reloaded = true }
+        }
+        return reloaded
+    }
+
+    /// With Home Assistant Cloud signed in but its remote access off, turns it on: Maison then works away
+    /// from home with the same sign-in.
+    private func turnOnCloudRemoteAccess(connection: HomeAssistantConnection) async -> Bool {
+        guard remoteURL == nil, let status = try? await connection.send(["type": "cloud/status"]),
+              status["logged_in"]?.boolValue == true, status["remote_connected"]?.boolValue != true,
+              status["prefs"]?["remote_enabled"]?.boolValue != true else { return false }
+        return (try? await connection.send(["type": "cloud/remote/connect"])) != nil
+    }
+
+    /// Switches on Home Assistant's internet check (the Ping integration) when nothing measures the
+    /// connection, so the Network score fills in. Tried at most once a day.
+    private func ensureInternetCheck(flows: ConfigFlowClient, now: Date) async -> Bool {
+        let defaults = UserDefaults.standard
+        guard internetSources == nil else { return false }
+        if let attempted = defaults.object(forKey: InternetCheckSetting.attemptedKey) as? Date, now.timeIntervalSince(attempted) < 86_400 { return false }
+        defaults.set(now, forKey: InternetCheckSetting.attemptedKey)
+        guard case .created? = try? await flows.create("ping", answers: ["host": .string(InternetCheckSetting.host)]) else { return false }
+        defaults.set(now, forKey: InternetCheckSetting.addedKey)
+        return true
+    }
+
+    /// Adds a weather service when the server has none, as Home Assistant does when it is set up: the
+    /// most used one that asks nothing (it reads the home's location from the server). Once a day at most.
+    private func ensureWeather(flows: ConfigFlowClient, now: Date) async -> Bool {
+        let key = "weatherAttemptedAt"
+        guard !states.values.contains(where: { $0.domain == "weather" }) else { return false }
+        if let attempted = UserDefaults.standard.object(forKey: key) as? Date, now.timeIntervalSince(attempted) < 86_400 { return false }
+        UserDefaults.standard.set(now, forKey: key)
+        let installed = Set(integrations.map(\.domain))
+        let candidates = IntegrationDescription.serving(["weather_alerts.forecasts"], in: await integrationCatalog())
+            .filter { !installed.contains($0.domain) }
+        guard let added = await flows.addFirstAskingNothing(Array(candidates.prefix(3))) else { return false }
+        ServerSetupLog.recordAdded(added.domain)
+        return true
+    }
+
+    /// Ping ships its response times disabled, and registers them a few seconds after it is added, so
+    /// turning them on right away finds nothing. Checked on every refresh until the score reads the
+    /// average: turned on, Home Assistant reloads Ping within half a minute; on but not read yet, the
+    /// registry changed since Maison connected. Either way, reconnecting reads it.
+    private func ensureInternetResponseTime(connection: HomeAssistantConnection) async -> Bool {
+        guard let source = internetSources, source.latency == nil,
+              let found = try? await connection.enableEntities(platform: "ping", translationKeys: ["round_trip_time_avg"]) else { return false }
+        return found.turnedOn > 0 || found.alreadyOn > 0
+    }
+
+    /// The electricity meters to count. Those of Home Assistant's Energy dashboard add up (peak and
+    /// off-peak indexes); otherwise each energy total is a candidate, and only one is the home's meter.
+    /// Never picked by name.
+    func electricityMeters() async -> (ids: [String], addUp: Bool) {
+        if isDemo {
+            #if DEBUG
+            // `-noMeter YES` shows the demo home as one without a meter, to check the proposal.
+            if UserDefaults.standard.bool(forKey: "noMeter") { return ([], false) }
+            #endif
+            return (["sensor.energy_today"], true)
+        }
+        if let connection, let grid = try? await connection.gridConsumptionStatistics(), !grid.isEmpty { return (grid, true) }
+        // Readings from the grid operator, imported into the server's statistics.
+        if GridLink.load() != nil { return ([Self.gridStatisticID], true) }
+        let totals = devices
+            .filter { $0.deviceClass == "energy" && ["total_increasing", "total"].contains($0.attributes["state_class"]?.stringValue ?? "") }
+            .map(\.entityID)
+        return (totals, false)
+    }
+
     /// Automations that act on or watch the entity.
     func automations(using entity: EntityState) async -> [EntityState] {
-        if isDemo { return entity.kind == .cover ? [states["automation.trop_chaud"]].compactMap { $0 } : [] }
+        if isDemo { return entity.kind == .cover ? [states["automation.trop_chaud"]].compactMap(\.self) : [] }
         guard let connection, let ids = try? await connection.automations(using: entity.entityID) else { return [] }
         return ids.compactMap { states[$0] }
     }
 
-    /// Saves automations and scripts on the server; `nil` when signed out or in the demo.
-    var configEditor: ConfigEditor? {
-        guard !isDemo, let credentials else { return nil }
-        return ConfigEditor(serverURL: credentials.serverURL, accessToken: credentials.accessToken)
+    /// Saves automations and scripts on the server, with a token that is still valid; `nil` when signed out or in the demo.
+    func configEditor() async throws -> ConfigEditor? {
+        guard !isDemo, credentials != nil else { return nil }
+        let credentials = try await freshCredentials()
+        return ConfigEditor(serverURL: activeURL ?? credentials.serverURL, accessToken: credentials.accessToken)
     }
 
     /// Notify services available on the server (`mobile_app_iphone_de_theo`, `notify`).
@@ -318,9 +587,8 @@ final class HomeStore {
 
     /// Registers Maison as a mobile app device for the signed-in user (`/api/mobile_app/registrations`).
     func registerMobileApp(deviceName: String) async throws -> Webhook {
-        if isDemo { return Webhook(id: "demo", localURL: nil, remoteURL: nil) }
-        guard let credentials else { throw HomeAssistantError.connectionClosed }
-        var request = URLRequest(url: credentials.serverURL.appending(path: "api/mobile_app/registrations"))
+        var credentials = try await freshCredentials()
+        var request = URLRequest(url: (activeURL ?? credentials.serverURL).appending(path: "api/mobile_app/registrations"))
         request.httpMethod = "POST"
         request.setValue("Bearer \(credentials.accessToken)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -339,12 +607,20 @@ final class HomeStore {
         ]))
         let (data, response) = try await URLSession.shared.data(for: request)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
-        guard (200..<300).contains(status),
-              let id = try JSONDecoder().decode(JSONValue.self, from: data)["webhook_id"]?.stringValue else {
-            throw HomeAssistantError.invalidResponse(statusCode: status)
+        guard (200..<300).contains(status) else { throw HomeAssistantError.invalidResponse(statusCode: status) }
+        let reply = try JSONDecoder().decode(JSONValue.self, from: data)
+        guard let registration = MobileAppRegistration(reply) else { throw HomeAssistantError.invalidResponse(statusCode: status) }
+        // With Home Assistant Cloud, the reply carries the remote address even when no external URL is set.
+        if credentials.remoteURL == nil, let remote = registration.remoteURL {
+            credentials.remoteURL = remote
+            try? keep(credentials)
         }
-        let remote = serverConfig?.externalURL.flatMap { $0.isEmpty ? nil : URL(string: $0) }
-        return Webhook(id: id, localURL: credentials.serverURL, remoteURL: remote)
+        return Webhook(
+            id: registration.webhookID,
+            localURL: credentials.serverURL,
+            remoteURL: credentials.remoteURL,
+            cloudhookURL: registration.cloudhookURL
+        )
     }
 
     /// Adds the iPhone's tracker to the person linked to the signed-in user, so they count as home or away.
@@ -389,22 +665,31 @@ final class HomeStore {
     func rule(for automation: EntityState) async throws -> AutomationRule? {
         guard let id = automation.attributes["id"]?.stringValue else { return nil }
         if isDemo { return DemoHome.rules[id].map { AutomationRule(id: id, config: $0) } }
-        guard let editor = configEditor else { throw HomeAssistantError.connectionClosed }
+        guard let editor = try await configEditor() else { throw HomeAssistantError.connectionClosed }
         return try await editor.load(.automation, id: id).map { AutomationRule(id: id, config: $0) }
     }
 
     func save(_ rule: AutomationRule) async throws {
         if isDemo {
             DemoHome.rules[rule.id] = rule.config
+            // A new rule shows in the list, as the server would add its automation.
+            if !states.values.contains(where: { $0.domain == "automation" && $0.attributes["id"]?.stringValue == rule.id }) {
+                states["automation.\(rule.id)"] = EntityState(entityID: "automation.\(rule.id)", state: "on",
+                                                              attributes: ["friendly_name": .string(rule.name), "id": .string(rule.id)])
+            }
             return
         }
-        guard let editor = configEditor else { throw HomeAssistantError.connectionClosed }
+        guard let editor = try await configEditor() else { throw HomeAssistantError.connectionClosed }
         try await editor.save(.automation, id: rule.id, config: rule.config)
     }
 
     func delete(_ rule: AutomationRule) async throws {
-        if isDemo { return }
-        guard let editor = configEditor else { throw HomeAssistantError.connectionClosed }
+        if isDemo {
+            DemoHome.rules[rule.id] = nil
+            states = states.filter { !($0.value.domain == "automation" && $0.value.attributes["id"]?.stringValue == rule.id) }
+            return
+        }
+        guard let editor = try await configEditor() else { throw HomeAssistantError.connectionClosed }
         try await editor.delete(.automation, id: rule.id)
     }
 
@@ -482,6 +767,36 @@ extension HomeStore {
     func area(of entity: EntityState) -> Area? {
         guard let id = layout.areaByEntity[entity.entityID] else { return nil }
         return layout.areas.first { $0.id == id }
+    }
+
+    func area(id: String) -> Area? {
+        layout.areas.first { $0.id == id }
+    }
+
+    /// Marks a chore done in a room, and keeps it. Returns when it was done before, for Undo.
+    @discardableResult
+    func markDone(_ chore: Chore, in area: Area, at date: Date = .now) -> Date? {
+        let previous = housekeepingLog.markDone(chore, in: area.id, at: date)
+        housekeepingLog.save(to: housekeepingDefaults)
+        return previous
+    }
+
+    func undoDone(_ chore: Chore, in area: Area, previous: Date?) {
+        housekeepingLog.restore(chore, in: area.id, to: previous)
+        housekeepingLog.save(to: housekeepingDefaults)
+    }
+
+    /// The room's type, chosen or confirmed by the person.
+    func chooseKind(_ kind: RoomKind, for area: Area) {
+        housekeepingLog.kinds[area.id] = kind
+        housekeepingLog.save(to: housekeepingDefaults)
+    }
+
+    private func noteRoomsSeen() {
+        let unseen = layout.areas.map(\.id).filter { housekeepingLog.firstSeen[$0] == nil }
+        guard !unseen.isEmpty else { return }
+        housekeepingLog.noteSeen(unseen)
+        housekeepingLog.save(to: housekeepingDefaults)
     }
 
     func devices(in area: Area) -> [EntityState] {
@@ -697,7 +1012,7 @@ struct HomeSummary: Equatable {
     var text: String { sentences.joined(separator: " ") }
 }
 
-extension Sequence where Element == EntityState {
+extension Sequence<EntityState> {
     func sortedByName() -> [EntityState] {
         sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }

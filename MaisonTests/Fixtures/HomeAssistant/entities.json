@@ -1,0 +1,48 @@
+[
+  {
+    "entity_id": "light.salon",
+    "area_id": null,
+    "device_id": "dev-bulb",
+    "hidden_by": null,
+    "disabled_by": null,
+    "entity_category": null,
+    "platform": "hue",
+    "unique_id": "bulb-1"
+  },
+  {
+    "entity_id": "sensor.salon_battery",
+    "area_id": "salon",
+    "device_id": "dev-bulb",
+    "hidden_by": null,
+    "disabled_by": null,
+    "entity_category": "diagnostic",
+    "platform": "hue",
+    "unique_id": "bulb-battery"
+  },
+  {
+    "entity_id": "binary_sensor.porte",
+    "area_id": "entree",
+    "device_id": null,
+    "hidden_by": null,
+    "disabled_by": null,
+    "entity_category": null,
+    "platform": "mqtt",
+    "unique_id": "door-1"
+  },
+  {
+    "entity_id": "sensor.disabled",
+    "area_id": null,
+    "device_id": null,
+    "disabled_by": "user",
+    "platform": "template",
+    "unique_id": "disabled-1"
+  },
+  {
+    "entity_id": "device_tracker.iphone",
+    "area_id": null,
+    "device_id": "dev-phone",
+    "platform": "mobile_app",
+    "unique_id": "wh-from-ha",
+    "disabled_by": null
+  }
+]

@@ -1,15 +1,5 @@
 import Foundation
 
-/// Where a value comes from, shown next to it everywhere in the app.
-enum ValueOrigin: String, Sendable, Hashable, Codable {
-    /// Read on a sensor or a meter.
-    case measured
-    /// Computed by Maison from other values.
-    case estimated
-    /// Entered by the household, typed or read from one of their documents.
-    case entered
-}
-
 /// A value and its origin.
 struct Sourced<Value: Sendable & Hashable>: Sendable, Hashable {
     var value: Value

@@ -19,10 +19,10 @@ struct DiscoveredServer: Sendable, Hashable, Identifiable {
             return nil
         }
         self.url = url
-        self.id = txtRecord["uuid"].flatMap { $0.isEmpty ? nil : $0 } ?? url.absoluteString
-        self.name = txtRecord["location_name"].flatMap { $0.isEmpty ? nil : $0 } ?? url.host() ?? "Home Assistant"
-        self.version = txtRecord["version"].flatMap { $0.isEmpty ? nil : $0 }
-        self.externalURL = txtRecord["external_url"]
+        id = txtRecord["uuid"].flatMap { $0.isEmpty ? nil : $0 } ?? url.absoluteString
+        name = txtRecord["location_name"].flatMap { $0.isEmpty ? nil : $0 } ?? url.host() ?? "Home Assistant"
+        version = txtRecord["version"].flatMap { $0.isEmpty ? nil : $0 }
+        externalURL = txtRecord["external_url"]
             .flatMap(URL.init(string:))
             .flatMap { $0.host() == nil || $0 == url ? nil : $0 }
     }

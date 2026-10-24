@@ -33,7 +33,7 @@ struct PlanTab: View {
                     NumberLabel(value: plan.surface.formatted(.number.precision(.fractionLength(0))), unit: "m²", size: .xLarge)
                     Spacer()
                     VStack(alignment: .trailing, spacing: 2) {
-                        Text("\(plan.rooms.count) rooms · \(plan.devices.count) devices placed")
+                        Text("\(plan.rooms.count) rooms, \(plan.devices.count) devices placed")
                             .font(.roundedSubheadlineEmphasized)
                             .foregroundStyle(.secondary)
                         Text(scannedText(plan))
@@ -136,8 +136,8 @@ struct ScanIntro: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(isSupported ? "LiDAR Sensor Found" : "No LiDAR Sensor").font(.roundedHeadline)
                     Text(isSupported
-                         ? "The scan is computed on the iPhone; nothing is sent online."
-                         : "Scanning needs an iPhone Pro. Another member of the household can scan, and the plan is shared.")
+                        ? "The scan is computed on the iPhone; nothing is sent online."
+                        : "Scanning needs an iPhone Pro. Another member of the household can scan, and the plan is shared.")
                         .font(.roundedFootnote)
                         .foregroundStyle(.secondary)
                 }
@@ -215,7 +215,7 @@ struct ScanScreen: View {
                     Image(systemName: "figure.walk.motion")
                     VStack(alignment: .leading, spacing: 1) {
                         Text(scan.instruction).font(.roundedSubheadlineEmphasized)
-                        Text("\(scan.walls) walls · \(scan.doors) doors · \(scan.windows) windows detected")
+                        Text("\(scan.walls) walls, \(scan.doors) doors, \(scan.windows) windows detected")
                             .font(.roundedFootnote)
                             .foregroundStyle(.secondary)
                     }
@@ -270,7 +270,7 @@ struct ScanScreen: View {
                 result = nil
                 scan.restart()
             }, onSave: { dismiss() })
-            .interactiveDismissDisabled()
+                .interactiveDismissDisabled()
         }
         .errorFeedback(scan.error)
         // A tick each time the scan finds a wall, a door or a window.
@@ -301,9 +301,11 @@ final class ScanController: NSObject, RoomCaptureSessionDelegate {
         view.delegate = viewDelegate
         return view
     }()
+
     @ObservationIgnored private lazy var viewDelegate = CaptureViewDelegate { [weak self] data in
         Task { await self?.roomEnded(data) }
     }
+
     @ObservationIgnored private var rooms: [CapturedRoom] = []
     @ObservationIgnored private var finishing: CheckedContinuation<Void, Never>?
     @ObservationIgnored private var isFinishing = false
@@ -376,7 +378,7 @@ final class ScanController: NSObject, RoomCaptureSessionDelegate {
         Task { @MainActor in self.instruction = text }
     }
 
-    nonisolated private static func text(for instruction: RoomCaptureSession.Instruction) -> String {
+    private nonisolated static func text(for instruction: RoomCaptureSession.Instruction) -> String {
         switch instruction {
         case .moveCloseToWall: String(localized: "Move closer to the wall")
         case .moveAwayFromWall: String(localized: "Step back from the wall")
@@ -440,7 +442,7 @@ struct PlanReview: View {
                         Spacer()
                         VStack(alignment: .trailing, spacing: 2) {
                             Text("\(plan.rooms.count) rooms found").font(.roundedSubheadlineEmphasized).foregroundStyle(.secondary)
-                            Text("\(plan.doors.count) doors · \(plan.windows.count) windows").font(.roundedFootnote).foregroundStyle(.tertiary)
+                            Text("\(plan.doors.count) doors, \(plan.windows.count) windows").font(.roundedFootnote).foregroundStyle(.tertiary)
                         }
                         .padding(.top, 10)
                     }
@@ -612,8 +614,8 @@ struct PlacementSheet: View {
 
     private func detail(for entity: EntityState) -> String {
         let room = store.area(of: entity)?.name ?? ""
-        if entity.entityID == selected, position != nil { return String(localized: "\(room) · position chosen") }
-        if plan.devices[entity.entityID] != nil { return String(localized: "\(room) · placed") }
+        if entity.entityID == selected, position != nil { return String(localized: "\(room), position chosen") }
+        if plan.devices[entity.entityID] != nil { return String(localized: "\(room), placed") }
         return room
     }
 

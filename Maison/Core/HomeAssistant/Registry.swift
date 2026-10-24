@@ -4,10 +4,13 @@ import Foundation
 struct Area: Sendable, Hashable, Identifiable, Decodable {
     let id: String
     let name: String
+    /// The room's icon in Home Assistant ("mdi:sofa"), which says what it is for.
+    var icon: String?
 
     private enum CodingKeys: String, CodingKey {
         case id = "area_id"
         case name
+        case icon
     }
 }
 
@@ -21,6 +24,8 @@ struct EntityRegistryEntry: Sendable, Hashable, Decodable {
     let entityCategory: String?
     /// The integration that provides the entity ("sonos", "hue").
     var platform: String?
+    /// What the entity is within its integration ("filter_life"), the same in every language.
+    var translationKey: String?
 
     var isVisible: Bool {
         hiddenBy == nil && disabledBy == nil && entityCategory == nil
@@ -34,6 +39,7 @@ struct EntityRegistryEntry: Sendable, Hashable, Decodable {
         case disabledBy = "disabled_by"
         case entityCategory = "entity_category"
         case platform
+        case translationKey = "translation_key"
     }
 }
 
@@ -54,6 +60,7 @@ struct HomeLayout: Sendable, Hashable {
     var deviceByEntity: [String: String] = [:]
     var hiddenEntities: Set<String> = []
     var platformByEntity: [String: String] = [:]
+    var translationKeyByEntity: [String: String] = [:]
 
     init() {}
 
@@ -69,6 +76,9 @@ struct HomeLayout: Sendable, Hashable {
             }
             if let platform = entry.platform {
                 platformByEntity[entry.entityID] = platform
+            }
+            if let key = entry.translationKey {
+                translationKeyByEntity[entry.entityID] = key
             }
             if !entry.isVisible {
                 hiddenEntities.insert(entry.entityID)
@@ -94,12 +104,17 @@ struct ServerConfig: Sendable, Hashable, Decodable {
     let version: String?
     let externalURL: String?
     let internalURL: String?
+    /// ISO 3166 code set in Home Assistant's general settings ("FR").
+    var country: String?
+    /// ISO 4217 code ("EUR"), the currency Home Assistant counts energy costs in.
+    var currency: String?
 
     private enum CodingKeys: String, CodingKey {
         case locationName = "location_name"
         case version
         case externalURL = "external_url"
         case internalURL = "internal_url"
+        case country, currency
     }
 }
 
@@ -146,9 +161,18 @@ struct DayUsage: Sendable, Equatable {
 
 /// A configured integration (config entry).
 struct Integration: Sendable, Hashable, Decodable {
+    var entryID: String?
     let domain: String
     let title: String
     let state: String?
+
+    /// Set up, but failing: Maison reloads it on its own.
+    var isFailing: Bool { state == "setup_error" || state == "setup_retry" }
+
+    private enum CodingKeys: String, CodingKey {
+        case entryID = "entry_id"
+        case domain, title, state
+    }
 }
 
 extension HomeAssistantConnection {

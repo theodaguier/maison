@@ -1,0 +1,13 @@
+{
+  "location_name": "Maison",
+  "latitude": 48.8566,
+  "longitude": 2.3522,
+  "elevation": 35,
+  "time_zone": "Europe/Paris",
+  "unit_system": {"length": "km", "mass": "g", "temperature": "°C", "volume": "L"},
+  "version": "2026.8.1",
+  "external_url": "https://maison.example.com",
+  "internal_url": "http://homeassistant.local:8123",
+  "currency": "EUR",
+  "country": "FR"
+}

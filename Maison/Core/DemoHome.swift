@@ -24,11 +24,12 @@ enum DemoHome {
             Area(id: "hallway", name: "Couloir"),
             Area(id: "office", name: "Bureau"),
             Area(id: "bathroom", name: "Salle de bain"),
+            Area(id: "back_room", name: "Arrière"),
         ]
         let placement: [String: String] = [
             "light.lampadaire": "living_room", "light.bandeau_led": "living_room", "light.plafonnier": "living_room",
-            "climate.thermostat": "living_room", "media_player.sonos": "living_room", "media_player.fire_tv": "living_room",
-            "cover.volets_salon": "living_room", "sensor.salon_temperature": "living_room", "sensor.salon_humidity": "living_room",
+            "climate.thermostat": "living_room", "media_player.sonos": "living_room", "media_player.fire_tv": "living_room", "vacuum.robot": "living_room",
+            "cover.volets_salon": "living_room", "sensor.salon_temperature": "living_room", "sensor.salon_humidity": "living_room", "sensor.salon_co2": "living_room",
             "binary_sensor.salon_motion": "living_room",
             "climate.climatiseur": "bedroom", "sensor.chambre_temperature": "bedroom",
             "switch.prise_cafe": "kitchen", "sensor.prise_cafe_power": "kitchen",
@@ -42,12 +43,20 @@ enum DemoHome {
         layout.areas = areas
         layout.areaByEntity = placement
         layout.deviceByEntity = [
+            "switch.chauffe_eau": "water_heater_plug", "sensor.chauffe_eau_energy": "water_heater_plug",
+            "climate.climatiseur": "aircon", "sensor.climatiseur_filter_life": "aircon", "button.climatiseur_reset_filter": "aircon",
             "switch.prise_cafe": "plug", "sensor.prise_cafe_power": "plug",
             "lock.porte_entree": "lock", "sensor.porte_entree_battery": "lock",
             "sensor.sdb_temperature": "bathroom_sensor", "sensor.sdb_humidity": "bathroom_sensor", "sensor.sdb_battery": "bathroom_sensor",
         ]
         layout.hiddenEntities = ["sensor.porte_entree_battery", "sensor.sdb_battery", "sensor.prise_cafe_power"]
-        layout.platformByEntity = ["media_player.sonos": "sonos", "media_player.sonos_cuisine": "sonos"]
+        layout.platformByEntity = [
+            "media_player.sonos": "sonos", "media_player.sonos_cuisine": "sonos",
+            "binary_sensor.internet": "ping", "sensor.internet_round_trip_time_average": "ping",
+            "sensor.internet_round_trip_time_maximum": "ping",
+        ]
+        layout.translationKeyByEntity = ["sensor.climatiseur_filter_life": "filter_life", "button.climatiseur_reset_filter": "reset_filter"]
+        layout.hiddenEntities.formUnion(["sensor.climatiseur_filter_life", "button.climatiseur_reset_filter", "binary_sensor.internet", "sensor.internet_round_trip_time_average", "sensor.internet_round_trip_time_maximum"])
         return layout
     }()
 
@@ -88,6 +97,9 @@ enum DemoHome {
             EntityState(entityID: "media_player.sonos_cuisine", state: "paused", attributes: [
                 "friendly_name": "Sonos cuisine", "device_class": "speaker", "volume_level": 0.3, "group_members": ["media_player.sonos_cuisine"],
             ]),
+            EntityState(entityID: "vacuum.robot", state: "docked", attributes: [
+                "friendly_name": "Robot aspirateur", "battery_level": 100,
+            ]),
             EntityState(entityID: "fan.ventilateur", state: "on", attributes: [
                 "friendly_name": "Ventilateur", "percentage": 60, "percentage_step": 10, "oscillating": true,
                 "preset_modes": ["Doux", "Normal", "Turbo", "Nuit"], "preset_mode": "Normal",
@@ -117,6 +129,41 @@ enum DemoHome {
             EntityState(entityID: "sensor.chambre_temperature", state: "21.4", attributes: [
                 "friendly_name": "Chambre température", "device_class": "temperature", "unit_of_measurement": "°C",
             ]),
+            EntityState(entityID: "binary_sensor.internet", state: "on", attributes: [
+                "friendly_name": "Internet", "device_class": "connectivity",
+            ]),
+            EntityState(entityID: "sensor.internet_round_trip_time_average", state: "14", attributes: [
+                "friendly_name": "Internet temps de réponse moyen", "unit_of_measurement": "ms", "state_class": "measurement",
+            ]),
+            EntityState(entityID: "sensor.internet_round_trip_time_maximum", state: "21", attributes: [
+                "friendly_name": "Internet temps de réponse maximum", "unit_of_measurement": "ms", "state_class": "measurement",
+            ]),
+            EntityState(entityID: "weather.forecast_maison", state: "partlycloudy", attributes: [
+                "friendly_name": "Météo", "temperature": 14, "humidity": 62,
+            ]),
+            EntityState(entityID: "sensor.salon_co2", state: "1140", attributes: [
+                "friendly_name": "Salon CO₂", "device_class": "carbon_dioxide", "unit_of_measurement": "ppm",
+            ]),
+            EntityState(entityID: "sensor.chauffe_eau_energy", state: "412.6", attributes: [
+                "friendly_name": "Chauffe-eau", "device_class": "energy", "unit_of_measurement": "kWh", "state_class": "total_increasing",
+            ]),
+            EntityState(entityID: "switch.chauffe_eau", state: "on", attributes: ["friendly_name": "Chauffe-eau"]),
+            EntityState(entityID: "sensor.climatiseur_filter_life", state: "8", attributes: [
+                "friendly_name": "Climatiseur durée de vie du filtre", "unit_of_measurement": "%",
+            ]),
+            EntityState(entityID: "button.climatiseur_reset_filter", state: "unknown", attributes: ["friendly_name": "Climatiseur filtre nettoyé"]),
+            EntityState(entityID: "sensor.compteur_eau", state: "182.4", attributes: [
+                "friendly_name": "Compteur d’eau", "device_class": "water", "unit_of_measurement": "L", "state_class": "total_increasing",
+            ]),
+            EntityState(entityID: "sensor.box_download", state: "348", attributes: [
+                "friendly_name": "Box débit descendant", "device_class": "data_rate", "unit_of_measurement": "Mbit/s",
+            ]),
+            EntityState(entityID: "sensor.box_upload", state: "92", attributes: [
+                "friendly_name": "Box débit montant", "device_class": "data_rate", "unit_of_measurement": "Mbit/s",
+            ]),
+            EntityState(entityID: "device_tracker.iphone_theo_box", state: "home", attributes: ["friendly_name": "iPhone de Théo", "source_type": "router"]),
+            EntityState(entityID: "device_tracker.macbook_box", state: "home", attributes: ["friendly_name": "MacBook", "source_type": "router"]),
+            EntityState(entityID: "device_tracker.tv_box", state: "not_home", attributes: ["friendly_name": "TV", "source_type": "router"]),
             EntityState(entityID: "sensor.salon_humidity", state: "48", attributes: [
                 "friendly_name": "Salon humidité", "device_class": "humidity", "unit_of_measurement": "%",
             ]),
@@ -199,6 +246,10 @@ enum DemoHome {
             let position = data["position"]?.doubleValue ?? 0
             state = position > 0 ? "open" : "closed"
             attributes["current_position"] = .number(position)
+        case "start":
+            state = "cleaning"
+        case "return_to_base":
+            state = "returning"
         case "media_play_pause":
             state = state == "playing" ? "paused" : "playing"
         case "media_play":
@@ -233,6 +284,20 @@ enum DemoHome {
     // MARK: Plan
 
     /// The apartment of the mock-ups: six rooms, about 73 m².
+    /// What was done in each room: the bathroom is late, the living room comes back in a few days.
+    static var housekeepingLog: HousekeepingLog {
+        func daysAgo(_ days: Double) -> Date { .now.addingTimeInterval(-days * 86_400) }
+        var log = HousekeepingLog()
+        for chore in [Chore.sink, .shower, .toilet, .towels] { log.markDone(chore, in: "bathroom", at: daysAgo(9)) }
+        log.markDone(.vacuum, in: "living_room", at: daysAgo(4))
+        log.markDone(.dust, in: "living_room", at: daysAgo(12))
+        log.markDone(.floors, in: "kitchen", at: daysAgo(1))
+        log.markDone(.worktop, in: "kitchen", at: daysAgo(0.2))
+        log.markDone(.sheets, in: "bedroom", at: daysAgo(3))
+        log.markDone(.vacuum, in: "bedroom", at: daysAgo(5))
+        return log
+    }
+
     static let plan: FloorPlan = {
         typealias P = FloorPlan.Point
         func rect(_ x0: Double, _ y0: Double, _ x1: Double, _ y1: Double) -> [P] {
@@ -300,6 +365,25 @@ enum DemoHome {
             return upToNow([(15.2, "cool"), (17.9, "off"), (19.4, "cool")])
         case "binary_sensor.fenetre_chambre":
             return upToNow([(7, "on"), (7.5, "off"), (9.03, "on"), (9.67, "off")])
+        case "sensor.salon_temperature":
+            return hourly(since: start) { hour, _ in 21.4 + 0.6 * sin((hour - 15) / 24 * 2 * .pi) }
+        case "sensor.chambre_temperature":
+            // Too warm for a few hours around 2 am, as in the mock-ups.
+            return hourly(since: start) { hour, _ in hour >= 0 && hour < 4 ? 24.6 : 21.4 + 0.5 * sin((hour - 15) / 24 * 2 * .pi) }
+        case "binary_sensor.internet":
+            let cut = today.addingTimeInterval(3 * 3600 + 12 * 60)
+            return [StateChange(state: "on", date: start)]
+                + [StateChange(state: "off", date: cut), StateChange(state: "on", date: cut.addingTimeInterval(240))]
+                .filter { $0.date > start && $0.date <= .now }
+        case "sensor.internet_round_trip_time_average":
+            return stride(from: start.timeIntervalSince1970, to: Date.now.timeIntervalSince1970, by: 900).map { time in
+                let date = Date(timeIntervalSince1970: time)
+                let wobble = 4 * sin(time / 2_700) + 2 * sin(time / 650)
+                let evening = date >= today && Calendar.current.component(.hour, from: date) == 21 ? 14.0 : 0
+                return StateChange(state: String(format: "%.1f", 15 + wobble + evening), date: date)
+            }
+        case "sensor.box_download":
+            return hourly(since: start) { hour, _ in hour >= 20 && hour < 23 ? 210 : 340 + 10 * sin(hour) }
         case "sensor.sdb_temperature":
             let values: [(Double, Double)] = [(-24, 22.6), (-21, 22.2), (-18, 22.1), (-16, 22.1), (-14, 23.9), (-12.5, 23), (-11, 22.7), (-9, 22.9), (-7, 23.2), (-5, 23.1), (-3.5, 23.5), (-2.4, 24.6), (-1.6, 23.6), (-0.8, 23.2), (-0.2, 23.1)]
             return values.map { StateChange(state: String($0.1), date: Date.now.addingTimeInterval($0.0 * 3600)) }
@@ -321,7 +405,45 @@ enum DemoHome {
         ].filter { $0.date >= today }
     }
 
+    /// One reading each hour since `start`, ending with the current hour.
+    private static func hourly(since start: Date, _ value: (Double, Date) -> Double) -> [StateChange] {
+        stride(from: start.timeIntervalSince1970, to: Date.now.timeIntervalSince1970, by: 3600).map { time in
+            let date = Date(timeIntervalSince1970: time)
+            let hour = Double(Calendar.current.component(.hour, from: date))
+            return StateChange(state: String(format: "%.1f", value(hour, date)), date: date)
+        }
+    }
+
+    /// Electricity each hour: a water heater at 7 pm, a quieter day today than the week before.
+    private static func energyChange(at date: Date) -> Double {
+        let calendar = Calendar.current
+        let hour = calendar.component(.hour, from: date)
+        let base = [0.1, 0.08, 0.06, 0.06, 0.06, 0.07, 0.16, 0.28, 0.22, 0.14, 0.12, 0.14, 0.22, 0.18, 0.14, 0.16, 0.2, 0.26, 0.34, 0.3, 0.32, 0.26, 0.18, 0.12][hour]
+        let heater = hour == 19 ? 1.6 : hour == 20 ? 0.6 : 0
+        let isToday = calendar.isDateInToday(date)
+        return (base + heater) * (isToday ? 0.82 : 1 + 0.06 * sin(date.timeIntervalSince1970 / 90_000))
+    }
+
+    /// Peak and off-peak hours, as on a French bill.
+    static let tariff = EnergyTariff(price: 0.27, offPeak: EnergyTariff.OffPeak(price: 0.2068, startHour: 22, endHour: 6))
+
     static func statistics(of entityID: String, since start: Date, period: String) -> [StatisticPoint] {
+        if entityID == "sensor.chauffe_eau_energy" || entityID == "sensor.compteur_eau", period == "hour" {
+            let first = (start.timeIntervalSince1970 / 3600).rounded(.down) * 3600
+            return stride(from: first, to: Date.now.timeIntervalSince1970 - 3600, by: 3600).map { time in
+                let date = Date(timeIntervalSince1970: time)
+                let hour = Calendar.current.component(.hour, from: date)
+                let value = entityID == "sensor.chauffe_eau_energy" ? (hour == 19 ? 1.2 : hour == 20 || hour == 6 ? 0.4 : 0) : ([7, 8, 19, 20].contains(hour) ? 18.0 : 1.5)
+                return StatisticPoint(start: date, mean: nil, min: nil, max: nil, change: value)
+            }
+        }
+        if entityID == "sensor.energy_today", period == "hour" {
+            let first = (start.timeIntervalSince1970 / 3600).rounded(.down) * 3600
+            return stride(from: first, to: Date.now.timeIntervalSince1970 - 3600, by: 3600).map { time in
+                let date = Date(timeIntervalSince1970: time)
+                return StatisticPoint(start: date, mean: nil, min: nil, max: nil, change: energyChange(at: date))
+            }
+        }
         guard entityID.hasSuffix("temperature") else { return [] }
         let step: TimeInterval = period == "day" ? 86_400 : 3600
         return stride(from: start.timeIntervalSince1970, to: Date.now.timeIntervalSince1970, by: step).map { time in
@@ -391,4 +513,34 @@ enum DemoHome {
     private static func isoString(_ date: Date) -> String {
         ISO8601DateFormatter().string(from: date)
     }
+}
+
+extension DemoHome {
+    /// A few of the server's integrations, for the search.
+    static let integrationCatalog: [IntegrationDescription] = [
+        IntegrationDescription(domain: "airthings", name: "Airthings", iotClass: "cloud_polling"),
+        IntegrationDescription(domain: "aranet", name: "Aranet", iotClass: "local_push"),
+        IntegrationDescription(domain: "awair", name: "Awair", iotClass: "local_polling"),
+        IntegrationDescription(domain: "enphase_envoy", name: "Enphase Envoy", iotClass: "local_polling"),
+        IntegrationDescription(domain: "fritz", name: "AVM FRITZ!Box Tools", iotClass: "local_polling"),
+        IntegrationDescription(domain: "freebox", name: "Freebox", iotClass: "local_polling"),
+        IntegrationDescription(domain: "google", name: "Google Calendar", iotClass: "cloud_polling"),
+        IntegrationDescription(domain: "matter", name: "Matter", iotClass: "local_push"),
+        IntegrationDescription(domain: "met", name: "Meteorologisk institutt (Met.no)", iotClass: "cloud_polling"),
+        IntegrationDescription(domain: "meteo_france", name: "Météo-France", iotClass: "cloud_polling"),
+        IntegrationDescription(domain: "netatmo", name: "Netatmo", iotClass: "cloud_polling"),
+        IntegrationDescription(domain: "netgear", name: "NETGEAR", iotClass: "local_polling"),
+        IntegrationDescription(domain: "nut", name: "Network UPS Tools (NUT)", iotClass: "local_polling"),
+        IntegrationDescription(domain: "ping", name: "Ping (ICMP)", iotClass: "local_polling"),
+        IntegrationDescription(domain: "shelly", name: "Shelly", iotClass: "local_push"),
+        IntegrationDescription(domain: "tado", name: "tado°", iotClass: "cloud_polling"),
+        IntegrationDescription(domain: "tplink", name: "TP-Link Smart Home", iotClass: "local_polling"),
+        IntegrationDescription(domain: "upnp", name: "UPnP/IGD", iotClass: "local_polling"),
+        IntegrationDescription(domain: "zha", name: "Zigbee Home Automation", iotClass: "local_polling"),
+    ]
+
+    static let discoveredDevices = [
+        DiscoveredDevice(flowID: "demo-shelly", domain: "shelly", name: "Shelly Plug S"),
+        DiscoveredDevice(flowID: "demo-freebox", domain: "freebox", name: nil),
+    ]
 }

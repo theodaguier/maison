@@ -1,8 +1,9 @@
 # Maison
 
-A native iOS app (SwiftUI, Liquid Glass) that understands your home and acts for you: comfort, energy and the network first, with the bills and devices that serve them. [Home Assistant](https://www.home-assistant.io) is the memory of everything measured; Maison understands and acts, connected or not. The direction is in [`ROADMAP.md`](ROADMAP.md).
+A native iOS app (SwiftUI, Liquid Glass) that understands your home and acts for you, on top of [Home Assistant](https://www.home-assistant.io): Home Assistant collects, Maison understands and acts. The direction is in [`ROADMAP.md`](ROADMAP.md).
 
-- **Local first**: the app talks directly to the household's Home Assistant server; away from home it uses the external URL set in Home Assistant (Tailscale, a domain, Nabu Casa).
+- **Local first**: the app talks directly to the household's Home Assistant server. When the local address doesn't answer within a few seconds, it switches on its own to the remote one: the external URL set in Home Assistant (Tailscale, a domain), otherwise Home Assistant Cloud's remote access. The same sign-in works through both.
+- **Presence**: once allowed, the iPhone registers with Home Assistant as a mobile app and reports significant location changes, so rules like "When everyone leaves" work. It can be turned off in Settings, and signing out stops it.
 - **Automations run on the server**, not on the iPhone.
 - **Household sharing through iCloud** (CloudKit) for app-specific data.
 
@@ -30,15 +31,25 @@ Maison/
   DesignSystem/        colour tokens, typography, cards, rings, gauges
   Features/            Home, Rooms, Automations, Settings, device sheets
   Core/HomeAssistant/  discovery, OAuth, WebSocket client, registries
+  Core/Analytics/      usage events; off unless a PostHog project token is set
   Core/Devices/        device kinds, inline controls, presentation
   Resources/           illustrations, colours, string catalogs
 MaisonTests/      tests (Swift Testing)
 ci/               export options and helper scripts for GitHub Actions
 ```
 
+## Product analytics
+
+Usage events go to PostHog in the EU (`https://eu.i.posthog.com`). The project token is not in the repo. With none set, the app records nothing, so CI and a fresh checkout keep working.
+
+- **On your Mac:** copy [`Config/Secrets.xcconfig.example`](Config/Secrets.xcconfig.example) to `Config/Secrets.xcconfig` and set `POSTHOG_API_KEY`. That file is gitignored. Use the project token (`phc_…`) from the EU project's settings, never a personal key (`phx_…`).
+- **TestFlight:** repository secret `POSTHOG_API_KEY`. The release workflow passes it to `xcodebuild`. If the secret is missing, the upload still runs and analytics stays off.
+
+Xcode writes that setting into Info.plist as `PostHogAPIKey`. Settings → Share Usage Data is off by default: nothing is recorded, and the SDK is not even set up, until the person turns it on.
+
 ## Household sharing
 
-The household lives in a CloudKit zone (`Household`) in the owner's private database of `iCloud.com.theodaguier.maison`, shared as a whole with a zone-wide `CKShare`. It holds the household (name, server URLs) and one `MemberFavorites` record per member — never device state. A share doesn't grant Home Assistant access: everyone signs in with their own Home Assistant account.
+The household lives in a CloudKit zone (`Household`) in the owner's private database of `iCloud.com.theodaguier.maison`, shared as a whole with a zone-wide `CKShare`. It holds the household (name, server URLs), one `MemberFavorites` record per member, and a `MemberProfile` when someone edits the name the household sees — never device state, and never a copy of an Apple ID identity. On iOS 26 the owner's name is present on the share only with the iCloud Extended Share Access entitlement (`InProcessShareOwnerParticipantInfo`); it is shown, not stored. A share doesn't grant Home Assistant access: everyone signs in with their own Home Assistant account.
 
 - **Invite**: Settings → Household → Invite Someone adds the person's iCloud email or phone number to the share as Resident (`privateUser`) or Administrator (`administrator`), then hands the link to the share sheet.
 - **Accept**: opening the link calls `SceneDelegate`, which accepts the share; the connect screen then offers the household's server.
@@ -53,7 +64,10 @@ The record types are created in the Development environment the first time a deb
 | Workflow | Trigger | What it does |
 | --- | --- | --- |
 | [`CI`](.github/workflows/ci.yml) | push to `main`, pull requests | generates the project, builds, runs the tests on a simulator |
+| [`Lint`](.github/workflows/lint.yml) | push to `main`, pull requests | SwiftLint and SwiftFormat, both in lint mode |
 | [`TestFlight`](.github/workflows/release.yml) | `v*` tag or manual run | archives a Release build and uploads it to TestFlight |
+
+The check to require in branch protection is **Tests unitaires**. A failed run uploads the `.xcresult` bundle. Outdated runs on the same pull request are cancelled.
 
 The marketing version comes from the tag (`v0.2.0` → `0.2.0`) and the build number from the GitHub run counter.
 
@@ -71,6 +85,7 @@ git tag v0.1.0 && git push origin v0.1.0
 | `ASC_KEY_P8` | full content of the `AuthKey_XXXX.p8` file |
 | `DIST_CERT_P12` | Apple Distribution certificate, base64-encoded `.p12` |
 | `DIST_CERT_PASSWORD` | password of that `.p12` |
+| `POSTHOG_API_KEY` | optional PostHog project token (`phc_…`) for the EU project. Without it the archive still uploads and analytics stays off. |
 
 Two scripts store them through `gh` without printing them:
 

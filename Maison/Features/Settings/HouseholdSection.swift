@@ -50,13 +50,13 @@ struct HouseholdSection: View {
                         MemberRow(member: member, fallbackName: store.currentUser?.name)
                     }
                     .buttonStyle(.plain)
-                        .contextMenu {
-                            if household.currentRole.canManageMembers, !member.isCurrentUser, member.role != .owner {
-                                Button("Remove from Household", systemImage: "person.badge.minus", role: .destructive) {
-                                    memberToRemove = member
-                                }
+                    .contextMenu {
+                        if household.currentRole.canManageMembers, !member.isCurrentUser, member.role != .owner {
+                            Button("Remove from Household", systemImage: "person.badge.minus", role: .destructive) {
+                                memberToRemove = member
                             }
                         }
+                    }
                 }
                 if let sentConfirmation {
                     Label(sentConfirmation, systemImage: "checkmark.circle.fill")
@@ -143,36 +143,56 @@ struct HouseholdSection: View {
     }
 }
 
+/// Initials, or a person / envelope symbol when there is no name. Never a bare "?".
+struct MemberAvatar: View {
+    let initials: String?
+    var pending = false
+    var size: CGFloat = 30
+
+    var body: some View {
+        ZStack {
+            if let initials {
+                Text(initials)
+                    .font(.system(size: initials.count > 1 ? size * 0.32 : size * 0.42, weight: .semibold, design: .rounded))
+                    .foregroundStyle(pending ? Color.secondary : Color.primary)
+            } else {
+                Image(systemName: pending ? "envelope.fill" : "person.fill")
+                    .font(.system(size: size * 0.38, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .frame(width: size, height: size)
+        .background(Theme.pill, in: .circle)
+        .accessibilityHidden(true)
+    }
+}
+
 private struct MemberRow: View {
     let member: HouseholdMember
     /// Shown for the current user when iCloud doesn't share their name.
     let fallbackName: String?
 
     var body: some View {
-        let name = member.name ?? (member.isCurrentUser ? fallbackName : nil)
+        let person = member.normalized
+        let name = person.resolvedName(accountName: fallbackName)
         HStack(spacing: 12) {
-            Text(member.isPending ? "?" : (name ?? "?").prefix(1).uppercased())
-                .font(.system(size: 14, weight: .semibold, design: .rounded))
-                .foregroundStyle(member.isPending ? .secondary : .primary)
-                .frame(width: 30, height: 30)
-                .background(Theme.pill, in: .circle)
-                .accessibilityHidden(true)
+            MemberAvatar(initials: person.initials(accountName: fallbackName), pending: person.showsAsInvitation)
             VStack(alignment: .leading, spacing: 1) {
-                Text(member.isPending ? String(localized: "Invitation Sent") : name ?? String(localized: "Invited Person"))
+                Text(rowTitle(name, for: person))
                     .font(.roundedBody)
                     .foregroundStyle(.primary)
                     .lineLimit(1)
-                if member.isCurrentUser {
+                if person.isCurrentUser {
                     Text("You").font(.roundedFootnote).foregroundStyle(.tertiary)
-                } else if member.isPending {
-                    Text([name, String(localized: "Waiting via iCloud")].compactMap { $0 }.joined(separator: " · "))
+                } else if person.showsAsInvitation {
+                    Text("Waiting via iCloud")
                         .font(.roundedFootnote)
                         .foregroundStyle(.tertiary)
                         .lineLimit(1)
                 }
             }
             Spacer()
-            RoleBadge(role: member.role)
+            RoleBadge(role: person.role)
             Image(systemName: "chevron.right")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.tertiary)
@@ -181,6 +201,13 @@ private struct MemberRow: View {
         .contentShape(.rect)
         .accessibilityElement(children: .combine)
     }
+
+    private func rowTitle(_ name: String?, for person: HouseholdMember) -> String {
+        if person.showsAsInvitation {
+            return name ?? String(localized: "Invitation Sent")
+        }
+        return name ?? String(localized: "Household Member")
+    }
 }
 
 extension HouseholdRole {
@@ -188,6 +215,15 @@ extension HouseholdRole {
         switch self {
         case .owner: String(localized: "Owner")
         case .administrator: String(localized: "Administrator")
+        case .resident: String(localized: "Resident")
+        }
+    }
+
+    /// The short label in the coloured pill. The owner is not an administrator.
+    var badge: String {
+        switch self {
+        case .owner: String(localized: "Owner")
+        case .administrator: String(localized: "Admin")
         case .resident: String(localized: "Resident")
         }
     }
