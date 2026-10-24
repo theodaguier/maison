@@ -338,7 +338,7 @@ struct MemberPage: View {
             .accessibilityElement(children: .combine)
 
             if person.showsAsInvitation {
-                Explanation(text: "Waiting for them to accept the invitation in iCloud. Once they do, they sign in to Home Assistant with their own account.")
+                Explanation(text: "Waiting for them to accept the invitation in iCloud. Once they do, Maison connects them to Home Assistant.")
             } else {
                 Explanation(text: person.role == .resident
                     ? "Controls devices, scenes and automations."
@@ -364,23 +364,6 @@ struct MemberPage: View {
                 }
                 .padding(.top, 8)
             } else if canManage {
-                SettingsGroup("Role") {
-                    ForEach([HouseholdRole.resident, .administrator], id: \.self) { role in
-                        if role == .administrator { SettingsDivider() }
-                        Button {
-                            Task { await run { try await household.setRole(role, of: person) } }
-                        } label: {
-                            SettingsRow(symbol: role == .administrator ? "person.badge.key.fill" : "person.fill",
-                                        color: role == .administrator ? .purple : .blue,
-                                        title: LocalizedStringKey(stringLiteral: role.title),
-                                        detail: role == .administrator
-                                            ? String(localized: "Can also add devices, manage members and the server.")
-                                            : String(localized: "Controls devices, scenes and automations."),
-                                        value: person.role == role ? "✓" : nil)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
                 WideButton(title: "Remove from Household", style: .destructive) { confirmsRemove = true }
                     .padding(.top, 8)
             }
@@ -402,17 +385,17 @@ struct MemberPage: View {
         .confirmationDialog("Remove \(person.resolvedName(accountName: nil) ?? "")?", isPresented: $confirmsRemove, titleVisibility: .visible) {
             Button("Remove", role: .destructive) {
                 Task {
-                    await run { try await household.remove(person) }
+                    await run { try await store.remove(person) }
                     if error == nil { dismiss() }
                 }
             }
         } message: {
-            Text("They’ll lose access to the household’s favorites and settings. Their Home Assistant account isn’t affected.")
+            Text("They’ll lose access to this home, Home Assistant included.")
         }
         .confirmationDialog("Cancel the invitation?", isPresented: $confirmsCancel, titleVisibility: .visible) {
             Button("Cancel the Invitation", role: .destructive) {
                 Task {
-                    await run { try await household.remove(person) }
+                    await run { try await store.remove(person) }
                     if error == nil { dismiss() }
                 }
             }
@@ -445,7 +428,7 @@ struct MemberPage: View {
         guard let contact = person.invitationContact else { return }
         error = nil
         do {
-            let url = try await store.household.invite(contact, as: person.role)
+            let url = try await store.invite(contact)
             let householdName = store.household.household?.name ?? String(localized: "Home")
             shareItems = [String(localized: "I’m adding you to \(householdName), you’ll see, it’s simple."), url]
             isSharing = true

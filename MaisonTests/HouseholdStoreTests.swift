@@ -125,10 +125,10 @@ struct HouseholdStoreTests {
         let store = HouseholdStore(cloud: cloud, defaults: defaults)
         await store.serverConnected(server)
 
-        let link = try await store.invite("camille@icloud.com", as: .administrator)
+        let link = try await store.invite("camille@icloud.com") { _, _, _ in "u1" }
 
         #expect(link.host() == "www.icloud.com")
-        #expect(await cloud.invitations.map(\.role) == [.administrator])
+        #expect(await cloud.invitations == ["camille@icloud.com"])
         #expect(store.members.last?.name == "camille@icloud.com")
         #expect(store.members.last?.isPending == true)
     }

@@ -1,4 +1,5 @@
 import AuthenticationServices
+import CloudKit
 import Foundation
 import Observation
 
@@ -109,7 +110,11 @@ final class HomeStore {
 
     func start() async {
         guard !isDemo else { return }
-        Task { await household.start() }
+        Task {
+            await household.start()
+            // Joined, but the app closed before signing in with the account made for this person.
+            await signInWithInvitation()
+        }
         // Without credentials, onboarding starts discovery once it has explained why it needs the local network.
         if credentials != nil {
             await connect()
@@ -636,6 +641,63 @@ final class HomeStore {
         }
     }
 
+    // MARK: - Household
+
+    /// Invites someone with the same controls as everyone: an administrator of the household, signed
+    /// in by an administrator account Maison makes on the server for them.
+    func invite(_ contact: String) async throws -> URL {
+        guard currentUser?.isAdmin == true, connection != nil else { throw MemberAccountError.needsAdministrator }
+        return try await household.invite(contact) { name, username, password in
+            guard let connection else { throw MemberAccountError.needsAdministrator }
+            return try await connection.createAdministrator(named: name, username: username, password: password)
+        }
+    }
+
+    /// Removes someone from the household, and the account Maison made for them on the server.
+    func remove(_ member: HouseholdMember) async throws {
+        try await household.remove(member) { accountID in
+            guard let connection else { throw HomeAssistantError.connectionClosed }
+            try await connection.deleteAccount(accountID)
+        }
+    }
+
+    /// Joins the household of an invitation, then signs in with the account made for this person.
+    func join(_ metadata: CKShare.Metadata) async {
+        await household.accept(metadata)
+        await signInWithInvitation()
+    }
+
+    /// Signs in with the account Maison made when this person was invited, so joining needs no typing.
+    /// The password is then replaced by one nobody knows and cleared from the household. Without
+    /// such an account, onboarding shows the server's sign-in page.
+    func signInWithInvitation() async {
+        guard !isDemo, credentials == nil, let server = household.household,
+              let access = await household.unusedAccess(), let password = access.password
+        else { return }
+        phase = .connecting
+        do {
+            let signedIn = try await connector.signIn(
+                username: access.username, password: password,
+                addresses: [server.serverURL, server.remoteURL].compactMap(\.self)
+            )
+            // Tokens work through every address: keep the local one first, whichever answered.
+            let credentials = Credentials(
+                serverURL: server.serverURL, accessToken: signedIn.accessToken, refreshToken: signedIn.refreshToken,
+                expiresAt: signedIn.expiresAt, remoteURL: server.remoteURL
+            )
+            try credentialStore.save(credentials)
+            self.credentials = credentials
+            serverURL = server.serverURL
+            remoteURL = server.remoteURL
+            discovery.stop()
+            await connect()
+            try? await connection?.changePassword(from: password, to: MemberAccess.makePassword())
+            await household.accessUsed(access)
+        } catch {
+            phase = .failed(error.localizedDescription)
+        }
+    }
+
     // MARK: - Automations
 
     /// Recent runs of every automation, from the traces Home Assistant keeps.
@@ -734,6 +796,14 @@ final class HomeStore {
 
     func isFavorite(_ entity: EntityState) -> Bool {
         favoriteIDs.contains(entity.entityID)
+    }
+}
+
+enum MemberAccountError: LocalizedError, Equatable {
+    case needsAdministrator
+
+    var errorDescription: String? {
+        String(localized: "To invite someone, Maison must be connected to Home Assistant with an administrator account.")
     }
 }
 

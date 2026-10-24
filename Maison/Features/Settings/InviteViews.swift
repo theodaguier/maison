@@ -5,14 +5,14 @@ import VisionKit
 
 // MARK: - Inviting (owner side)
 
-/// "Share the Home": who to invite, their role, then the share sheet or a code to scan.
+/// "Share the Home": who to invite, then the share sheet or a code to scan. Everyone invited gets the
+/// same controls: an administrator of the household, with an administrator account Maison makes on the server.
 struct InviteSheet: View {
     @Environment(HomeStore.self) private var store
     @Environment(\.dismiss) private var dismiss
     let onSent: (String) -> Void
 
     @State private var contact = ""
-    @State private var role: HouseholdRole = .resident
     @State private var link: URL?
     @State private var isCreating = false
     @State private var errorMessage: String?
@@ -45,14 +45,11 @@ struct InviteSheet: View {
                     .padding(16)
                     .cardStyle(radius: Theme.rowRadius)
 
-                    roleCard(.resident, detail: "Controls devices, scenes and automations.")
-                    roleCard(.administrator, detail: "Can also add devices, manage members and the server.")
-
                     VStack(alignment: .leading, spacing: 10) {
                         Text("Done automatically").font(.roundedFootnote).foregroundStyle(.tertiary)
                         automatic("icloud.fill", .blue, "Plan, rooms and names shared through iCloud")
                         automatic("arrow.down.app.fill", .blue, "Installing the app is part of the link")
-                        automatic("lock.fill", .gray, "They sign in to Home Assistant with their own account")
+                        automatic("person.badge.key.fill", .purple, "Maison connects them to Home Assistant, with the same controls as you")
                     }
                     .padding(16)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -111,7 +108,7 @@ struct InviteSheet: View {
             }
         }
         .sheet(isPresented: $showsCode) {
-            if let link { InviteCodeSheet(link: link, role: role) }
+            if let link { InviteCodeSheet(link: link) }
         }
         .errorFeedback(errorMessage)
     }
@@ -144,33 +141,6 @@ struct InviteSheet: View {
         .accessibilityHidden(true)
     }
 
-    private func roleCard(_ value: HouseholdRole, detail: LocalizedStringKey) -> some View {
-        Button {
-            role = value
-            link = nil
-        } label: {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(value.title).font(.roundedHeadline).foregroundStyle(.primary)
-                    Text(detail).font(.roundedFootnote).foregroundStyle(.secondary)
-                }
-                Spacer()
-                Image(systemName: role == value ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 22))
-                    .foregroundStyle(role == value ? Color.blue : Color(.tertiaryLabel))
-            }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Theme.card, in: .rect(cornerRadius: Theme.rowRadius))
-            .overlay {
-                RoundedRectangle(cornerRadius: Theme.rowRadius)
-                    .strokeBorder(role == value ? Color.blue : Theme.cardBorder, lineWidth: role == value ? 2 : 1)
-            }
-        }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(role == value ? .isSelected : [])
-    }
-
     private func automatic(_ symbol: String, _ color: Color, _ text: LocalizedStringKey) -> some View {
         HStack(spacing: 10) {
             Image(systemName: symbol)
@@ -182,14 +152,14 @@ struct InviteSheet: View {
         }
     }
 
-    /// Creates the iCloud share once per person and role.
+    /// Creates the iCloud share and the person's account once per person.
     private func prepare() async -> Bool {
         if link != nil { return true }
         isCreating = true
         errorMessage = nil
         defer { isCreating = false }
         do {
-            let share = try await store.household.invite(contact, as: role)
+            let share = try await store.invite(contact)
             link = InviteLink.url(share: share, household: householdName, inviter: store.currentUser?.name)
             return true
         } catch {
@@ -229,7 +199,6 @@ struct ActivitySheet: UIViewControllerRepresentable {
 struct InviteCodeSheet: View {
     @Environment(\.dismiss) private var dismiss
     let link: URL
-    let role: HouseholdRole
 
     var body: some View {
         NavigationStack {
@@ -244,12 +213,6 @@ struct InviteCodeSheet: View {
                     .font(.roundedSubheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
-                Text(role.title)
-                    .font(.roundedFootnoteEmphasized)
-                    .foregroundStyle(.blue)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(Color.blue.opacity(0.1), in: .capsule)
                 Spacer()
             }
             .padding(24)
@@ -315,18 +278,12 @@ struct InvitationView: View {
                     Text(title)
                         .font(.system(size: 22, weight: .bold, design: .rounded))
                         .multilineTextAlignment(.center)
-                    Text(role.title)
-                        .font(.roundedFootnoteEmphasized)
-                        .foregroundStyle(.blue)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 4)
-                        .background(Color.blue.opacity(0.1), in: .capsule)
                     VStack(alignment: .leading, spacing: 10) {
                         Text("You’ll be able to").font(.roundedFootnote).foregroundStyle(.tertiary)
                         can("Control the lights, heating and shutters")
                         can("Run scenes and see automations")
                         can("Keep your own favorites")
-                        if role == .administrator { can("Invite and remove people") }
+                        can("Invite and remove people")
                     }
                     .padding(16)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -338,7 +295,7 @@ struct InvitationView: View {
                 Button {
                     Task {
                         isJoining = true
-                        await store.household.accept(metadata)
+                        await store.join(metadata)
                         store.household.pendingInvitation = nil
                     }
                 } label: {
@@ -352,10 +309,6 @@ struct InvitationView: View {
                 .buttonStyle(.glassProminent)
                 .controlSize(.large)
                 .disabled(isJoining)
-                Text("You’ll then sign in to Home Assistant with your own account.")
-                    .font(.roundedFootnote)
-                    .foregroundStyle(.tertiary)
-                    .multilineTextAlignment(.center)
                 Button("Not Now") { store.household.pendingInvitation = nil }
                     .font(.roundedSubheadlineEmphasized)
             }
@@ -381,10 +334,6 @@ struct InvitationView: View {
         if let inviter { return String(localized: "\(inviter) invites you to join their home") }
         if let household { return String(localized: "You’re invited to join “\(household)”") }
         return String(localized: "You’re invited to join a home")
-    }
-
-    private var role: HouseholdRole {
-        metadata.participantRole == .administrator ? .administrator : .resident
     }
 
     private func can(_ text: LocalizedStringKey) -> some View {

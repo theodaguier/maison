@@ -6198,6 +6198,16 @@
         }
       }
     },
+    "Maison connects them to Home Assistant, with the same controls as you": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maison la connecte à Home Assistant, avec les mêmes contrôles que vous"
+          }
+        }
+      }
+    },
     "Maison couldn’t turn this into a rule. Try saying it differently.": {
       "localizations": {
         "fr": {
@@ -9574,26 +9584,6 @@
         }
       }
     },
-    "They sign in to Home Assistant with their own account": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Elle se connecte à Home Assistant avec son propre compte"
-          }
-        }
-      }
-    },
-    "They’ll lose access to the household’s favorites and settings. Their Home Assistant account isn’t affected.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cette personne perdra l’accès aux favoris et réglages du foyer. Son compte Home Assistant n’est pas modifié."
-          }
-        }
-      }
-    },
     "They won’t join the household unless you invite them again.": {
       "localizations": {
         "fr": {
@@ -9620,6 +9610,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ménage de la semaine"
+          }
+        }
+      }
+    },
+    "They’ll lose access to this home, Home Assistant included.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elle perdra l’accès à cette maison, Home Assistant compris."
           }
         }
       }
@@ -9800,6 +9800,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sur %@"
+          }
+        }
+      }
+    },
+    "To invite someone, Maison must be connected to Home Assistant with an administrator account.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour inviter quelqu’un, Maison doit être connectée à Home Assistant avec un compte administrateur."
           }
         }
       }
@@ -10434,12 +10444,12 @@
         }
       }
     },
-    "Waiting for them to accept the invitation in iCloud. Once they do, they sign in to Home Assistant with their own account.": {
+    "Waiting for them to accept the invitation in iCloud. Once they do, Maison connects them to Home Assistant.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "En attente de l’acceptation dans iCloud. Ensuite, la personne se connecte à Home Assistant avec son propre compte."
+            "value": "En attente de l’acceptation dans iCloud. Ensuite, Maison connecte la personne à Home Assistant."
           }
         }
       }
@@ -10954,12 +10964,12 @@
         }
       }
     },
-    "You joined %@. Sign in with your own Home Assistant account to control it.": {
+    "You joined %@. Sign in to Home Assistant to control it.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Vous avez rejoint %@. Connectez-vous avec votre propre compte Home Assistant pour le piloter."
+            "value": "Vous avez rejoint %@. Connectez-vous à Home Assistant pour la piloter."
           }
         }
       }
@@ -11190,16 +11200,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Il vous faudra une nouvelle invitation pour revenir. Vous restez connecté à Home Assistant."
-          }
-        }
-      }
-    },
-    "You’ll then sign in to Home Assistant with your own account.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vous vous connecterez ensuite à Home Assistant avec votre propre compte."
           }
         }
       }

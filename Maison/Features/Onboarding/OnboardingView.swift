@@ -446,7 +446,7 @@ private struct ServerFoundStep: View {
                 .font(.onboardingTitle)
                 .padding(.top, 14)
             if let joinedHousehold {
-                Text("You joined \(joinedHousehold). Sign in with your own Home Assistant account to control it.")
+                Text("You joined \(joinedHousehold). Sign in to Home Assistant to control it.")
                     .font(.roundedBody)
                     .foregroundStyle(.secondary)
                     .padding(.top, 8)

@@ -9,6 +9,10 @@ struct ServerConnector: Sendable {
         try await HomeAssistantAuth(serverURL: address).refresh(credentials)
     }
 
+    var signIn: @Sendable (URL, String, String) async throws -> Credentials = { address, username, password in
+        try await HomeAssistantAuth(serverURL: address).signIn(username: username, password: password)
+    }
+
     var open: @Sendable (URL, String) -> HomeAssistantConnection = { address, accessToken in
         HomeAssistantConnection(serverURL: address, accessToken: accessToken)
     }
@@ -36,6 +40,23 @@ struct ServerConnector: Sendable {
                     try await connection.connect()
                 }
                 return Opened(connection: connection, credentials: credentials, address: address)
+            } catch HomeAssistantError.authenticationFailed(let message) {
+                // Another address leads to the same server: it would refuse the sign-in too.
+                throw HomeAssistantError.authenticationFailed(message)
+            } catch {
+                lastError = error
+            }
+        }
+        throw lastError
+    }
+
+    /// Signs in with a username and password through the first address that answers.
+    func signIn(username: String, password: String, addresses: [URL]) async throws -> Credentials {
+        var lastError: any Error = HomeAssistantError.connectionClosed
+        for (index, address) in addresses.enumerated() {
+            let limit = index == addresses.count - 1 ? nil : timeout
+            do {
+                return try await Self.run(within: limit) { try await signIn(address, username, password) }
             } catch HomeAssistantError.authenticationFailed(let message) {
                 // Another address leads to the same server: it would refuse the sign-in too.
                 throw HomeAssistantError.authenticationFailed(message)

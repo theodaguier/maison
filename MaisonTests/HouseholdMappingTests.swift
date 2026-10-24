@@ -88,9 +88,7 @@ struct HouseholdMappingTests {
         #expect(HouseholdRole(role) == expected)
     }
 
-    @Test func invitesWithTheMatchingShareRole() {
-        #expect(HouseholdRole.administrator.participantRole == .administrator)
-        #expect(HouseholdRole.resident.participantRole == .privateUser)
+    @Test func ownersAndAdministratorsManageMembers() {
         #expect(HouseholdRole.owner.canManageMembers)
         #expect(HouseholdRole.administrator.canManageMembers)
         #expect(!HouseholdRole.resident.canManageMembers)
