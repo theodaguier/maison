@@ -353,7 +353,7 @@ struct MemberPage: View {
                     }
                 }
                 .padding(.top, 8)
-            } else if person.showsAsInvitation && canManage {
+            } else if person.showsAsInvitation, canManage {
                 VStack(spacing: 12) {
                     if person.invitationContact != nil {
                         WideButton(title: "Resend the Invitation", style: .secondary) {

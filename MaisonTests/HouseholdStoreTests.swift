@@ -180,6 +180,7 @@ struct HouseholdStoreTests {
 
         #expect(store.members.first?.name == "Théo")
         #expect(store.members.first?.showsAsInvitation == false)
-        #expect(await cloud.displayNames(of: ["_me"], in: .owned)["_me"] == "Théo")
+        let names = try await cloud.displayNames(of: ["_me"], in: .owned)
+        #expect(names["_me"] == "Théo")
     }
 }
