@@ -159,4 +159,41 @@ struct HouseholdStoreTests {
         #expect(store.members.isEmpty)
         #expect(store.favoriteIDs == ["light.salon"])
     }
+
+    @Test func theCurrentUserIsNeverLeftAsAPendingInvitation() async throws {
+        let cloud = FakeHouseholdCloud()
+        _ = try await cloud.create(server)
+        await cloud.setMembers([
+            HouseholdMember(id: "_me", name: nil, role: .owner, isPending: true, isCurrentUser: true),
+            HouseholdMember(id: "jules", name: "jules@icloud.com", role: .resident, isPending: true, contact: "jules@icloud.com"),
+        ], in: .owned)
+        let store = HouseholdStore(cloud: cloud, defaults: defaults)
+
+        await store.start()
+
+        let me = try #require(store.members.first { $0.isCurrentUser })
+        #expect(!me.isPending)
+        #expect(!me.showsAsInvitation)
+        #expect(me.resolvedName(accountName: "Théo") == "Théo")
+        #expect(me.initials(accountName: "Théo") == "T")
+        #expect(store.members.last?.showsAsInvitation == true)
+        #expect(store.members.last?.invitationContact == "jules@icloud.com")
+    }
+
+    @Test func aChosenDisplayNameFillsTheMissingAppleIDName() async throws {
+        let cloud = FakeHouseholdCloud()
+        let store = HouseholdStore(cloud: cloud, defaults: defaults)
+        await store.serverConnected(server)
+        let me = try #require(store.members.first { $0.isCurrentUser })
+
+        try await store.setDisplayName("  Théo  ", of: me)
+        #expect(store.members.first?.name == "Théo")
+
+        await store.reload()
+
+        #expect(store.members.first?.name == "Théo")
+        #expect(store.members.first?.showsAsInvitation == false)
+        let names = try await cloud.displayNames(of: ["_me"], in: .owned)
+        #expect(names["_me"] == "Théo")
+    }
 }

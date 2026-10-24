@@ -62,6 +62,9 @@ final class HouseholdStore {
 
     private static let favoritesKey = "favoriteEntityIDs"
     private static let planKey = "floorPlan"
+    /// The name the current user chose. Kept on the device so it survives the participant id
+    /// changing when the household is shared for the first time, and published to iCloud for everyone else.
+    private static let displayNameKey = "householdDisplayName"
 
     /// The role of the person using the app.
     var currentRole: HouseholdRole {
@@ -148,13 +151,33 @@ final class HouseholdStore {
 
     func refreshMembers() async throws {
         guard let cloud, let location else { return }
-        let members = try await cloud.members(in: location)
+        var members = try await cloud.members(in: location)
         if members.isEmpty, !location.isShared, let memberID {
-            // Never shared yet: the owner is alone.
-            self.members = [HouseholdMember(id: memberID, name: nil, role: .owner, isCurrentUser: true)]
-        } else {
-            self.members = members.sortedForDisplay()
+            // Never shared yet: the owner is alone, and iCloud has no name for them.
+            members = [HouseholdMember(id: memberID, name: nil, role: .owner, isCurrentUser: true)]
         }
+        members = members.map(\.normalized)
+        let chosen = (try? await cloud.displayNames(of: members.map(\.id), in: location)) ?? [:]
+        let localName = HouseholdMember.nonEmpty(defaults.string(forKey: Self.displayNameKey))
+        if let localName, let me = members.first(where: \.isCurrentUser), chosen[me.id] != localName {
+            try? await cloud.saveDisplayName(localName, of: me.id, in: location)
+        }
+        members = members.map { member in
+            if member.isCurrentUser, let localName { return member.withName(localName) }
+            if let name = chosen[member.id] { return member.withName(name) }
+            return member
+        }
+        self.members = members.sortedForDisplay()
+    }
+
+    /// Saves the name the current user wants the household to see.
+    func setDisplayName(_ name: String, of member: HouseholdMember) async throws {
+        guard member.isCurrentUser, let trimmed = HouseholdMember.nonEmpty(name) else { return }
+        if let cloud, let location {
+            try await cloud.saveDisplayName(trimmed, of: member.id, in: location)
+        }
+        defaults.set(trimmed, forKey: Self.displayNameKey)
+        members = members.map { $0.isCurrentUser ? $0.withName(trimmed) : $0 }
     }
 
     /// Returns the link to send to the person invited.
@@ -168,7 +191,7 @@ final class HouseholdStore {
     func setRole(_ role: HouseholdRole, of member: HouseholdMember) async throws {
         guard let cloud, let location else {
             // The demo household has no iCloud: change it in place.
-            members = members.map { $0.id == member.id ? HouseholdMember(id: $0.id, name: $0.name, role: role, isPending: $0.isPending, isCurrentUser: $0.isCurrentUser) : $0 }
+            members = members.map { $0.id == member.id ? $0.withRole(role) : $0 }
             return
         }
         try await cloud.setRole(role, of: member, in: location)
