@@ -263,7 +263,7 @@ struct ItemSheet: View {
             item.purchasePrice.map { ("Price", Money.text($0.value, currency: item.currency), $0.origin) },
             item.purchaseDate.map { ("Bought", $0.value.formatted(date: .abbreviated, time: .omitted), $0.origin) },
             item.warrantyEnd.map { ("Warranty Until", $0.value.formatted(date: .abbreviated, time: .omitted), $0.origin) },
-        ].compactMap { $0 }
+        ].compactMap(\.self)
         if rows.isEmpty {
             Text("Scan its bill and Maison fills in the price, the date and the warranty.")
                 .font(.roundedSubheadline)

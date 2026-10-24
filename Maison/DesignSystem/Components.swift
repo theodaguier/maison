@@ -457,7 +457,7 @@ enum Haptics {
 
 extension View {
     /// `.increase` or `.decrease` as a stepped value goes up or down.
-    func stepFeedback<Value: Comparable & Equatable>(_ value: Value) -> some View {
+    func stepFeedback(_ value: some Comparable & Equatable) -> some View {
         sensoryFeedback(trigger: value) { old, new in new > old ? .increase : .decrease }
     }
 }

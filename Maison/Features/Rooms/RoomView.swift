@@ -209,7 +209,7 @@ enum RoomCategory: CaseIterable {
         RoomView(room: Area(id: "living_room", name: "Salon"))
     }
     .environment(DemoHome.store())
-        .environment(BelongingsStore.demo())
+    .environment(BelongingsStore.demo())
 }
 
 /// "Reported by the air conditioner: the filter needs cleaning", and "Done".

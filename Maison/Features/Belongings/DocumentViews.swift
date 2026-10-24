@@ -382,7 +382,7 @@ private struct ReadingView: View {
             Text("Reading the document")
                 .font(.roundedTitle3)
             Text(Intelligence.isAvailable ? "Apple Intelligence reads it on this iPhone. Nothing is sent anywhere."
-                                          : "Maison looks for its date. You fill in the rest.")
+                : "Maison looks for its date. You fill in the rest.")
                 .font(.roundedSubheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

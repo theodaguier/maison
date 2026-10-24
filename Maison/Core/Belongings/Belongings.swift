@@ -133,7 +133,7 @@ struct ReplacementEvent: Sendable, Hashable, Identifiable {
         case document, manual
     }
 
-    var id: UUID = UUID()
+    var id: UUID = .init()
     var itemID: UUID
     var date: Date
     var source: Source

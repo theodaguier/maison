@@ -116,7 +116,7 @@ struct BelongingsDatabase: Sendable {
 
 // MARK: - Records
 
-private func sourced<Value>(_ row: Row, _ column: String) -> Sourced<Value>? where Value: DatabaseValueConvertible {
+private func sourced<Value: DatabaseValueConvertible>(_ row: Row, _ column: String) -> Sourced<Value>? {
     guard let value: Value = row[column] else { return nil }
     let origin = (row[column + "Origin"] as String?).flatMap(ValueOrigin.init(rawValue:)) ?? .entered
     return Sourced(value: value, origin: origin)
