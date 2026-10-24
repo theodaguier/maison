@@ -122,7 +122,7 @@ struct MemberAccountTests {
 
     // MARK: - Record
 
-    @Test func theRecordKeepsThePasswordEncrypted() throws {
+    @Test func theRecordKeepsThePasswordEncrypted() {
         let zone = CKRecordZone.ID(zoneName: "Household", ownerName: CKCurrentUserDefaultName)
         let access = MemberAccess(participantID: "p1", accountID: "u1", username: "maison-ab12", password: "secret")
 
