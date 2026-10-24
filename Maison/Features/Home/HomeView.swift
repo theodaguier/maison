@@ -53,6 +53,8 @@ private struct HomeDashboard: View {
     @State private var opened: OpenedDevice?
     @State private var scores: HomeScores?
     @State private var openedScore: ScoreKind?
+    @State private var openedFinding: Finding?
+    @State private var createdRule: AutomationRule?
     @State private var temperatureChange: Double?
     @State private var confirmsTurnOff = false
     @State private var turnedOff = 0
@@ -79,8 +81,14 @@ private struct HomeDashboard: View {
                 ScoresCard(scores: scores, isDimmed: store.phase != .connected) { openedScore = $0 }
                 SummaryCard(summary: scoredSummary, digest: digest) { readsDigest = true }
                 if let attention = Attention.pick(from: scores) {
-                    AttentionCard(attention: attention) { openedScore = attention.kind }
-                        .transition(.opacity)
+                    AttentionCard(attention: attention) {
+                        if let id = attention.findingID, let finding = scores?.findings.first(where: { $0.id == id }) {
+                            openedFinding = finding
+                        } else {
+                            openedScore = attention.kind
+                        }
+                    }
+                    .transition(.opacity)
                 }
             }
             .animation(.smooth, value: Attention.pick(from: scores))
@@ -127,6 +135,28 @@ private struct HomeDashboard: View {
             }
         }
         .sheet(item: $openedScore) { ScoreSheet(kind: $0, scores: scores) }
+        .sheet(item: $openedFinding) { finding in
+            NavigationStack {
+                FindingView(finding: finding) { rule in
+                    createdRule = rule
+                    Task { scores = await store.loadScores() }
+                }
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button("Close", systemImage: "xmark") { openedFinding = nil }
+                    }
+                }
+            }
+            .presentationDetents([.large])
+        }
+        .overlay(alignment: .bottom) {
+            if let createdRule {
+                RuleCreatedBanner(rule: createdRule) { withAnimation(.smooth) { self.createdRule = nil } }
+                    .padding(.bottom, 12)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .animation(.smooth, value: createdRule?.id)
         .task(id: store.indoorTemperatureSensors.map(\.entityID)) {
             temperatureChange = await store.temperatureChangeSinceYesterday()
         }
@@ -193,6 +223,8 @@ private struct HomeDashboard: View {
         scores = loaded
         #if DEBUG
         await store.writeScoreDiagnostics(loaded, duration: ContinuousClock.now - started)
+        // `-sheet finding` opens the first finding once the scores are in.
+        if UserDefaults.standard.string(forKey: "sheet") == "finding", openedFinding == nil { openedFinding = loaded.findings.first }
         #endif
     }
 

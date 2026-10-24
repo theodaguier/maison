@@ -1,6 +1,16 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "%@ %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$@"
+          }
+        }
+      }
+    },
     "%@ %@ at %@": {
       "localizations": {
         "fr": {
@@ -17,6 +27,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$@ %2$@ consommés"
+          }
+        }
+      }
+    },
+    "%@ a year": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ par an"
           }
         }
       }
@@ -111,6 +131,16 @@
         }
       }
     },
+    "%@ in off-peak hours": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ en heures creuses"
+          }
+        }
+      }
+    },
     "%@ invites you to join their home": {
       "localizations": {
         "fr": {
@@ -187,6 +217,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@ est déverrouillée."
+          }
+        }
+      }
+    },
+    "%@ kWh at the peak price": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ kWh au prix des heures pleines"
           }
         }
       }
@@ -281,6 +321,16 @@
         }
       }
     },
+    "%@ today": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ aujourd’hui"
+          }
+        }
+      }
+    },
     "%@ was too cold around %@": {
       "localizations": {
         "en": {
@@ -309,6 +359,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$@ a eu trop chaud vers %2$@"
+          }
+        }
+      }
+    },
+    "%@ yesterday": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ hier"
           }
         }
       }
@@ -362,12 +422,32 @@
         }
       }
     },
+    "%@° and dry outside": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@° et sec dehors"
+          }
+        }
+      }
+    },
     "%@° cooler than yesterday": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "%@° de moins qu’hier"
+          }
+        }
+      }
+    },
+    "%@° outside, the CO₂ is rising in %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@° dehors, le CO₂ monte dans %2$@"
           }
         }
       }
@@ -407,6 +487,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld %% de confort : toutes les pièces sont restées dans votre plage."
+          }
+        }
+      }
+    },
+    "%lld %% of its use in peak hours": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld %% de sa conso en heures pleines"
           }
         }
       }
@@ -1554,6 +1644,16 @@
         }
       }
     },
+    "About %@ %@ more a year": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Environ %1$@ %2$@ de plus par an"
+          }
+        }
+      }
+    },
     "Above": {
       "localizations": {
         "fr": {
@@ -1594,6 +1694,16 @@
         }
       }
     },
+    "Add": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter"
+          }
+        }
+      }
+    },
     "Add a Condition": {
       "localizations": {
         "fr": {
@@ -1630,6 +1740,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ajouter aux favoris"
+          }
+        }
+      }
+    },
+    "Add your kWh price to see the cost": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajoutez votre prix du kWh pour voir le coût"
           }
         }
       }
@@ -1680,6 +1800,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Visez une zone plus détaillée"
+          }
+        }
+      }
+    },
+    "Air": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Air"
+          }
+        }
+      }
+    },
+    "Air for 10 minutes now": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aérez 10 minutes maintenant"
+          }
+        }
+      }
+    },
+    "Air, %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Air, %@"
           }
         }
       }
@@ -2004,6 +2154,16 @@
         }
       }
     },
+    "Base": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Base"
+          }
+        }
+      }
+    },
     "Bathroom": {
       "localizations": {
         "fr": {
@@ -2120,6 +2280,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Par %@"
+          }
+        }
+      }
+    },
+    "By Device": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Par appareil"
           }
         }
       }
@@ -2304,6 +2474,16 @@
         }
       }
     },
+    "Comfort, weather": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confort, météo"
+          }
+        }
+      }
+    },
     "Comfortable": {
       "localizations": {
         "fr": {
@@ -2344,6 +2524,16 @@
         }
       }
     },
+    "Connected Devices": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appareils connectés"
+          }
+        }
+      }
+    },
     "Connected locally": {
       "localizations": {
         "fr": {
@@ -2354,12 +2544,32 @@
         }
       }
     },
+    "Connected locally, %lld ms": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connecté en local, %lld ms"
+          }
+        }
+      }
+    },
     "Connected remotely": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Connecté à distance"
+          }
+        }
+      }
+    },
+    "Connected remotely, %lld ms": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connecté à distance, %lld ms"
           }
         }
       }
@@ -2494,6 +2704,26 @@
         }
       }
     },
+    "Cost": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coût"
+          }
+        }
+      }
+    },
+    "Cost of the day": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coût du jour"
+          }
+        }
+      }
+    },
     "Couldn’t Connect": {
       "localizations": {
         "fr": {
@@ -2510,6 +2740,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Impossible de charger le foyer"
+          }
+        }
+      }
+    },
+    "Couldn’t create the rule. Editing automations needs an administrator account.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de créer la règle. Modifier les automatisations demande un compte administrateur."
           }
         }
       }
@@ -2580,6 +2820,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Créer et modifier les règles"
+          }
+        }
+      }
+    },
+    "Created by Maison: runs only during the off-peak hours of your tariff.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Créée par Maison : ne fonctionne que pendant les heures creuses de votre tarif."
           }
         }
       }
@@ -2894,6 +3144,16 @@
         }
       }
     },
+    "Electricity": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Électricité"
+          }
+        }
+      }
+    },
     "Electricity each hour over the last 24 hours": {
       "localizations": {
         "fr": {
@@ -3050,6 +3310,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Estimé"
+          }
+        }
+      }
+    },
+    "Estimated cost": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coût estimé"
           }
         }
       }
@@ -3414,22 +3684,22 @@
         }
       }
     },
-    "Home Assistant %@ · %@": {
+    "Home Assistant %@, %@": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Home Assistant %1$@ · %2$@"
+            "value": "Home Assistant %1$@, %2$@"
           }
         }
       }
     },
-    "Home Assistant %@ · synced with iCloud": {
+    "Home Assistant %@, synced with iCloud": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Home Assistant %@ · synchronisé avec iCloud"
+            "value": "Home Assistant %@, synchronisé avec iCloud"
           }
         }
       }
@@ -3614,6 +3884,16 @@
         }
       }
     },
+    "Ignore": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ignorer"
+          }
+        }
+      }
+    },
     "In %@": {
       "localizations": {
         "fr": {
@@ -3654,12 +3934,42 @@
         }
       }
     },
+    "Internet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Internet"
+          }
+        }
+      }
+    },
+    "Internet Box": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Box internet"
+          }
+        }
+      }
+    },
     "Internet response time over the last 24 hours": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Temps de réponse d’internet sur les dernières 24 heures"
+          }
+        }
+      }
+    },
+    "Internet throughput over the last 24 hours, in %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Débit internet sur les dernières 24 heures, en %@"
           }
         }
       }
@@ -3754,6 +4064,16 @@
         }
       }
     },
+    "It doesn’t run at %lld:00": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il ne tourne pas à %lld h"
+          }
+        }
+      }
+    },
     "It finds the reader on your network and adds it by itself.": {
       "localizations": {
         "fr": {
@@ -3794,6 +4114,16 @@
         }
       }
     },
+    "It runs": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il tourne"
+          }
+        }
+      }
+    },
     "It’s %@": {
       "localizations": {
         "fr": {
@@ -3830,6 +4160,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Il fait %@° de plus qu’hier à la même heure."
+          }
+        }
+      }
+    },
+    "It’s Already Set to Off-Peak Hours": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il est déjà réglé en heures creuses"
           }
         }
       }
@@ -4134,6 +4474,16 @@
         }
       }
     },
+    "Location, through the Home Assistant app": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Position, via l’app Home Assistant"
+          }
+        }
+      }
+    },
     "Lock": {
       "localizations": {
         "fr": {
@@ -4304,6 +4654,16 @@
         }
       }
     },
+    "Maison takes it into account for its next findings.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maison en tiendra compte pour les prochains constats."
+          }
+        }
+      }
+    },
     "Maison · %@ open too long": {
       "localizations": {
         "fr": {
@@ -4404,6 +4764,16 @@
         }
       }
     },
+    "Month, estimated": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mois, estimé"
+          }
+        }
+      }
+    },
     "More": {
       "localizations": {
         "fr": {
@@ -4434,6 +4804,16 @@
         }
       }
     },
+    "Most of it around %lld:00": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Surtout vers %lld h"
+          }
+        }
+      }
+    },
     "Motion": {
       "localizations": {
         "fr": {
@@ -4450,6 +4830,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Approchez-vous du mur"
+          }
+        }
+      }
+    },
+    "My Off-Peak Hours Are Different": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mes heures creuses sont différentes"
           }
         }
       }
@@ -4874,6 +5264,16 @@
         }
       }
     },
+    "Nothing shared": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rien de partagé"
+          }
+        }
+      }
+    },
     "OK": {
       "localizations": {
         "fr": {
@@ -4900,6 +5300,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "Éteinte depuis %@"
+          }
+        }
+      }
+    },
+    "Off-Peak Hours": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Heures creuses"
+          }
+        }
+      }
+    },
+    "Off-peak from %lld:00 to %lld:00": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Heures creuses de %1$lld h à %2$lld h"
+          }
+        }
+      }
+    },
+    "Off-peak hours": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Heures creuses"
+          }
+        }
+      }
+    },
+    "Off-peak price per kWh": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prix du kWh en heures creuses"
           }
         }
       }
@@ -5074,6 +5514,16 @@
         }
       }
     },
+    "Open the windows for 10 minutes.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrez les fenêtres 10 minutes."
+          }
+        }
+      }
+    },
     "Opened %lld times today": {
       "localizations": {
         "en": {
@@ -5160,6 +5610,16 @@
         }
       }
     },
+    "Outside, weather": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dehors, météo"
+          }
+        }
+      }
+    },
     "Owner": {
       "localizations": {
         "fr": {
@@ -5226,6 +5686,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pic de %1$@ %2$@"
+          }
+        }
+      }
+    },
+    "Peak price per kWh": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prix du kWh en heures pleines"
           }
         }
       }
@@ -5330,6 +5800,16 @@
         }
       }
     },
+    "Price per kWh": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prix du kWh"
+          }
+        }
+      }
+    },
     "Profile": {
       "localizations": {
         "fr": {
@@ -5426,6 +5906,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Actualiser"
+          }
+        }
+      }
+    },
+    "Remind Me": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Me le rappeler"
+          }
+        }
+      }
+    },
+    "Reminded": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rappel prévu"
           }
         }
       }
@@ -5590,6 +6090,16 @@
         }
       }
     },
+    "Rule created: %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Règle créée : %@"
+          }
+        }
+      }
+    },
     "Rules": {
       "localizations": {
         "fr": {
@@ -5606,6 +6116,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Lancer"
+          }
+        }
+      }
+    },
+    "Run It in Off-Peak Hours": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le faire tourner en heures creuses"
           }
         }
       }
@@ -5846,6 +6366,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sécurité"
+          }
+        }
+      }
+    },
+    "See": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Voir"
           }
         }
       }
@@ -6230,12 +6760,32 @@
         }
       }
     },
+    "Something Else": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autre chose"
+          }
+        }
+      }
+    },
     "Something Went Wrong": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Un problème est survenu"
+          }
+        }
+      }
+    },
+    "Sources": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sources"
           }
         }
       }
@@ -6490,6 +7040,16 @@
         }
       }
     },
+    "Tariff": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tarif"
+          }
+        }
+      }
+    },
     "Tell me if open longer than": {
       "localizations": {
         "fr": {
@@ -6600,6 +7160,16 @@
         }
       }
     },
+    "The prices on your bill, taxes included.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les prix de votre facture, taxes comprises."
+          }
+        }
+      }
+    },
     "The rooms couldn’t be put together. Scan again, keeping some overlap between rooms.": {
       "localizations": {
         "fr": {
@@ -6700,6 +7270,16 @@
         }
       }
     },
+    "This Isn’t Right": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce n’est pas juste"
+          }
+        }
+      }
+    },
     "This action was set up in Home Assistant. Maison keeps it as it is.": {
       "localizations": {
         "fr": {
@@ -6790,6 +7370,16 @@
         }
       }
     },
+    "Throughput": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Débit"
+          }
+        }
+      }
+    },
     "Time": {
       "localizations": {
         "fr": {
@@ -6806,6 +7396,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Plage horaire"
+          }
+        }
+      }
+    },
+    "Time to air": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "C’est le moment d’aérer"
           }
         }
       }
@@ -6860,12 +7460,32 @@
         }
       }
     },
+    "Too cold": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trop froid"
+          }
+        }
+      }
+    },
     "Too much at once for a reliable suggestion": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Trop de choses à la fois pour une proposition fiable"
+          }
+        }
+      }
+    },
+    "Too warm": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trop chaud"
           }
         }
       }
@@ -7096,6 +7716,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Inchangé"
+          }
+        }
+      }
+    },
+    "Undo": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annuler"
           }
         }
       }
@@ -7360,6 +7990,36 @@
         }
       }
     },
+    "Water": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eau"
+          }
+        }
+      }
+    },
+    "Water today": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eau aujourd’hui"
+          }
+        }
+      }
+    },
+    "Water yesterday": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eau hier"
+          }
+        }
+      }
+    },
     "Welcome to Maison": {
       "localizations": {
         "fr": {
@@ -7386,6 +8046,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ce que ça permet"
+          }
+        }
+      }
+    },
+    "What’s Wrong?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Qu’est-ce qui ne va pas ?"
           }
         }
       }
@@ -7436,6 +8106,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Blanc"
+          }
+        }
+      }
+    },
+    "Why": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pourquoi"
           }
         }
       }
@@ -7550,6 +8230,26 @@
         }
       }
     },
+    "Yesterday": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hier"
+          }
+        }
+      }
+    },
+    "Yesterday’s cost": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coût d’hier"
+          }
+        }
+      }
+    },
     "You": {
       "localizations": {
         "fr": {
@@ -7650,6 +8350,16 @@
         }
       }
     },
+    "Your Permissions": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos droits"
+          }
+        }
+      }
+    },
     "Your Plan": {
       "localizations": {
         "fr": {
@@ -7676,6 +8386,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Votre demande"
+          }
+        }
+      }
+    },
+    "Your Tariff": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre tarif"
+          }
+        }
+      }
+    },
+    "Your iPhone tells your server when you leave or come home, for rules like “When everyone leaves”. Nothing else leaves it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre iPhone indique à votre serveur quand vous partez ou rentrez, pour les règles comme « Quand tout le monde part ». Rien d’autre ne quitte l’iPhone."
           }
         }
       }
@@ -7846,6 +8576,16 @@
         }
       }
     },
+    "connected": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "connectés"
+          }
+        }
+      }
+    },
     "controls %@": {
       "localizations": {
         "fr": {
@@ -7902,6 +8642,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "pendant %lld min"
+          }
+        }
+      }
+    },
+    "from your tariff": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "d’après votre tarif"
           }
         }
       }
@@ -7965,6 +8715,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "iOS vous demandera de confirmer."
+          }
+        }
+      }
+    },
+    "iPhone": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone"
           }
         }
       }
@@ -8217,6 +8977,16 @@
         }
       }
     },
+    "to save every year": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "à gagner chaque année"
+          }
+        }
+      }
+    },
     "turns off %@": {
       "localizations": {
         "fr": {
@@ -8307,6 +9077,26 @@
         }
       }
     },
+    "your tariff": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "votre tarif"
+          }
+        }
+      }
+    },
+    "° around %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "° vers %@"
+          }
+        }
+      }
+    },
     "“%@”": {
       "shouldTranslate": false
     },
@@ -8376,6 +9166,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "« %1$@ » correspond à %2$@."
+          }
+        }
+      }
+    },
+    "%@: mostly in peak hours": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ : surtout en heures pleines"
+          }
+        }
+      }
+    },
+    "%@ %@ more per day": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$@ de plus par jour"
           }
         }
       }

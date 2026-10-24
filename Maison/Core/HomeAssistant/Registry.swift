@@ -96,13 +96,15 @@ struct ServerConfig: Sendable, Hashable, Decodable {
     let internalURL: String?
     /// ISO 3166 code set in Home Assistant's general settings ("FR").
     var country: String?
+    /// ISO 4217 code ("EUR"), the currency Home Assistant counts energy costs in.
+    var currency: String?
 
     private enum CodingKeys: String, CodingKey {
         case locationName = "location_name"
         case version
         case externalURL = "external_url"
         case internalURL = "internal_url"
-        case country
+        case country, currency
     }
 }
 

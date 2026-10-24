@@ -80,16 +80,27 @@ extension HomeAssistantConnection {
         }
     }
 
-    /// Turns on the entities an integration ships disabled, picked by their translation key
-    /// (`round_trip_time_avg`), which doesn't depend on the server's language.
-    func enableEntities(ofEntry entryID: String, translationKeys: Set<String>) async throws {
+    /// Turns on the `platform` entities an integration ships disabled, picked by their translation key
+    /// (`round_trip_time_avg`), which doesn't depend on the server's language. One the person turned
+    /// off stays off. Returns how many it turned on and how many were on already: none of either means
+    /// the integration hasn't registered them yet.
+    func enableEntities(platform: String, translationKeys: Set<String>) async throws -> (turnedOn: Int, alreadyOn: Int) {
         let entries = try await send(["type": "config/entity_registry/list"]).arrayValue ?? []
-        for entry in entries where entry["config_entry_id"]?.stringValue == entryID
-            && entry["disabled_by"]?.stringValue == "integration"
+        var turnedOn = 0, alreadyOn = 0
+        for entry in entries where entry["platform"]?.stringValue == platform
             && translationKeys.contains(entry["translation_key"]?.stringValue ?? "") {
-            guard let entityID = entry["entity_id"]?.stringValue else { continue }
-            _ = try await send(["type": "config/entity_registry/update", "entity_id": .string(entityID), "disabled_by": .null])
+            switch entry["disabled_by"]?.stringValue {
+            case nil:
+                alreadyOn += 1
+            case "integration":
+                guard let entityID = entry["entity_id"]?.stringValue else { continue }
+                _ = try await send(["type": "config/entity_registry/update", "entity_id": .string(entityID), "disabled_by": .null])
+                turnedOn += 1
+            default:
+                continue
+            }
         }
+        return (turnedOn, alreadyOn)
     }
 }
 

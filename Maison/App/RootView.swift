@@ -2,6 +2,7 @@ import SwiftUI
 
 /// Onboarding until the first sign-in is done, then four tabs on the system Liquid Glass tab bar.
 struct RootView: View {
+    @State private var tab: AppTab = .home
     @Environment(HomeStore.self) private var store
     /// Set once on appear, so that signing in doesn't swap onboarding for the tabs before its summary.
     @State private var isOnboarding: Bool?
@@ -37,21 +38,36 @@ struct RootView: View {
     }
 
     private var tabs: some View {
-        TabView {
-            Tab("Home", systemImage: "house.fill") {
+        TabView(selection: $tab) {
+            Tab("Home", systemImage: "house.fill", value: AppTab.home) {
                 HomeView()
             }
-            Tab("Rooms", systemImage: "square.grid.2x2.fill") {
+            Tab("Rooms", systemImage: "square.grid.2x2.fill", value: AppTab.rooms) {
                 RoomsView()
             }
-            Tab("Automations", systemImage: "clock.fill") {
+            Tab("Rules", systemImage: "clock.fill", value: AppTab.rules) {
                 AutomationsView()
             }
-            Tab("Settings", systemImage: "gearshape.fill") {
+            Tab("Settings", systemImage: "gearshape.fill", value: AppTab.settings) {
                 SettingsView()
             }
         }
+        .environment(\.selectTab, SelectTab { tab = $0 })
     }
+}
+
+enum AppTab: Hashable {
+    case home, rooms, rules, settings
+}
+
+/// Switches tab from inside a screen ("See" on the rule just created).
+struct SelectTab {
+    let action: (AppTab) -> Void
+    func callAsFunction(_ tab: AppTab) { action(tab) }
+}
+
+extension EnvironmentValues {
+    @Entry var selectTab = SelectTab { _ in }
 }
 
 #Preview {

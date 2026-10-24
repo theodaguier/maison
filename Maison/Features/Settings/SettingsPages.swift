@@ -91,6 +91,28 @@ struct ServerPage: View {
                 }
                 Explanation(text: "Maison adds what your server needs by itself: devices it found on your network, and the check behind the Network score.")
             }
+            if !store.integrationSummaries.isEmpty {
+                SettingsGroup("Integrations") {
+                    ForEach(Array(store.integrationSummaries.prefix(12).enumerated()), id: \.element.domain) { index, item in
+                        if index > 0 { SettingsDivider() }
+                        NavigationLink { IntegrationPage(integration: item) } label: {
+                            SettingsRow(title: LocalizedStringKey(stringLiteral: item.title), detail: store.integrationDetail(item),
+                                        showsChevron: true) {
+                                IntegrationLogo(domain: item.domain)
+                            }
+                        }
+                    }
+                }
+                .buttonStyle(.plain)
+            }
+            SettingsGroup {
+                NavigationLink { PermissionsPage() } label: {
+                    SettingsRow(symbol: "person.badge.key.fill", color: .gray, title: "Your Permissions",
+                                value: store.currentUser?.isAdmin == true ? String(localized: "Full") : String(localized: "Standard"),
+                                showsChevron: true)
+                }
+            }
+            .buttonStyle(.plain)
             HStack(spacing: 12) {
                 Button {
                     Task { await store.connect() }
@@ -101,6 +123,20 @@ struct ServerPage: View {
             }
             .font(.roundedHeadline)
             .controlSize(.large)
+        }
+    }
+}
+
+// MARK: - iPhone
+
+/// What the iPhone adds to the home, and the switch for it.
+struct IPhoneSourcePage: View {
+    var body: some View {
+        SettingsPage(title: "iPhone") {
+            SettingsGroup {
+                PresenceRow()
+            }
+            Explanation(text: "Your iPhone tells your server when you leave or come home, for rules like “When everyone leaves”. Nothing else leaves it.")
         }
     }
 }
