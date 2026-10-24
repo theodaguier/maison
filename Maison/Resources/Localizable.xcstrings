@@ -2976,6 +2976,16 @@
         }
       }
     },
+    "Cancel the invitation?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annuler l’invitation ?"
+          }
+        }
+      }
+    },
     "Change": {
       "localizations": {
         "fr": {
@@ -3816,6 +3826,16 @@
         }
       }
     },
+    "Display Name": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nom affiché"
+          }
+        }
+      }
+    },
     "Done": {
       "localizations": {
         "fr": {
@@ -3882,6 +3902,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Modifier"
+          }
+        }
+      }
+    },
+    "Edit Display Name": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifier le nom"
           }
         }
       }
@@ -4672,6 +4702,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Foyer"
+          }
+        }
+      }
+    },
+    "Household Member": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Membre du foyer"
           }
         }
       }
@@ -7372,6 +7412,16 @@
         }
       }
     },
+    "Resend the Invitation": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renvoyer l’invitation"
+          }
+        }
+      }
+    },
     "Resident": {
       "localizations": {
         "fr": {
@@ -8108,6 +8158,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Afficher un code à scanner"
+          }
+        }
+      }
+    },
+    "Shown to everyone in the household.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visible par tout le foyer."
           }
         }
       }
@@ -8928,6 +8988,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cette personne perdra l’accès aux favoris et réglages du foyer. Son compte Home Assistant n’est pas modifié."
+          }
+        }
+      }
+    },
+    "They won’t join the household unless you invite them again.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette personne ne rejoindra pas le foyer, sauf si vous l’invitez de nouveau."
           }
         }
       }

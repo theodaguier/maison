@@ -9,6 +9,7 @@ actor FakeHouseholdCloud: HouseholdCloud {
     private var favorites: [String: [String]] = [:]
     private var plans: [HouseholdLocation: FloorPlan] = [:]
     private var participants: [HouseholdLocation: [HouseholdMember]] = [:]
+    private var displayNames: [String: String] = [:]
     private(set) var createdCount = 0
     private(set) var savedHouseholds: [Household] = []
     private(set) var invitations: [(contact: String, role: HouseholdRole)] = []
@@ -23,6 +24,10 @@ actor FakeHouseholdCloud: HouseholdCloud {
         households[location] = household
         participants[location] = members
         return location
+    }
+
+    func setMembers(_ members: [HouseholdMember], in location: HouseholdLocation) {
+        participants[location] = members
     }
 
     func setFavorites(_ entityIDs: [String], of memberID: String, in location: HouseholdLocation) {
@@ -73,6 +78,18 @@ actor FakeHouseholdCloud: HouseholdCloud {
         participants[location] ?? []
     }
 
+    func displayNames(of memberIDs: [String], in location: HouseholdLocation) async throws -> [String: String] {
+        var names: [String: String] = [:]
+        for id in memberIDs {
+            if let name = displayNames[key(id, location)] { names[id] = name }
+        }
+        return names
+    }
+
+    func saveDisplayName(_ name: String, of memberID: String, in location: HouseholdLocation) async throws {
+        displayNames[key(memberID, location)] = name
+    }
+
     func invite(_ contact: String, as role: HouseholdRole, to household: Household, in location: HouseholdLocation) async throws -> URL {
         invitations.append((contact, role))
         var members = participants[location] ?? [HouseholdMember(id: "owner", name: "Owner", role: .owner, isCurrentUser: true)]
@@ -84,7 +101,7 @@ actor FakeHouseholdCloud: HouseholdCloud {
     func setRole(_ role: HouseholdRole, of member: HouseholdMember, in location: HouseholdLocation) async throws {
         guard let index = participants[location]?.firstIndex(where: { $0.id == member.id }) else { return }
         let old = participants[location]![index]
-        participants[location]![index] = HouseholdMember(id: old.id, name: old.name, role: role, isPending: old.isPending, isCurrentUser: old.isCurrentUser)
+        participants[location]![index] = old.withRole(role)
     }
 
     func remove(_ member: HouseholdMember, from location: HouseholdLocation) async throws {

@@ -25,6 +25,9 @@ protocol HouseholdCloud: Sendable {
     func saveFloorPlan(_ plan: FloorPlan, in location: HouseholdLocation) async throws
     /// The share's participants, or an empty list when nobody was ever invited.
     func members(in location: HouseholdLocation) async throws -> [HouseholdMember]
+    /// Names members chose to show. Missing records are left out. Not an Apple ID identity.
+    func displayNames(of memberIDs: [String], in location: HouseholdLocation) async throws -> [String: String]
+    func saveDisplayName(_ name: String, of memberID: String, in location: HouseholdLocation) async throws
     /// Adds the person to the household's share with `role` and returns the link to send them.
     func invite(_ contact: String, as role: HouseholdRole, to household: Household, in location: HouseholdLocation) async throws -> URL
     func remove(_ member: HouseholdMember, from location: HouseholdLocation) async throws
@@ -132,10 +135,41 @@ struct CloudKitHousehold: HouseholdCloud {
 
     func members(in location: HouseholdLocation) async throws -> [HouseholdMember] {
         guard let share = try await share(in: location) else { return [] }
+        // currentUserParticipant is missing on some private-database shares, and on iOS 26 the
+        // owner's user record id is nil without the extended share-access entitlement.
+        let currentRecordName = try? await container.userRecordID().recordName
         let current = share.currentUserParticipant
-        return share.participants.map { participant in
-            HouseholdMember(participant, isCurrentUser: participant == current)
+        return share.participants.compactMap { participant in
+            let isCurrent = HouseholdMember.matchesCurrentUser(
+                role: participant.role,
+                participantRecordName: participant.userIdentity.userRecordID?.recordName,
+                currentUserRecordName: currentRecordName,
+                matchesCurrentParticipant: current.map { participant == $0 } ?? false,
+                inPrivateDatabase: !location.isShared
+            )
+            guard HouseholdMember.belongsInHousehold(
+                role: participant.role,
+                acceptance: participant.acceptanceStatus,
+                isCurrentUser: isCurrent
+            ) else { return nil }
+            return HouseholdMember(participant, isCurrentUser: isCurrent)
         }
+    }
+
+    func displayNames(of memberIDs: [String], in location: HouseholdLocation) async throws -> [String: String] {
+        var names: [String: String] = [:]
+        for id in memberIDs {
+            let recordID = MemberProfile.recordID(for: id, in: location.zoneID)
+            if let name = try await record(recordID, in: location).flatMap(MemberProfile.displayName(from:)) {
+                names[id] = name
+            }
+        }
+        return names
+    }
+
+    func saveDisplayName(_ name: String, of memberID: String, in location: HouseholdLocation) async throws {
+        let existing = try await record(MemberProfile.recordID(for: memberID, in: location.zoneID), in: location)
+        try await save(MemberProfile.record(name, for: memberID, updating: existing, in: location.zoneID), in: location)
     }
 
     func invite(_ contact: String, as role: HouseholdRole, to household: Household, in location: HouseholdLocation) async throws -> URL {

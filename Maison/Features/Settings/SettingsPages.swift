@@ -290,33 +290,85 @@ struct DaySummaryPage: View {
 struct MemberPage: View {
     @Environment(HomeStore.self) private var store
     @Environment(\.dismiss) private var dismiss
-    let member: HouseholdMember
+    private let memberID: String
+    private let fallback: HouseholdMember
+
     @State private var error: String?
     @State private var confirmsRemove = false
+    @State private var confirmsCancel = false
+    @State private var confirmsLeave = false
+    @State private var isEditingName = false
+    @State private var isSharing = false
+    @State private var shareItems: [Any] = []
+
+    init(member: HouseholdMember) {
+        memberID = member.id
+        fallback = member
+    }
+
+    /// The member as the household knows them now, so a renamed person or a changed role shows at once.
+    private var person: HouseholdMember {
+        store.household.members.first { $0.id == memberID }?.normalized ?? fallback.normalized
+    }
 
     var body: some View {
         let household = store.household
-        let canManage = household.currentRole.canManageMembers && !member.isCurrentUser && member.role != .owner
-        SettingsPage(title: LocalizedStringKey(stringLiteral: member.name ?? String(localized: "Invitation Sent"))) {
+        let accountName = store.currentUser?.name
+        let canManage = household.currentRole.canManageMembers && !person.isCurrentUser && person.role != .owner
+        SettingsPage(title: person.showsAsInvitation ? "Invitation Sent" : "Household") {
             VStack(spacing: 10) {
-                Text(member.isPending ? "?" : String((member.name ?? "?").prefix(1)).uppercased())
-                    .font(.system(size: 30, weight: .semibold, design: .rounded))
-                    .frame(width: 72, height: 72)
-                    .background(Theme.pill, in: .circle)
-                Text(member.name ?? String(localized: "Invitation Sent")).font(.roundedTitle3)
-                RoleBadge(role: member.role)
+                MemberAvatar(initials: person.initials(accountName: accountName), pending: person.showsAsInvitation, size: 72)
+                if let heading = heading(for: person, accountName: accountName) {
+                    Text(heading)
+                        .font(.roundedTitle3)
+                        .multilineTextAlignment(.center)
+                }
+                if person.isCurrentUser {
+                    Text("You")
+                        .font(.roundedFootnoteEmphasized)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(Theme.pill, in: .capsule)
+                }
+                RoleBadge(role: person.role)
             }
             .frame(maxWidth: .infinity)
             .padding(.top, 8)
-            if member.isPending {
+            .accessibilityElement(children: .combine)
+
+            if person.showsAsInvitation {
                 Explanation(text: "Waiting for them to accept the invitation in iCloud. Once they do, they sign in to Home Assistant with their own account.")
+            } else {
+                Explanation(text: person.role == .resident
+                    ? "Controls devices, scenes and automations."
+                    : "Can also add devices, manage members and the server.")
             }
-            if canManage {
+
+            if person.isCurrentUser {
+                VStack(spacing: 12) {
+                    WideButton(title: "Edit Display Name", style: .secondary) { isEditingName = true }
+                    if household.location?.isShared == true {
+                        WideButton(title: "Leave Household", style: .destructive) { confirmsLeave = true }
+                    }
+                }
+                .padding(.top, 8)
+            } else if person.showsAsInvitation && canManage {
+                VStack(spacing: 12) {
+                    if person.invitationContact != nil {
+                        WideButton(title: "Resend the Invitation", style: .secondary) {
+                            Task { await resend(person) }
+                        }
+                    }
+                    WideButton(title: "Cancel the Invitation", style: .destructive) { confirmsCancel = true }
+                }
+                .padding(.top, 8)
+            } else if canManage {
                 SettingsGroup("Role") {
                     ForEach([HouseholdRole.resident, .administrator], id: \.self) { role in
                         if role == .administrator { SettingsDivider() }
                         Button {
-                            Task { await run { try await household.setRole(role, of: member) } }
+                            Task { await run { try await household.setRole(role, of: person) } }
                         } label: {
                             SettingsRow(symbol: role == .administrator ? "person.badge.key.fill" : "person.fill",
                                         color: role == .administrator ? .purple : .blue,
@@ -324,31 +376,82 @@ struct MemberPage: View {
                                         detail: role == .administrator
                                             ? String(localized: "Can also add devices, manage members and the server.")
                                             : String(localized: "Controls devices, scenes and automations."),
-                                        value: member.role == role ? "✓" : nil)
+                                        value: person.role == role ? "✓" : nil)
                         }
                         .buttonStyle(.plain)
                     }
                 }
-                WideButton(title: member.isPending ? "Cancel the Invitation" : "Remove from Household", style: .destructive) {
-                    confirmsRemove = true
-                }
-                .padding(.top, 8)
+                WideButton(title: "Remove from Household", style: .destructive) { confirmsRemove = true }
+                    .padding(.top, 8)
             }
             if let error {
                 Text(error).font(.roundedFootnote).foregroundStyle(.red)
             }
         }
-        .confirmationDialog("Remove \(member.name ?? "")?", isPresented: $confirmsRemove, titleVisibility: .visible) {
+        .sheet(isPresented: $isEditingName) {
+            DisplayNameSheet(name: person.resolvedName(accountName: accountName) ?? "") { newName in
+                Task { await run { try await household.setDisplayName(newName, of: person) } }
+            }
+        }
+        .sheet(isPresented: $isSharing) {
+            if !shareItems.isEmpty {
+                ActivitySheet(items: shareItems) { _ in isSharing = false }
+                    .presentationDetents([.medium, .large])
+            }
+        }
+        .confirmationDialog("Remove \(person.resolvedName(accountName: nil) ?? "")?", isPresented: $confirmsRemove, titleVisibility: .visible) {
             Button("Remove", role: .destructive) {
                 Task {
-                    await run { try await household.remove(member) }
+                    await run { try await household.remove(person) }
                     if error == nil { dismiss() }
                 }
             }
         } message: {
             Text("They’ll lose access to the household’s favorites and settings. Their Home Assistant account isn’t affected.")
         }
+        .confirmationDialog("Cancel the invitation?", isPresented: $confirmsCancel, titleVisibility: .visible) {
+            Button("Cancel the Invitation", role: .destructive) {
+                Task {
+                    await run { try await household.remove(person) }
+                    if error == nil { dismiss() }
+                }
+            }
+        } message: {
+            Text("They won’t join the household unless you invite them again.")
+        }
+        .confirmationDialog("Leave this household?", isPresented: $confirmsLeave, titleVisibility: .visible) {
+            Button("Leave Household", role: .destructive) {
+                Task {
+                    await run { try await household.leave() }
+                    if error == nil { dismiss() }
+                }
+            }
+        } message: {
+            Text("You’ll need a new invitation to join again. You stay signed in to Home Assistant.")
+        }
         .errorFeedback(error)
+    }
+
+    /// The name in the page body. The navigation title is the section ("Household") or the invitation
+    /// state, so this heading is not a second copy of that title.
+    private func heading(for person: HouseholdMember, accountName: String?) -> String? {
+        if person.showsAsInvitation {
+            return person.resolvedName(accountName: accountName)
+        }
+        return person.resolvedName(accountName: accountName) ?? String(localized: "Household Member")
+    }
+
+    private func resend(_ person: HouseholdMember) async {
+        guard let contact = person.invitationContact else { return }
+        error = nil
+        do {
+            let url = try await store.household.invite(contact, as: person.role)
+            let householdName = store.household.household?.name ?? String(localized: "Home")
+            shareItems = [String(localized: "I’m adding you to \(householdName), you’ll see, it’s simple."), url]
+            isSharing = true
+        } catch {
+            self.error = error.localizedDescription
+        }
     }
 
     private func run(_ action: () async throws -> Void) async {
@@ -357,13 +460,63 @@ struct MemberPage: View {
     }
 }
 
-/// "Admin", "Resident" in a coloured pill.
+/// The name everyone in the household sees for the current user.
+private struct DisplayNameSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var name: String
+    @FocusState private var isFocused: Bool
+    let onSave: (String) -> Void
+
+    init(name: String, onSave: @escaping (String) -> Void) {
+        _name = State(initialValue: name)
+        self.onSave = onSave
+    }
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 14) {
+                TextField("Name", text: $name)
+                    .font(.roundedBody)
+                    .textInputAutocapitalization(.words)
+                    .autocorrectionDisabled()
+                    .focused($isFocused)
+                    .padding(16)
+                    .cardStyle(radius: Theme.rowRadius)
+                Text("Shown to everyone in the household.")
+                    .font(.roundedFootnote)
+                    .foregroundStyle(.secondary)
+                Spacer()
+            }
+            .padding(20)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .background(Theme.background)
+            .navigationTitle("Display Name")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(role: .close) { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        onSave(name)
+                        dismiss()
+                    }
+                    .disabled(HouseholdMember.nonEmpty(name) == nil)
+                }
+            }
+        }
+        .presentationDetents([.medium])
+        .onAppear { isFocused = true }
+    }
+}
+
+/// "Owner", "Admin", "Resident" in a coloured pill.
 struct RoleBadge: View {
     let role: HouseholdRole
 
     var body: some View {
         let color: Color = role == .resident ? .blue : .purple
-        Text(role == .resident ? String(localized: "Resident") : String(localized: "Admin"))
+        Text(role.badge)
             .font(.roundedFootnoteEmphasized)
             .foregroundStyle(color)
             .padding(.horizontal, 9)
