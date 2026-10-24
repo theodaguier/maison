@@ -91,6 +91,9 @@ struct RootView: View {
             case .newRule: RuleEditor(rule: .new(), isNew: true)
             case .scenes: ScenesSheet()
             case .search: DeviceSearchSheet()
+            case .leaving: LeavingSheet()
+            case .addDevice: AddDeviceSheet()
+            case .editShortcuts: ShortcutsEditor()
             }
         }
         .environment(\.selectTab, SelectTab { tab = $0 })
