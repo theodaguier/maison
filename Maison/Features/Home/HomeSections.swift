@@ -494,8 +494,11 @@ struct NetworkSection: View {
             ("\(score.outages.count)", score.outages.count == 1 ? String(localized: "Outage") : String(localized: "Outages")),
         ]
         if let last = score.latency.last { items.append(("\(Int(last.milliseconds.rounded())) ms", String(localized: "Response"))) }
-        if let download = router.download { items.append((download, String(localized: "Download"))) }
-        else if let devices = router.devices { items.append(("\(devices)", String(localized: "Devices"))) }
+        if let download = router.download {
+            items.append((download, String(localized: "Download")))
+        } else if let devices = router.devices {
+            items.append(("\(devices)", String(localized: "Devices")))
+        }
         return items
     }
 
