@@ -133,7 +133,9 @@ private struct HomeDashboard: View {
             if phase != .idle { hasScrolled = true }
         }
         .scrollEdgeEffectHidden(!isPastHero, for: .top)
-        .onScrollGeometryChange(for: Bool.self, of: { $0.contentOffset.y + $0.contentInsets.top > 180 }) { _, isPast in
+        // Measured from rest: while the large title folds, the offset and the inset move together and their
+        // sum hardly changes. The scores reach the folded bar after about 110 pt.
+        .onScrollGeometryChange(for: Bool.self, of: { [topInset] in topInset > 0 && $0.contentOffset.y + topInset > 110 }) { _, isPast in
             isPastHero = isPast
         }
         // Behind the scroll view rather than in it, so the refresh spinner stays over the painting.
@@ -407,7 +409,7 @@ private final class HeroScroll {
 }
 
 /// The painting behind the home screen. Scrolled up, it follows the cards at `rate`, so it reads as further
-/// away; pulled down, it stretches from the top of the screen instead of leaving a gap.
+/// away, and fades out; pulled down, it stretches from the top of the screen instead of leaving a gap.
 private struct HeroBackdrop: View {
     let asset: String
     let scroll: HeroScroll
@@ -416,6 +418,7 @@ private struct HeroBackdrop: View {
 
     var body: some View {
         let pulled = max(-scroll.distance, 0)
+        let scrolled = max(scroll.distance, 0)
         ZStack {
             // When the hour or the weather turns, the new painting fades in over the old one.
             Image(asset)
@@ -433,8 +436,14 @@ private struct HeroBackdrop: View {
             LinearGradient(colors: [Theme.background.opacity(0.55), Theme.background.opacity(0)], startPoint: .top, endPoint: .bottom)
                 .frame(height: height * 0.6)
         }
+        // No hard edge where the painting ends, beside and between the cards: it melts into the background.
+        .mask {
+            LinearGradient(stops: [.init(color: .black, location: 0.62), .init(color: .clear, location: 1)], startPoint: .top, endPoint: .bottom)
+        }
         .scaleEffect((height + pulled) / height, anchor: .top)
-        .offset(y: -max(scroll.distance, 0) * rate)
+        .offset(y: -scrolled * rate)
+        // Gone by the time the cards reach the bar, so the folded title never sits over it.
+        .opacity(1 - min(scrolled / (height * 0.7), 1))
         .accessibilityHidden(true)
     }
 }
