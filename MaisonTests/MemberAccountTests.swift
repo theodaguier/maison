@@ -224,11 +224,7 @@ struct MemberAccountHouseholdTests {
         let location = await cloud.addSharedHousehold(server, members: [])
         await cloud.setCurrentParticipant("p1", in: location)
         try await cloud.saveMemberAccess(MemberAccess(participantID: "p1", accountID: "u1", username: "maison-ab12", password: "secret"), in: location)
-        let transport = FakeTransport { message in
-            message["type"]?.stringValue == "auth"
-                ? [["type": "auth_ok", "ha_version": "2026.8.1"]]
-                : [result(for: message, [])]
-        }
+        let transport = fakeHomeServer()
         let signIns = Log<String>()
         let connector = ServerConnector(
             signIn: { address, username, password in

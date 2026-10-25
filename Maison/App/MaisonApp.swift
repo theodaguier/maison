@@ -3,9 +3,10 @@ import SwiftUI
 @main
 struct MaisonApp: App {
     /// `-demo`, or "Try a Demo Home" in onboarding, fills the app with the sample home of the mock-ups.
-    @State private var store = DemoMode.isOn ? DemoHome.store() : HomeStore()
+    @State private var store = DemoMode.isOn ? DemoHome.store() : HomeStore(lastKnownHome: LastKnownHomeFile.onDevice())
     @AppStorage("appearance") private var appearance: Appearance = .system
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
         WindowGroup {
@@ -16,7 +17,7 @@ struct MaisonApp: App {
                 .environment(store)
                 .environment(\.setDemoMode) { isOn in
                     DemoMode.isOn = isOn
-                    store = isOn ? DemoHome.store() : HomeStore()
+                    store = isOn ? DemoHome.store() : HomeStore(lastKnownHome: LastKnownHomeFile.onDevice())
                     Task { await store.start() }
                 }
                 .preferredColorScheme(appearance.colorScheme)
@@ -25,6 +26,14 @@ struct MaisonApp: App {
                         store.household.pendingInvitation = metadata
                     }
                     await store.start()
+                }
+                // The connection may have died while the app was in the background.
+                .onChange(of: scenePhase) { _, phase in
+                    switch phase {
+                    case .active: Task { await store.becameActive() }
+                    case .background: store.enteredBackground()
+                    default: break
+                    }
                 }
         }
     }

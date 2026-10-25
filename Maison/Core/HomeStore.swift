@@ -52,6 +52,20 @@ final class HomeStore {
     @ObservationIgnored private(set) var activeURL: URL?
     @ObservationIgnored private var updatesTask: Task<Void, Never>?
     @ObservationIgnored private var retryTask: Task<Void, Never>?
+    /// Pings the server while connected, so that a dead connection is noticed within seconds.
+    @ObservationIgnored private var heartbeatTask: Task<Void, Never>?
+    @ObservationIgnored private var networkTask: Task<Void, Never>?
+    /// One attempt at a time: a network change and a return to the foreground often come together.
+    @ObservationIgnored private var isConnecting = false
+    @ObservationIgnored private let timing: ConnectionTiming
+    /// Updates received since the last redraw, applied together once `timing.batchWindow` has passed.
+    @ObservationIgnored private var pendingUpdates: [EntityUpdate] = []
+    @ObservationIgnored private var flushTask: Task<Void, Never>?
+    /// The home as last seen, shown at launch until the server answers. `nil` keeps nothing.
+    @ObservationIgnored private let lastKnownHome: (any LastKnownHomeStorage)?
+    @ObservationIgnored private var lastKnownHomeSavedAt: ContinuousClock.Instant?
+    /// The last write of the last known home; writes run one after the other, off the main thread.
+    @ObservationIgnored private(set) var savingLastKnownHome: Task<Void, Never>?
     /// `source_connected` is sent once per sign-in, not again when a lost connection comes back.
     @ObservationIgnored private var reportedConnection = false
     @ObservationIgnored private let isDemo: Bool
@@ -65,12 +79,16 @@ final class HomeStore {
         defaults: UserDefaults = .standard,
         household: HouseholdStore? = nil,
         presence: PresenceReporter? = nil,
-        connector: ServerConnector = ServerConnector()
+        connector: ServerConnector = ServerConnector(),
+        timing: ConnectionTiming = ConnectionTiming(),
+        lastKnownHome: (any LastKnownHomeStorage)? = nil
     ) {
         self.credentialStore = credentialStore
         self.household = household ?? HouseholdStore(cloud: CloudKitHousehold.isEntitled ? CloudKitHousehold() : nil, defaults: defaults)
         self.presence = presence ?? .shared
         self.connector = connector
+        self.timing = timing
+        self.lastKnownHome = lastKnownHome
         isDemo = false
         housekeepingDefaults = defaults
         housekeepingLog = HousekeepingLog.load(from: defaults)
@@ -79,6 +97,12 @@ final class HomeStore {
         serverURL = credentials?.serverURL
         remoteURL = credentials?.remoteURL
         phase = credentials == nil ? .signedOut : .connecting
+        // Shown while the server is reached, and instead of an error when it isn't.
+        if let credentials, let home = lastKnownHome?.load(), home.serverURL == credentials.serverURL {
+            states = home.states
+            layout = home.layout
+            lastUpdate = home.savedAt
+        }
     }
 
     /// A store filled with sample data, for previews and the `-demo` launch argument.
@@ -88,6 +112,8 @@ final class HomeStore {
         // The demo never asks for the location nor registers with a server.
         presence = PresenceReporter(webhooks: MemoryWebhookStorage(), credentialStore: credentialStore, isDemo: true)
         connector = ServerConnector()
+        timing = ConnectionTiming()
+        lastKnownHome = nil
         isDemo = true
         housekeepingDefaults = UserDefaults(suiteName: "com.theodaguier.maison.demo") ?? .standard
         housekeepingLog = DemoHome.housekeepingLog
@@ -117,10 +143,39 @@ final class HomeStore {
             // Joined, but the app closed before signing in with the account made for this person.
             await signInWithInvitation()
         }
+        networkTask?.cancel()
+        networkTask = Task { [weak self] in
+            for await _ in NetworkRoute.changes() {
+                await self?.networkChanged()
+            }
+        }
         // Without credentials, onboarding starts discovery once it has explained why it needs the local network.
         if credentials != nil {
             await connect()
         }
+    }
+
+    /// The app is back in the foreground. A connection that died while it was away is replaced now,
+    /// not when the next ping fails; an unreachable server is tried again at once.
+    func becameActive() async {
+        guard !isDemo, credentials != nil else { return }
+        switch phase {
+        case .connected:
+            guard let connection, await !isAlive(connection) else { return }
+            stopUpdates()
+            await connect()
+        case .offline, .failed:
+            await connect()
+        case .connecting, .signedOut:
+            return
+        }
+    }
+
+    /// The iPhone moved to another network: the address that answers may not be the same (home Wi-Fi
+    /// against cellular), and a socket opened on the previous network may be dead without saying so.
+    func networkChanged() async {
+        guard !isDemo, credentials != nil, phase != .signedOut else { return }
+        await connect()
     }
 
     /// Runs Home Assistant's sign-in page through `authenticate`, which presents the URL and
@@ -153,27 +208,41 @@ final class HomeStore {
             phase = .signedOut
             return
         }
+        guard !isConnecting else { return }
+        isConnecting = true
+        defer { isConnecting = false }
         retryTask?.cancel()
         if states.isEmpty {
             phase = .connecting
         }
+        var opening: HomeAssistantConnection?
         do {
             // The local address at home, the remote one away.
             let opened = try await connector.connect(credentials)
+            let connection = opened.connection
+            opening = connection
             if opened.credentials != credentials {
                 try keep(opened.credentials)
             }
-            let connection = opened.connection
-            async let states = connection.states()
-            async let layout = connection.layout()
-            let changes = try await connection.stateChanges()
-            let (loadedStates, loadedLayout) = try await (states, layout)
+            // One subscription gives every state, then only what changes, compressed. A server that
+            // stops answering halfway is given up on, so that the next attempt can start.
+            let (loadedStates, updates, loadedLayout) = try await ServerConnector.run(
+                within: timing.loadTimeout, onTimeout: { await connection.disconnect() }
+            ) {
+                async let layout = connection.layout()
+                let (states, updates) = try await connection.entities()
+                return try await (states, updates, layout)
+            }
 
+            // The old connection's stream ends when it closes: that is not a lost connection.
+            stopUpdates()
+            // The old connection may have dropped while this one opened.
+            retryTask?.cancel()
             await self.connection?.disconnect()
             self.connection = connection
             activeURL = opened.address
-            self.states = Dictionary(loadedStates.map { ($0.entityID, $0) }, uniquingKeysWith: { _, last in last })
-            self.layout = loadedLayout
+            states = loadedStates
+            layout = loadedLayout
             serverVersion = await connection.serverVersion
             lastUpdate = .now
             phase = .connected
@@ -182,20 +251,24 @@ final class HomeStore {
                 reportedConnection = true
                 Analytics.shared.track(.sourceConnected(.homeAssistant))
             }
+            rememberHome()
             Task { await loadServerDetails(from: connection) }
 
-            updatesTask?.cancel()
             updatesTask = Task { [weak self] in
-                for await state in changes {
-                    self?.states[state.entityID] = state
-                    self?.lastUpdate = .now
+                for await update in updates {
+                    self?.receive(update)
                 }
                 guard !Task.isCancelled else { return }
                 self?.connectionLost()
             }
+            heartbeatTask = Task { [weak self] in
+                await self?.keepAlive(connection)
+            }
         } catch HomeAssistantError.authenticationFailed(let message) {
+            await opening?.disconnect()
             phase = .failed(message ?? String(localized: "Home Assistant refused the sign-in."))
         } catch {
+            await opening?.disconnect()
             if states.isEmpty {
                 phase = .failed(error.localizedDescription)
             } else {
@@ -204,15 +277,107 @@ final class HomeStore {
         }
     }
 
+    /// Holds an update until the batch window closes, so that a home whose power sensors report
+    /// every second redraws its screens a few times a second at most, not once per sensor.
+    private func receive(_ update: EntityUpdate) {
+        pendingUpdates.append(update)
+        guard flushTask == nil else { return }
+        flushTask = Task { [weak self, window = timing.batchWindow] in
+            try? await Task.sleep(for: window)
+            guard !Task.isCancelled else { return }
+            self?.flushUpdates()
+        }
+    }
+
+    /// Applies the held updates in one change of `states`, and none when nothing shown moved.
+    private func flushUpdates() {
+        flushTask = nil
+        guard !pendingUpdates.isEmpty else { return }
+        var updated = states
+        var didChange = false
+        for update in pendingUpdates {
+            didChange = update.apply(to: &updated) || didChange
+        }
+        pendingUpdates.removeAll()
+        lastUpdate = .now
+        if didChange {
+            states = updated
+            if let saved = lastKnownHomeSavedAt, ContinuousClock.now - saved < timing.lastKnownHomeInterval {
+                return
+            }
+            rememberHome()
+        }
+    }
+
+    /// The app went to the background: the home as it is now is the one shown at the next launch.
+    func enteredBackground() {
+        flushUpdates()
+        rememberHome()
+    }
+
+    /// Writes the home as it is now, for the next launch.
+    private func rememberHome() {
+        guard let lastKnownHome, let serverURL, !states.isEmpty else { return }
+        let home = LastKnownHome(serverURL: serverURL, savedAt: lastUpdate ?? .now, states: states, layout: layout)
+        lastKnownHomeSavedAt = ContinuousClock.now
+        let previous = savingLastKnownHome
+        savingLastKnownHome = Task {
+            await previous?.value
+            await lastKnownHome.save(home)
+        }
+    }
+
+    /// Pings the server every `timing.heartbeat`. One that doesn't answer within `timing.pingTimeout`
+    /// counts as gone: its socket is closed and a new connection is tried.
+    private func keepAlive(_ connection: HomeAssistantConnection) async {
+        while !Task.isCancelled {
+            try? await Task.sleep(for: timing.heartbeat)
+            guard !Task.isCancelled else { return }
+            guard await isAlive(connection) else {
+                guard !Task.isCancelled, connection === self.connection else { return }
+                connectionLost()
+                return
+            }
+        }
+    }
+
+    /// Whether the server answers a ping in time. The round trip is kept for Settings.
+    /// A connection that doesn't answer is closed, so nothing waits on it any longer.
+    private func isAlive(_ connection: HomeAssistantConnection) async -> Bool {
+        do {
+            let duration = try await ServerConnector.run(within: timing.pingTimeout, onTimeout: { await connection.disconnect() }) {
+                try await connection.ping()
+            }
+            latencies = Array((latencies + [duration]).suffix(20))
+            return true
+        } catch {
+            await connection.disconnect()
+            return false
+        }
+    }
+
+    /// Stops listening to the current connection. Updates already received are applied.
+    private func stopUpdates() {
+        updatesTask?.cancel()
+        updatesTask = nil
+        heartbeatTask?.cancel()
+        heartbeatTask = nil
+        flushTask?.cancel()
+        flushUpdates()
+    }
+
     private func connectionLost() {
+        stopUpdates()
         if case .offline = phase {} else {
             phase = .offline(since: lastUpdate ?? .now)
         }
         retryTask?.cancel()
-        retryTask = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(5))
-            guard !Task.isCancelled else { return }
-            await self?.connect()
+        retryTask = Task { [weak self, delay = timing.retryDelay] in
+            try? await Task.sleep(for: delay)
+            guard !Task.isCancelled, let self else { return }
+            // `connect()` cancels a pending retry: this one is no longer pending, and must not cancel itself.
+            retryTask = nil
+            await connect()
         }
     }
 
@@ -304,9 +469,8 @@ final class HomeStore {
     }
 
     func signOut() async {
-        updatesTask?.cancel()
+        stopUpdates()
         retryTask?.cancel()
-        updatesTask = nil
         await connection?.disconnect()
         connection = nil
         activeURL = nil
@@ -316,6 +480,14 @@ final class HomeStore {
         remoteURL = nil
         // The webhook belongs to this server: positions must stop reaching it.
         presence.forget()
+        if let lastKnownHome {
+            let previous = savingLastKnownHome
+            savingLastKnownHome = Task {
+                await previous?.value
+                await lastKnownHome.delete()
+            }
+        }
+        lastKnownHomeSavedAt = nil
         states = [:]
         layout = HomeLayout()
         reportedConnection = false
@@ -1090,4 +1262,20 @@ extension Sequence<EntityState> {
     func sortedByName() -> [EntityState] {
         sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
+}
+
+/// How the store paces its connection. The tests shorten it.
+struct ConnectionTiming: Sendable {
+    /// Updates arriving within this window are applied together, in one redraw.
+    var batchWindow: Duration = .milliseconds(300)
+    /// How often the server is pinged while connected.
+    var heartbeat: Duration = .seconds(20)
+    /// How long a ping may take before the connection counts as dead.
+    var pingTimeout: Duration = .seconds(5)
+    /// How long to wait before trying again once the connection dropped.
+    var retryDelay: Duration = .seconds(5)
+    /// How long the states and rooms may take to load once connected.
+    var loadTimeout: Duration = .seconds(30)
+    /// While updates keep coming, the last known home is written at most this often.
+    var lastKnownHomeInterval: Duration = .seconds(60)
 }
