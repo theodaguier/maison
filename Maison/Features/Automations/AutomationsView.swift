@@ -291,5 +291,4 @@ private struct AutomationCard: View {
 #Preview {
     AutomationsView()
         .environment(DemoHome.store())
-        .environment(BelongingsStore.demo())
 }

@@ -157,5 +157,4 @@ extension Area {
 #Preview {
     RoomsView()
         .environment(DemoHome.store())
-        .environment(BelongingsStore.demo())
 }

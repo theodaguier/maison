@@ -132,5 +132,4 @@ extension EnvironmentValues {
 #Preview {
     RootView()
         .environment(DemoHome.store())
-        .environment(BelongingsStore.demo())
 }
