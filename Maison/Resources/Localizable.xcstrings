@@ -12048,6 +12048,706 @@
         }
       }
     },
+    "%@ arrives home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ arrive à la maison"
+          }
+        }
+      }
+    },
+    "%@ is home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ est à la maison"
+          }
+        }
+      }
+    },
+    "%@ leaves home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ quitte la maison"
+          }
+        }
+      }
+    },
+    "%lld min after the event ends": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min après la fin de l’événement"
+          }
+        }
+      }
+    },
+    "%lld min after the event starts": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min après le début de l’événement"
+          }
+        }
+      }
+    },
+    "%lld min before the event ends": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min avant la fin de l’événement"
+          }
+        }
+      }
+    },
+    "%lld min before the event starts": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min avant le début de l’événement"
+          }
+        }
+      }
+    },
+    "30 min before sunset": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "30 min avant le coucher du soleil"
+          }
+        }
+      }
+    },
+    "A person arrives or leaves": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une personne arrive ou part"
+          }
+        }
+      }
+    },
+    "After a power cut or an update": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Après une coupure de courant ou une mise à jour"
+          }
+        }
+      }
+    },
+    "An NFC tag is scanned": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un tag NFC est scanné"
+          }
+        }
+      }
+    },
+    "Arrives home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrive"
+          }
+        }
+      }
+    },
+    "At home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À la maison"
+          }
+        }
+      }
+    },
+    "At night": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La nuit"
+          }
+        }
+      }
+    },
+    "At regular intervals": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À intervalle régulier"
+          }
+        }
+      }
+    },
+    "Between 22:00 and 6:00": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entre 22:00 et 6:00"
+          }
+        }
+      }
+    },
+    "Do": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Action"
+          }
+        }
+      }
+    },
+    "During the day": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En journée"
+          }
+        }
+      }
+    },
+    "Every %lld min": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes les %lld min"
+          }
+        }
+      }
+    },
+    "Every 15 minutes": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes les 15 minutes"
+          }
+        }
+      }
+    },
+    "Every day at 7:30": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tous les jours à 7:30"
+          }
+        }
+      }
+    },
+    "Everyone leaves, someone arrives": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tout le monde part, quelqu’un arrive"
+          }
+        }
+      }
+    },
+    "Floor lamp · Turn on": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lampadaire · Allumer"
+          }
+        }
+      }
+    },
+    "Flow": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Déroulé"
+          }
+        }
+      }
+    },
+    "Leaves home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Part"
+          }
+        }
+      }
+    },
+    "Lights in a room": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lumières d’une pièce"
+          }
+        }
+      }
+    },
+    "Movie night": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Soirée cinéma"
+          }
+        }
+      }
+    },
+    "Outside below 0°": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dehors en dessous de 0°"
+          }
+        }
+      }
+    },
+    "Repeats": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Répétition"
+          }
+        }
+      }
+    },
+    "Run it": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’exécuter"
+          }
+        }
+      }
+    },
+    "Run the rule": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exécuter la règle"
+          }
+        }
+      }
+    },
+    "Run the script": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lancer le script"
+          }
+        }
+      }
+    },
+    "Runs its actions right away, without checking its conditions.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exécute ses actions tout de suite, sans vérifier ses conditions."
+          }
+        }
+      }
+    },
+    "Set speed": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Régler la vitesse"
+          }
+        }
+      }
+    },
+    "Set volume": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Régler le volume"
+          }
+        }
+      }
+    },
+    "Speed %@ %%": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vitesse %@ %%"
+          }
+        }
+      }
+    },
+    "Speed %lld %%": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vitesse %lld %%"
+          }
+        }
+      }
+    },
+    "Tag": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tag"
+          }
+        }
+      }
+    },
+    "Tags are written and named from the Home Assistant companion app.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les tags s’écrivent et se nomment depuis l’app compagnon de Home Assistant."
+          }
+        }
+      }
+    },
+    "The household leaves or returns": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le foyer part ou rentre"
+          }
+        }
+      }
+    },
+    "The server starts": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le serveur démarre"
+          }
+        }
+      }
+    },
+    "The “Entrance” tag": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le tag « Entrée »"
+          }
+        }
+      }
+    },
+    "Théo gets home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Théo arrive à la maison"
+          }
+        }
+      }
+    },
+    "Théo is away": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Théo est absent"
+          }
+        }
+      }
+    },
+    "Timing": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moment"
+          }
+        }
+      }
+    },
+    "To Théo’s iPhone": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur l’iPhone de Théo"
+          }
+        }
+      }
+    },
+    "Turn it off": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La désactiver"
+          }
+        }
+      }
+    },
+    "Turn it on": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’activer"
+          }
+        }
+      }
+    },
+    "Turn off every light in the bedroom": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Éteindre toutes les lumières de la chambre"
+          }
+        }
+      }
+    },
+    "Turn off the lights": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Éteindre les lumières"
+          }
+        }
+      }
+    },
+    "Turn on the lights": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allumer les lumières"
+          }
+        }
+      }
+    },
+    "Turn the rule off": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Désactiver la règle"
+          }
+        }
+      }
+    },
+    "Turn the rule on": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activer la règle"
+          }
+        }
+      }
+    },
+    "Useful to put things back in order after a power cut or an update.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utile pour tout remettre en ordre après une coupure de courant ou une mise à jour."
+          }
+        }
+      }
+    },
+    "Uses the calendars connected to Home Assistant: work, family, holidays…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utilise les agendas connectés à Home Assistant : travail, famille, jours fériés…"
+          }
+        }
+      }
+    },
+    "Volume %@ %%": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Volume %@ %%"
+          }
+        }
+      }
+    },
+    "Volume %lld %%": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Volume %lld %%"
+          }
+        }
+      }
+    },
+    "Water the garden": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arroser le jardin"
+          }
+        }
+      }
+    },
+    "When Home Assistant starts": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Au démarrage de Home Assistant"
+          }
+        }
+      }
+    },
+    "When the event ends": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À la fin de l’événement"
+          }
+        }
+      }
+    },
+    "When the event starts": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Au début de l’événement"
+          }
+        }
+      }
+    },
+    "When the server starts": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Au démarrage du serveur"
+          }
+        }
+      }
+    },
+    "When “Remote work” starts": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Au début de « Télétravail »"
+          }
+        }
+      }
+    },
+    "Where": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Où"
+          }
+        }
+      }
+    },
+    "Whole home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toute la maison"
+          }
+        }
+      }
+    },
+    "turns off the lights": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "éteint les lumières"
+          }
+        }
+      }
+    },
+    "turns off the rule “%@”": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "désactive la règle « %@ »"
+          }
+        }
+      }
+    },
+    "turns on all the lights": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "allume toutes les lumières"
+          }
+        }
+      }
+    },
+    "turns on the lights": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "allume les lumières"
+          }
+        }
+      }
+    },
+    "turns on the rule “%@”": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "active la règle « %@ »"
+          }
+        }
+      }
+    },
     "About %@ %@ this month": {
       "localizations": {
         "fr": {
