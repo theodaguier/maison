@@ -52,6 +52,10 @@ final class HomeStore {
     @ObservationIgnored private(set) var activeURL: URL?
     @ObservationIgnored private var updatesTask: Task<Void, Never>?
     @ObservationIgnored private var retryTask: Task<Void, Never>?
+    @ObservationIgnored private let timing: ConnectionTiming
+    /// Updates received since the last redraw, applied together once `timing.batchWindow` has passed.
+    @ObservationIgnored private var pendingUpdates: [EntityUpdate] = []
+    @ObservationIgnored private var flushTask: Task<Void, Never>?
     /// `source_connected` is sent once per sign-in, not again when a lost connection comes back.
     @ObservationIgnored private var reportedConnection = false
     @ObservationIgnored private let isDemo: Bool
@@ -65,12 +69,14 @@ final class HomeStore {
         defaults: UserDefaults = .standard,
         household: HouseholdStore? = nil,
         presence: PresenceReporter? = nil,
-        connector: ServerConnector = ServerConnector()
+        connector: ServerConnector = ServerConnector(),
+        timing: ConnectionTiming = ConnectionTiming()
     ) {
         self.credentialStore = credentialStore
         self.household = household ?? HouseholdStore(cloud: CloudKitHousehold.isEntitled ? CloudKitHousehold() : nil, defaults: defaults)
         self.presence = presence ?? .shared
         self.connector = connector
+        self.timing = timing
         isDemo = false
         housekeepingDefaults = defaults
         housekeepingLog = HousekeepingLog.load(from: defaults)
@@ -88,6 +94,7 @@ final class HomeStore {
         // The demo never asks for the location nor registers with a server.
         presence = PresenceReporter(webhooks: MemoryWebhookStorage(), credentialStore: credentialStore, isDemo: true)
         connector = ServerConnector()
+        timing = ConnectionTiming()
         isDemo = true
         housekeepingDefaults = UserDefaults(suiteName: "com.theodaguier.maison.demo") ?? .standard
         housekeepingLog = DemoHome.housekeepingLog
@@ -164,15 +171,17 @@ final class HomeStore {
                 try keep(opened.credentials)
             }
             let connection = opened.connection
-            async let states = connection.states()
             async let layout = connection.layout()
-            let changes = try await connection.stateChanges()
-            let (loadedStates, loadedLayout) = try await (states, layout)
+            // One subscription gives every state, then only what changes, compressed.
+            let (loadedStates, updates) = try await connection.entities()
+            let loadedLayout = try await layout
 
+            // The old connection's stream ends when it closes: that is not a lost connection.
+            stopUpdates()
             await self.connection?.disconnect()
             self.connection = connection
             activeURL = opened.address
-            self.states = Dictionary(loadedStates.map { ($0.entityID, $0) }, uniquingKeysWith: { _, last in last })
+            self.states = loadedStates
             self.layout = loadedLayout
             serverVersion = await connection.serverVersion
             lastUpdate = .now
@@ -184,11 +193,9 @@ final class HomeStore {
             }
             Task { await loadServerDetails(from: connection) }
 
-            updatesTask?.cancel()
             updatesTask = Task { [weak self] in
-                for await state in changes {
-                    self?.states[state.entityID] = state
-                    self?.lastUpdate = .now
+                for await update in updates {
+                    self?.receive(update)
                 }
                 guard !Task.isCancelled else { return }
                 self?.connectionLost()
@@ -204,7 +211,44 @@ final class HomeStore {
         }
     }
 
+    /// Holds an update until the batch window closes, so that a home whose power sensors report
+    /// every second redraws its screens a few times a second at most, not once per sensor.
+    private func receive(_ update: EntityUpdate) {
+        pendingUpdates.append(update)
+        guard flushTask == nil else { return }
+        flushTask = Task { [weak self, window = timing.batchWindow] in
+            try? await Task.sleep(for: window)
+            guard !Task.isCancelled else { return }
+            self?.flushUpdates()
+        }
+    }
+
+    /// Applies the held updates in one change of `states`, and none when nothing shown moved.
+    private func flushUpdates() {
+        flushTask = nil
+        guard !pendingUpdates.isEmpty else { return }
+        var updated = states
+        var didChange = false
+        for update in pendingUpdates {
+            didChange = update.apply(to: &updated) || didChange
+        }
+        pendingUpdates.removeAll()
+        lastUpdate = .now
+        if didChange {
+            states = updated
+        }
+    }
+
+    /// Stops listening to the current connection. Updates already received are applied.
+    private func stopUpdates() {
+        updatesTask?.cancel()
+        updatesTask = nil
+        flushTask?.cancel()
+        flushUpdates()
+    }
+
     private func connectionLost() {
+        stopUpdates()
         if case .offline = phase {} else {
             phase = .offline(since: lastUpdate ?? .now)
         }
@@ -304,9 +348,8 @@ final class HomeStore {
     }
 
     func signOut() async {
-        updatesTask?.cancel()
+        stopUpdates()
         retryTask?.cancel()
-        updatesTask = nil
         await connection?.disconnect()
         connection = nil
         activeURL = nil
@@ -1090,4 +1133,10 @@ extension Sequence<EntityState> {
     func sortedByName() -> [EntityState] {
         sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
+}
+
+/// How the store paces its connection. The tests shorten it.
+struct ConnectionTiming: Sendable {
+    /// Updates arriving within this window are applied together, in one redraw.
+    var batchWindow: Duration = .milliseconds(300)
 }

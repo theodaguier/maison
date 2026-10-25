@@ -173,24 +173,6 @@ actor HomeAssistantConnection {
         }
     }
 
-    /// Streams the new state of every entity that changes. Removed entities are skipped.
-    func stateChanges() async throws -> AsyncStream<EntityState> {
-        let events = try await subscribe(["type": "subscribe_events", "event_type": "state_changed"])
-        return AsyncStream { continuation in
-            let task = Task {
-                for await event in events {
-                    guard
-                        let newState = event["data"]?["new_state"], !newState.isNull,
-                        let state = try? newState.decode(EntityState.self)
-                    else { continue }
-                    continuation.yield(state)
-                }
-                continuation.finish()
-            }
-            continuation.onTermination = { _ in task.cancel() }
-        }
-    }
-
     /// Subscribes with the given command and streams the `event` payload of each message.
     func subscribe(_ command: [String: JSONValue]) async throws -> AsyncStream<JSONValue> {
         let (stream, continuation) = AsyncStream<JSONValue>.makeStream()

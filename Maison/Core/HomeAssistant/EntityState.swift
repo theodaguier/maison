@@ -1,6 +1,6 @@
 import Foundation
 
-/// The current state of one Home Assistant entity, as returned by `get_states` and `state_changed` events.
+/// The current state of one Home Assistant entity, as returned by `get_states` and `subscribe_entities`.
 struct EntityState: Sendable, Hashable, Identifiable, Decodable {
     let entityID: String
     let state: String
