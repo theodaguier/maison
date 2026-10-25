@@ -239,6 +239,14 @@ final class HouseholdStore {
         uploadFavorites()
     }
 
+    /// Replaces the favourites, in this order: the home's shortcuts, edited.
+    func setFavorites(_ entityIDs: [String]) {
+        var seen = Set<String>()
+        favoriteIDs = entityIDs.filter { seen.insert($0).inserted }
+        defaults.set(favoriteIDs, forKey: Self.favoritesKey)
+        uploadFavorites()
+    }
+
     /// Takes the iCloud copy when there is one, otherwise uploads the favourites kept on the device.
     private func syncFavorites() async throws {
         guard let cloud, let location, let memberID else { return }

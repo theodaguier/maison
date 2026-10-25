@@ -100,8 +100,9 @@ struct FindingsTests {
             deviceID: "d", deviceName: "Chauffe-eau", usage: [19: 1.6],
             tariff: EnergyTariff(price: 0.27, offPeak: offPeak), currency: "EUR", switchEntity: nil
         ))
-        let attention = Attention.pick(from: HomeScores(hasElectricityMeter: true, findings: [finding], computedAt: .now), meterProposalSeen: true)
-        #expect(attention?.findingID == finding.id)
-        #expect(attention?.kind == .energy)
+        let highlights = Highlights.compute(scores: HomeScores(hasElectricityMeter: true, findings: [finding], computedAt: .now),
+                                            inputs: HighlightInputs(meterProposalSeen: true))
+        #expect(highlights.first?.id == finding.id)
+        #expect(highlights.first?.score == .energy)
     }
 }
