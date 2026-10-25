@@ -29,7 +29,7 @@ struct GroundedNumbersTests {
 
 @MainActor
 struct DayFactsTests {
-    // Before 1:00 the demo meter's last full hour is yesterday's, and today has nothing to tell yet.
+    /// Before 1:00 the demo meter's last full hour is yesterday's, and today has nothing to tell yet.
     @Test(.enabled(if: Calendar.current.component(.hour, from: .now) >= 1))
     func demoHomeHasEnergyFact() async {
         let facts = await DemoHome.store().dayFacts()
