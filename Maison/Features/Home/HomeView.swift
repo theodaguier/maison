@@ -49,7 +49,6 @@ struct OpenedDevice: Identifiable {
 
 private struct HomeDashboard: View {
     @Environment(HomeStore.self) private var store
-    @Environment(\.colorScheme) private var colorScheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var opened: OpenedDevice?
     @State private var scores: HomeScores?
@@ -75,19 +74,11 @@ private struct HomeDashboard: View {
     @State private var showsDocuments = false
     @State private var scansDocument = false
     #endif
-    /// Height of the navigation bar area above the scroll content; the hero extends under it.
-    @State private var topInset: CGFloat = 0
-    /// The bar gets its opaque edge only once the illustration has scrolled away.
-    @State private var isPastHero = false
-
-    private let heroHeight: CGFloat = 358
-    /// Space between the large-title bar and the scores (design: they start at 238 pt, the bar ends at 187 pt).
-    private let heroSpace: CGFloat = 51
 
     var body: some View {
         ScrollView {
             VStack(spacing: Theme.sectionSpacing) {
-                hero
+                offlineBanner
                 ScoresCard(scores: scores, isDimmed: store.phase != .connected) { openedScore = $0 }
                 ForEach(arrangedSections) { section in
                     sectionView(section)
@@ -111,16 +102,8 @@ private struct HomeDashboard: View {
             .padding(.bottom, 24)
             // Exactly the screen's width: a card wider than it with real data must not let the page slide sideways.
             .containerRelativeFrame(.horizontal)
-            .background(alignment: .top) { illustration.offset(y: -topInset) }
         }
         .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
-        .onScrollGeometryChange(for: CGFloat.self, of: { $0.contentInsets.top }) { _, inset in
-            topInset = inset
-        }
-        .scrollEdgeEffectHidden(!isPastHero, for: .top)
-        .onScrollGeometryChange(for: Bool.self, of: { $0.contentOffset.y + $0.contentInsets.top > 180 }) { _, isPast in
-            isPastHero = isPast
-        }
         .background(Theme.background)
         .scrollEdgeEffectStyle(.hard, for: .top)
         .navigationTitle(store.serverConfig?.locationName ?? String(localized: "Home"))
@@ -319,30 +302,17 @@ private struct HomeDashboard: View {
             .foregroundStyle(.secondary)
     }
 
-    // MARK: Hero
+    // MARK: Offline
 
-    private var illustration: some View {
-        // The night illustration is the dark-mode version of the hero, as in the mock-ups.
-        Image(colorScheme == .dark ? "IllustrationNight" : "IllustrationDay")
-            .resizable()
-            .scaledToFill()
-            .frame(height: heroHeight)
-            .frame(maxWidth: .infinity)
-            .clipped()
-            .padding(.horizontal, -Theme.screenPadding)
-            .accessibilityHidden(true)
-    }
-
-    private var hero: some View {
+    /// Above the scores, only while the server is unreachable; otherwise the scores sit right under the title.
+    private var offlineBanner: some View {
         VStack(spacing: 0) {
             if case .offline(let since) = store.phase {
                 OfflineBanner(since: since)
-                    .padding(.bottom, 10)
                     .transition(.opacity.combined(with: .scale(0.96, anchor: .bottom)))
             }
         }
         .animation(.smooth, value: store.phase)
-        .frame(minHeight: heroSpace - Theme.sectionSpacing, alignment: .bottom)
     }
 }
 
@@ -357,7 +327,7 @@ private struct ScoreInputs: Hashable {
     }
 }
 
-/// Shown over the hero when the server stops answering; cached data stays visible underneath.
+/// Shown above the scores when the server stops answering; cached data stays visible underneath.
 private struct OfflineBanner: View {
     let since: Date
 
