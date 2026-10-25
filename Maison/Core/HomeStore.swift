@@ -241,8 +241,8 @@ final class HomeStore {
             await self.connection?.disconnect()
             self.connection = connection
             activeURL = opened.address
-            self.states = loadedStates
-            self.layout = loadedLayout
+            states = loadedStates
+            layout = loadedLayout
             serverVersion = await connection.serverVersion
             lastUpdate = .now
             phase = .connected

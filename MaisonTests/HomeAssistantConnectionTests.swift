@@ -202,6 +202,7 @@ actor StaggeredTransport: WebSocketTransport {
     private let replies = FakeTransport { message in
         message["type"]?.stringValue == "auth" ? [["type": "auth_ok"]] : [result(for: message)]
     }
+
     private var commands = 0
     private(set) var writtenIDs: [Int] = []
 
