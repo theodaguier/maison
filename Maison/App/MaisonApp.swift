@@ -4,8 +4,6 @@ import SwiftUI
 struct MaisonApp: App {
     /// `-demo`, or "Try a Demo Home" in onboarding, fills the app with the sample home of the mock-ups.
     @State private var store = DemoMode.isOn ? DemoHome.store() : HomeStore()
-    /// Objects and documents live on the iPhone; the demo home has its own, thrown away when it's left.
-    @State private var belongings = DemoMode.isOn ? BelongingsStore.demo() : BelongingsStore.onDevice()
     @AppStorage("appearance") private var appearance: Appearance = .system
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
@@ -16,11 +14,9 @@ struct MaisonApp: App {
                 .id(ObjectIdentifier(store))
                 .fontDesign(.rounded)
                 .environment(store)
-                .environment(belongings)
                 .environment(\.setDemoMode) { isOn in
                     DemoMode.isOn = isOn
                     store = isOn ? DemoHome.store() : HomeStore()
-                    belongings = isOn ? BelongingsStore.demo() : BelongingsStore.onDevice()
                     Task { await store.start() }
                 }
                 .preferredColorScheme(appearance.colorScheme)
