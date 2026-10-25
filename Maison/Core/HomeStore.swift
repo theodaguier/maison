@@ -61,6 +61,11 @@ final class HomeStore {
     /// Updates received since the last redraw, applied together once `timing.batchWindow` has passed.
     @ObservationIgnored private var pendingUpdates: [EntityUpdate] = []
     @ObservationIgnored private var flushTask: Task<Void, Never>?
+    /// The home as last seen, shown at launch until the server answers. `nil` keeps nothing.
+    @ObservationIgnored private let lastKnownHome: (any LastKnownHomeStorage)?
+    @ObservationIgnored private var lastKnownHomeSavedAt: ContinuousClock.Instant?
+    /// The last write of the last known home; writes run one after the other, off the main thread.
+    @ObservationIgnored private(set) var savingLastKnownHome: Task<Void, Never>?
     /// `source_connected` is sent once per sign-in, not again when a lost connection comes back.
     @ObservationIgnored private var reportedConnection = false
     @ObservationIgnored private let isDemo: Bool
@@ -75,13 +80,15 @@ final class HomeStore {
         household: HouseholdStore? = nil,
         presence: PresenceReporter? = nil,
         connector: ServerConnector = ServerConnector(),
-        timing: ConnectionTiming = ConnectionTiming()
+        timing: ConnectionTiming = ConnectionTiming(),
+        lastKnownHome: (any LastKnownHomeStorage)? = nil
     ) {
         self.credentialStore = credentialStore
         self.household = household ?? HouseholdStore(cloud: CloudKitHousehold.isEntitled ? CloudKitHousehold() : nil, defaults: defaults)
         self.presence = presence ?? .shared
         self.connector = connector
         self.timing = timing
+        self.lastKnownHome = lastKnownHome
         isDemo = false
         housekeepingDefaults = defaults
         housekeepingLog = HousekeepingLog.load(from: defaults)
@@ -90,6 +97,12 @@ final class HomeStore {
         serverURL = credentials?.serverURL
         remoteURL = credentials?.remoteURL
         phase = credentials == nil ? .signedOut : .connecting
+        // Shown while the server is reached, and instead of an error when it isn't.
+        if let credentials, let home = lastKnownHome?.load(), home.serverURL == credentials.serverURL {
+            states = home.states
+            layout = home.layout
+            lastUpdate = home.savedAt
+        }
     }
 
     /// A store filled with sample data, for previews and the `-demo` launch argument.
@@ -100,6 +113,7 @@ final class HomeStore {
         presence = PresenceReporter(webhooks: MemoryWebhookStorage(), credentialStore: credentialStore, isDemo: true)
         connector = ServerConnector()
         timing = ConnectionTiming()
+        lastKnownHome = nil
         isDemo = true
         housekeepingDefaults = UserDefaults(suiteName: "com.theodaguier.maison.demo") ?? .standard
         housekeepingLog = DemoHome.housekeepingLog
@@ -237,6 +251,7 @@ final class HomeStore {
                 reportedConnection = true
                 Analytics.shared.track(.sourceConnected(.homeAssistant))
             }
+            rememberHome()
             Task { await loadServerDetails(from: connection) }
 
             updatesTask = Task { [weak self] in
@@ -287,6 +302,28 @@ final class HomeStore {
         lastUpdate = .now
         if didChange {
             states = updated
+            if let saved = lastKnownHomeSavedAt, ContinuousClock.now - saved < timing.lastKnownHomeInterval {
+                return
+            }
+            rememberHome()
+        }
+    }
+
+    /// The app went to the background: the home as it is now is the one shown at the next launch.
+    func enteredBackground() {
+        flushUpdates()
+        rememberHome()
+    }
+
+    /// Writes the home as it is now, for the next launch.
+    private func rememberHome() {
+        guard let lastKnownHome, let serverURL, !states.isEmpty else { return }
+        let home = LastKnownHome(serverURL: serverURL, savedAt: lastUpdate ?? .now, states: states, layout: layout)
+        lastKnownHomeSavedAt = ContinuousClock.now
+        let previous = savingLastKnownHome
+        savingLastKnownHome = Task {
+            await previous?.value
+            await lastKnownHome.save(home)
         }
     }
 
@@ -443,6 +480,14 @@ final class HomeStore {
         remoteURL = nil
         // The webhook belongs to this server: positions must stop reaching it.
         presence.forget()
+        if let lastKnownHome {
+            let previous = savingLastKnownHome
+            savingLastKnownHome = Task {
+                await previous?.value
+                await lastKnownHome.delete()
+            }
+        }
+        lastKnownHomeSavedAt = nil
         states = [:]
         layout = HomeLayout()
         reportedConnection = false
@@ -1231,4 +1276,6 @@ struct ConnectionTiming: Sendable {
     var retryDelay: Duration = .seconds(5)
     /// How long the states and rooms may take to load once connected.
     var loadTimeout: Duration = .seconds(30)
+    /// While updates keep coming, the last known home is written at most this often.
+    var lastKnownHomeInterval: Duration = .seconds(60)
 }

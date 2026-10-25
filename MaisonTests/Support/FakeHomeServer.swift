@@ -38,7 +38,8 @@ enum FakeHome {
     static func store(
         _ transports: [any WebSocketTransport],
         timing: ConnectionTiming = ConnectionTiming(),
-        opened: Log<URL> = Log()
+        opened: Log<URL> = Log(),
+        lastKnownHome: (any LastKnownHomeStorage)? = nil
     ) throws -> HomeStore {
         let defaults = UserDefaults(suiteName: "FakeHome.\(UUID().uuidString)")!
         let keychain = MemoryCredentialStorage()
@@ -53,8 +54,18 @@ enum FakeHome {
             household: HouseholdStore(cloud: nil, defaults: defaults),
             presence: PresenceReporter(webhooks: MemoryWebhookStorage(), defaults: defaults),
             connector: connector,
-            timing: timing
+            timing: timing,
+            lastKnownHome: lastKnownHome
         )
+    }
+}
+
+extension LastKnownHomeFile {
+    /// A file of its own in the temporary directory.
+    static func temporary() -> LastKnownHomeFile {
+        LastKnownHomeFile(url: FileManager.default.temporaryDirectory
+            .appending(path: "LastKnownHome-\(UUID().uuidString)")
+            .appending(path: "LastKnownHome.json"))
     }
 }
 

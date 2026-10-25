@@ -1,7 +1,7 @@
 import Foundation
 
 /// A Home Assistant area, shown as a room.
-struct Area: Sendable, Hashable, Identifiable, Decodable {
+struct Area: Sendable, Hashable, Identifiable, Codable {
     let id: String
     let name: String
     /// The room's icon in Home Assistant ("mdi:sofa"), which says what it is for.
@@ -54,7 +54,7 @@ struct DeviceRegistryEntry: Sendable, Hashable, Decodable {
 }
 
 /// Everything the registries say about how entities are organised.
-struct HomeLayout: Sendable, Hashable {
+struct HomeLayout: Sendable, Hashable, Codable {
     var areas: [Area] = []
     var areaByEntity: [String: String] = [:]
     var deviceByEntity: [String: String] = [:]

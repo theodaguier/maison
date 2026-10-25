@@ -185,4 +185,96 @@ struct HomeConnectionTests {
     func reconnectsOnlyWhenAnotherNetworkIsReached(previous: NetworkRoute, current: NetworkRoute, reconnects: Bool) {
         #expect(current.isChange(from: previous) == reconnects)
     }
+
+    // MARK: - Last known home
+
+    var savedHome: LastKnownHome {
+        var layout = HomeLayout()
+        layout.areas = [Area(id: "salon", name: "Salon")]
+        layout.areaByEntity = ["sensor.power": "salon"]
+        return LastKnownHome(
+            serverURL: FakeHome.server,
+            savedAt: Date(timeIntervalSince1970: 1_792_480_000),
+            states: ["sensor.power": EntityState(
+                entityID: "sensor.power", state: "87", attributes: ["unit_of_measurement": "W"],
+                lastChanged: Date(timeIntervalSince1970: 1_792_479_999.123456)
+            )],
+            layout: layout
+        )
+    }
+
+    @Test func keepsTheLastKnownHomeInAFile() async throws {
+        let file = LastKnownHomeFile.temporary()
+        #expect(file.load() == nil)
+
+        await file.save(savedHome)
+        #expect(file.load() == savedHome)
+
+        try Data("{\"cut".utf8).write(to: file.url)
+        #expect(file.load() == nil)
+
+        await file.save(savedHome)
+        await file.delete()
+        #expect(file.load() == nil)
+    }
+
+    @Test func startingOfflineShowsTheLastKnownHome() async throws {
+        let file = LastKnownHomeFile.temporary()
+        await file.save(savedHome)
+        let store = try FakeHome.store([FailingTransport()], timing: ConnectionTiming(retryDelay: .seconds(3600)), lastKnownHome: file)
+
+        #expect(store.states == savedHome.states)
+        #expect(store.layout == savedHome.layout)
+
+        await store.connect()
+
+        // Not an error: the home as it was, and since when.
+        #expect(store.phase == .offline(since: savedHome.savedAt))
+        #expect(store.states["sensor.power"]?.state == "87")
+    }
+
+    @Test func theLastKnownHomeOfAnotherServerIsNotShown() async throws {
+        let file = LastKnownHomeFile.temporary()
+        var home = savedHome
+        home.serverURL = URL(string: "http://192.168.1.50:8123")!
+        await file.save(home)
+
+        let store = try FakeHome.store([FailingTransport()], lastKnownHome: file)
+
+        #expect(store.states.isEmpty)
+    }
+
+    @Test func remembersTheHomeOnceConnectedAndInTheBackground() async throws {
+        let file = LastKnownHomeFile.temporary()
+        let server = fakeHomeServer(entities: power)
+        let store = try FakeHome.store([server], timing: ConnectionTiming(batchWindow: .milliseconds(20)), lastKnownHome: file)
+
+        await store.connect()
+        await store.savingLastKnownHome?.value
+        #expect(file.load()?.states["sensor.power"]?.state == "100")
+        #expect(file.load()?.serverURL == FakeHome.server)
+
+        // Within the minute, a change waits for the app to leave the foreground.
+        await server.pushEntities(["c": ["sensor.power": ["+": ["s": "250", "lc": 1_792_483_980]]]])
+        try await waitUntil { store.states["sensor.power"]?.state == "250" }
+        await store.savingLastKnownHome?.value
+        #expect(file.load()?.states["sensor.power"]?.state == "100")
+
+        store.enteredBackground()
+        await store.savingLastKnownHome?.value
+        #expect(file.load()?.states["sensor.power"]?.state == "250")
+    }
+
+    @Test func signingOutForgetsTheLastKnownHome() async throws {
+        let file = LastKnownHomeFile.temporary()
+        let store = try FakeHome.store([fakeHomeServer(entities: power)], lastKnownHome: file)
+        await store.connect()
+        await store.savingLastKnownHome?.value
+        #expect(file.load() != nil)
+
+        await store.signOut()
+        await store.savingLastKnownHome?.value
+
+        #expect(file.load() == nil)
+    }
 }

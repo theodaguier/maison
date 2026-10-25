@@ -3,7 +3,7 @@ import SwiftUI
 @main
 struct MaisonApp: App {
     /// `-demo`, or "Try a Demo Home" in onboarding, fills the app with the sample home of the mock-ups.
-    @State private var store = DemoMode.isOn ? DemoHome.store() : HomeStore()
+    @State private var store = DemoMode.isOn ? DemoHome.store() : HomeStore(lastKnownHome: LastKnownHomeFile.onDevice())
     /// Objects and documents live on the iPhone; the demo home has its own, thrown away when it's left.
     @State private var belongings = DemoMode.isOn ? BelongingsStore.demo() : BelongingsStore.onDevice()
     @AppStorage("appearance") private var appearance: Appearance = .system
@@ -20,7 +20,7 @@ struct MaisonApp: App {
                 .environment(belongings)
                 .environment(\.setDemoMode) { isOn in
                     DemoMode.isOn = isOn
-                    store = isOn ? DemoHome.store() : HomeStore()
+                    store = isOn ? DemoHome.store() : HomeStore(lastKnownHome: LastKnownHomeFile.onDevice())
                     belongings = isOn ? BelongingsStore.demo() : BelongingsStore.onDevice()
                     Task { await store.start() }
                 }
@@ -33,8 +33,10 @@ struct MaisonApp: App {
                 }
                 // The connection may have died while the app was in the background.
                 .onChange(of: scenePhase) { _, phase in
-                    if phase == .active {
-                        Task { await store.becameActive() }
+                    switch phase {
+                    case .active: Task { await store.becameActive() }
+                    case .background: store.enteredBackground()
+                    default: break
                     }
                 }
         }
