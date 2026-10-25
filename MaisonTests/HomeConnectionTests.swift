@@ -151,6 +151,30 @@ struct HomeConnectionTests {
         #expect(store.phase == .connected)
     }
 
+    @Test func givesUpOnAServerThatStopsAnsweringWhileLoading() async throws {
+        // The subscription is accepted, but the states never follow.
+        let stalled = FakeTransport { message in
+            message["type"]?.stringValue == "auth" ? [["type": "auth_ok"]] : message["type"]?.stringValue == "subscribe_entities" ? [result(for: message)] : [result(for: message, [])]
+        }
+        let opened = Log<URL>()
+        let store = try FakeHome.store(
+            [stalled, fakeHomeServer(entities: power)],
+            timing: ConnectionTiming(retryDelay: .seconds(3600), loadTimeout: .milliseconds(100)),
+            opened: opened
+        )
+
+        await store.connect()
+        guard case .failed = store.phase else {
+            Issue.record("Expected a failure, got \(store.phase)")
+            return
+        }
+
+        // The attempt that stalled doesn't block the next one.
+        await store.connect()
+        #expect(opened.values.count == 2)
+        #expect(store.phase == .connected)
+    }
+
     @Test(arguments: [
         (NetworkRoute(isReachable: false), NetworkRoute(isReachable: true, interfaces: ["en0"], gateways: ["192.168.1.1"]), true),
         (NetworkRoute(isReachable: true, interfaces: ["en0"], gateways: ["192.168.1.1"]), NetworkRoute(isReachable: true, interfaces: ["en0"], gateways: ["192.168.1.1"]), false),

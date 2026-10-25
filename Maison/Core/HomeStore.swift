@@ -210,10 +210,15 @@ final class HomeStore {
             if opened.credentials != credentials {
                 try keep(opened.credentials)
             }
-            async let layout = connection.layout()
-            // One subscription gives every state, then only what changes, compressed.
-            let (loadedStates, updates) = try await connection.entities()
-            let loadedLayout = try await layout
+            // One subscription gives every state, then only what changes, compressed. A server that
+            // stops answering halfway is given up on, so that the next attempt can start.
+            let (loadedStates, updates, loadedLayout) = try await ServerConnector.run(
+                within: timing.loadTimeout, onTimeout: { await connection.disconnect() }
+            ) {
+                async let layout = connection.layout()
+                let (states, updates) = try await connection.entities()
+                return try await (states, updates, layout)
+            }
 
             // The old connection's stream ends when it closes: that is not a lost connection.
             stopUpdates()
@@ -332,8 +337,10 @@ final class HomeStore {
         retryTask?.cancel()
         retryTask = Task { [weak self, delay = timing.retryDelay] in
             try? await Task.sleep(for: delay)
-            guard !Task.isCancelled else { return }
-            await self?.connect()
+            guard !Task.isCancelled, let self else { return }
+            // `connect()` cancels a pending retry: this one is no longer pending, and must not cancel itself.
+            retryTask = nil
+            await connect()
         }
     }
 
@@ -1222,4 +1229,6 @@ struct ConnectionTiming: Sendable {
     var pingTimeout: Duration = .seconds(5)
     /// How long to wait before trying again once the connection dropped.
     var retryDelay: Duration = .seconds(5)
+    /// How long the states and rooms may take to load once connected.
+    var loadTimeout: Duration = .seconds(30)
 }
