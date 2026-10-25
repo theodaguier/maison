@@ -291,44 +291,48 @@ struct HeroRing: View {
 
 // MARK: - Controls
 
-/// The inline horizontal level control (92 × 14 pt): drag to set, the value is sent on release.
-struct LevelGauge: View {
+/// The "− 80 % +" pill for lights, covers and fans. Taps only, never a drag, so a scroll that
+/// starts on a row can't change the level. When the device is off or closed, it shows its state instead.
+struct LevelStepper: View {
     let level: Double
-    let tint: Color
-    let onCommit: (Double) -> Void
-
-    @State private var dragLevel: Double?
-    private let width: CGFloat = 92
+    /// Shown in place of the percentage at 0, such as "Off" or "Closed".
+    let offLabel: String
+    let onChange: (Double) -> Void
 
     var body: some View {
-        let shown = dragLevel ?? level
-        ZStack(alignment: .leading) {
-            Capsule().fill(Theme.gaugeTrack).frame(height: 6)
-            Capsule().fill(tint).frame(width: max(6, width * shown), height: 6)
-            Circle()
-                .fill(Theme.card)
-                .overlay { Circle().strokeBorder(tint, lineWidth: 2.5) }
-                .frame(width: 14, height: 14)
-                .offset(x: (width - 14) * shown)
+        HStack(spacing: 0) {
+            Button {
+                onChange(LevelStep.next(from: level, increasing: false))
+            } label: {
+                Image(systemName: "minus").padding(.horizontal, 11).padding(.vertical, 7)
+                    .foregroundStyle(level > 0 ? HierarchicalShapeStyle.primary : .quaternary)
+            }
+            .disabled(level <= 0)
+            .tapFeedback(.decrease)
+            Text(level > 0 ? level.formatted(.percent.precision(.fractionLength(0))) : offLabel)
+                .font(.roundedHeadline)
+                .monospacedDigit()
+                .contentTransition(.numericText())
+                .animation(.snappy, value: level)
+                .padding(.horizontal, 4)
+            Button {
+                onChange(LevelStep.next(from: level, increasing: true))
+            } label: {
+                Image(systemName: "plus").padding(.horizontal, 11).padding(.vertical, 7)
+                    .foregroundStyle(level < 1 ? HierarchicalShapeStyle.primary : .quaternary)
+            }
+            .disabled(level >= 1)
+            .tapFeedback(.increase)
         }
-        .frame(width: width, height: 30)
-        .contentShape(.rect)
-        .gesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { value in
-                    dragLevel = min(max(value.location.x / width, 0), 1)
-                }
-                .onEnded { _ in
-                    if let dragLevel { onCommit(dragLevel) }
-                    dragLevel = nil
-                }
-        )
-        .sensoryFeedback(.selection, trigger: dragLevel.map { Int($0 * 10) })
+        .font(.system(size: 15, weight: .semibold))
+        .foregroundStyle(.primary)
+        .buttonStyle(.plain)
+        .background(Theme.pill, in: .capsule)
+        .lineLimit(1)
         .accessibilityElement()
-        .accessibilityValue(shown.formatted(.percent.precision(.fractionLength(0))))
+        .accessibilityValue(level > 0 ? level.formatted(.percent.precision(.fractionLength(0))) : offLabel)
         .accessibilityAdjustableAction { direction in
-            let step = direction == .increment ? 0.1 : -0.1
-            onCommit(min(max(level + step, 0), 1))
+            onChange(LevelStep.next(from: level, increasing: direction == .increment))
         }
     }
 }
