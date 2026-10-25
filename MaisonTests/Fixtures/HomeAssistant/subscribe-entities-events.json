@@ -1,0 +1,41 @@
+[
+  {
+    "a": {
+      "light.salon": {
+        "s": "on",
+        "a": {"friendly_name": "Salon", "brightness": 180, "color_mode": "brightness"},
+        "c": "01JAC4Q7Y3H2M8N5P6R9S0T1V2",
+        "lc": 1792483923.123456
+      },
+      "sensor.salon_puissance": {
+        "s": "412",
+        "a": {"friendly_name": "Puissance salon", "unit_of_measurement": "W", "device_class": "power"},
+        "c": "01JAC4Q7Y3H2M8N5P6R9S0T1V3",
+        "lc": 1792483924.5
+      }
+    }
+  },
+  {
+    "c": {
+      "light.salon": {
+        "+": {"s": "off", "a": {"brightness": null}, "c": "01JAC4R9Z1A2B3C4D5E6F7G8H9", "lc": 1792483980.0}
+      }
+    }
+  },
+  {
+    "c": {
+      "sensor.salon_puissance": {
+        "+": {"c": "01JAC4R9Z1A2B3C4D5E6F7G8J0", "lu": 1792483981.0}
+      }
+    }
+  },
+  {
+    "c": {
+      "light.salon": {
+        "+": {"c": "01JAC4R9Z1A2B3C4D5E6F7G8J1", "lu": 1792483981.0},
+        "-": {"a": ["brightness"]}
+      }
+    }
+  },
+  {"r": ["sensor.salon_puissance"]}
+]

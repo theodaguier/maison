@@ -45,11 +45,24 @@ actor HomeAssistantConnection {
     private var pending: [Int: CheckedContinuation<JSONValue, any Error>] = [:]
     private var subscriptions: [Int: AsyncStream<JSONValue>.Continuation] = [:]
     private var receiveTask: Task<Void, Never>?
+    /// Commands wait here, in the order of their ids, for the one task that writes to the socket:
+    /// Home Assistant refuses an id that isn't higher than the previous one.
+    private let outbox: AsyncStream<Outgoing>.Continuation
+    private let outgoing: AsyncStream<Outgoing>
+    private var sendTask: Task<Void, Never>?
+    /// Set once the socket is gone, so later commands fail at once instead of waiting forever.
+    private var isClosed = false
     private(set) var serverVersion: String?
+
+    private struct Outgoing: Sendable {
+        let id: Int
+        let message: [String: JSONValue]
+    }
 
     init(transport: any WebSocketTransport, accessToken: String) {
         self.transport = transport
         self.accessToken = accessToken
+        (outgoing, outbox) = AsyncStream.makeStream()
     }
 
     init(serverURL: URL, accessToken: String) {
@@ -87,6 +100,7 @@ actor HomeAssistantConnection {
         }
 
         receiveTask = Task { await self.receiveLoop() }
+        sendTask = Task { await self.sendLoop() }
     }
 
     func disconnect() {
@@ -101,12 +115,8 @@ actor HomeAssistantConnection {
     /// Sends a command and returns its `result` payload.
     @discardableResult
     func send(_ command: [String: JSONValue]) async throws -> JSONValue {
-        let id = makeID()
-        var message = command
-        message["id"] = .number(Double(id))
-        return try await withCheckedThrowingContinuation { continuation in
-            pending[id] = continuation
-            Task { await self.deliver(message, id: id) }
+        try await withCheckedThrowingContinuation { continuation in
+            enqueue(command, replyTo: continuation)
         }
     }
 
@@ -163,39 +173,19 @@ actor HomeAssistantConnection {
         }
     }
 
-    /// Streams the new state of every entity that changes. Removed entities are skipped.
-    func stateChanges() async throws -> AsyncStream<EntityState> {
-        let events = try await subscribe(["type": "subscribe_events", "event_type": "state_changed"])
-        return AsyncStream { continuation in
-            let task = Task {
-                for await event in events {
-                    guard
-                        let newState = event["data"]?["new_state"], !newState.isNull,
-                        let state = try? newState.decode(EntityState.self)
-                    else { continue }
-                    continuation.yield(state)
-                }
-                continuation.finish()
-            }
-            continuation.onTermination = { _ in task.cancel() }
-        }
-    }
-
     /// Subscribes with the given command and streams the `event` payload of each message.
     func subscribe(_ command: [String: JSONValue]) async throws -> AsyncStream<JSONValue> {
-        let id = makeID()
         let (stream, continuation) = AsyncStream<JSONValue>.makeStream()
-        subscriptions[id] = continuation
-
-        var message = command
-        message["id"] = .number(Double(id))
+        var id: Int?
         do {
             _ = try await withCheckedThrowingContinuation { (reply: CheckedContinuation<JSONValue, any Error>) in
-                pending[id] = reply
-                Task { await self.deliver(message, id: id) }
+                id = enqueue(command, replyTo: reply)
+                // Registered before the command leaves, so no event can arrive ahead of it.
+                if let id, !isClosed { subscriptions[id] = continuation }
             }
         } catch {
-            subscriptions.removeValue(forKey: id)?.finish()
+            if let id { subscriptions.removeValue(forKey: id) }
+            continuation.finish()
             throw error
         }
         return stream
@@ -203,16 +193,34 @@ actor HomeAssistantConnection {
 
     // MARK: - Plumbing
 
-    private func makeID() -> Int {
-        defer { nextID += 1 }
-        return nextID
+    /// Gives the command the next id and queues it in the same step, so ids leave in increasing order.
+    @discardableResult
+    private func enqueue(_ command: [String: JSONValue], replyTo reply: CheckedContinuation<JSONValue, any Error>) -> Int {
+        let id = nextID
+        nextID += 1
+        guard !isClosed else {
+            reply.resume(throwing: HomeAssistantError.connectionClosed)
+            return id
+        }
+        var message = command
+        message["id"] = .number(Double(id))
+        pending[id] = reply
+        outbox.yield(Outgoing(id: id, message: message))
+        return id
     }
 
-    private func deliver(_ message: [String: JSONValue], id: Int) async {
-        do {
-            try await sendMessage(message)
-        } catch {
-            pending.removeValue(forKey: id)?.resume(throwing: error)
+    /// The only writer to the socket: each command is sent once the previous one has left.
+    private func sendLoop() async {
+        for await item in outgoing {
+            guard !isClosed else {
+                pending.removeValue(forKey: item.id)?.resume(throwing: HomeAssistantError.connectionClosed)
+                continue
+            }
+            do {
+                try await sendMessage(item.message)
+            } catch {
+                pending.removeValue(forKey: item.id)?.resume(throwing: error)
+            }
         }
     }
 
@@ -264,6 +272,8 @@ actor HomeAssistantConnection {
     }
 
     private func failAll(with error: any Error) {
+        isClosed = true
+        outbox.finish()
         let continuations = pending.values
         pending.removeAll()
         continuations.forEach { $0.resume(throwing: error) }

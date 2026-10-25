@@ -146,10 +146,7 @@ Dead ends that contradict the principles above:
 - The day summary and rule writing disappear when Apple Intelligence doesn't support the language.
 - The app is in English and French only.
 - A resident (not a Home Assistant administrator) gets errors where an administrator gets the rule editor, timers and door alerts, and attaching the iPhone to their person fails silently. These need a path of their own: read-only rules, and a request to the administrator.
-- Nothing is cached on the iPhone: starting away from any network shows an error instead of the last known home.
-- The connection isn't checked: no periodic ping, no reconnection when the app comes back to the foreground or the network changes, so a dead connection can take a long time to notice.
-- Every `state_changed` event of the server reaches the app and redraws the screens; a home with power sensors updating every second will stutter. `subscribe_entities`, batched updates and precomputed lists per room are the way out.
-- Commands get their id before a separate task sends them, while Home Assistant requires increasing ids: two commands sent at once could arrive out of order and be refused.
+- Updates arrive through `subscribe_entities` and are applied in batches, but every screen still recomputes its lists per room from all the states on each batch; precomputed lists per room are the next step.
 - Signing out stops the location reports, but the Maison device and its tracker stay in Home Assistant until removed there.
 
 ## Open questions

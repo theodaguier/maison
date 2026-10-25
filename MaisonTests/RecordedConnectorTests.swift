@@ -134,13 +134,37 @@ struct RecordedWebSocketTests {
         #expect(try await disabled.serverConfig().remoteURL(cloudStatus: off) == nil)
     }
 
-    @Test func streamsRecordedStateChanges() async throws {
-        let connection = try await recordedConnection(events: ["subscribe_events": "state-changed-events"])
+    @Test func readsAndUpdatesTheRecordedEntities() async throws {
+        let connection = try await recordedConnection(events: ["subscribe_entities": "subscribe-entities-events"])
 
-        var iterator = try await connection.stateChanges().makeAsyncIterator()
-        let first = await iterator.next()
+        let (initial, updates) = try await connection.entities()
+        var states = initial
+        #expect(states.keys.sorted() == ["light.salon", "sensor.salon_puissance"])
+        #expect(states["light.salon"]?.name == "Salon")
+        #expect(states["light.salon"]?.attributes["brightness"]?.intValue == 180)
+        #expect(states["light.salon"]?.lastChanged == Date(timeIntervalSince1970: 1_792_483_923.123456))
+        #expect(states["sensor.salon_puissance"]?.numericState == 412)
 
-        #expect(first == EntityState(entityID: "light.salon", state: "off", attributes: ["friendly_name": "Salon"]))
+        var iterator = updates.makeAsyncIterator()
+        let off = try #require(await iterator.next())
+        #expect(off.apply(to: &states))
+        #expect(states["light.salon"]?.state == "off")
+        #expect(states["light.salon"]?.attributes["brightness"] == .null)
+        #expect(states["light.salon"]?.attributes["friendly_name"] == "Salon")
+        #expect(states["light.salon"]?.lastChanged == Date(timeIntervalSince1970: 1_792_483_980))
+
+        // The sensor reported the same value: nothing to redraw.
+        let sameValue = try #require(await iterator.next())
+        #expect(!sameValue.apply(to: &states))
+
+        let removedAttribute = try #require(await iterator.next())
+        #expect(removedAttribute.apply(to: &states))
+        #expect(states["light.salon"]?.attributes["brightness"] == nil)
+        #expect(states["light.salon"]?.attributes["color_mode"] == "brightness")
+
+        let removedEntity = try #require(await iterator.next())
+        #expect(removedEntity.apply(to: &states))
+        #expect(states.keys.sorted() == ["light.salon"])
     }
 
     @Test func rejectsTheRecordedAuthFailure() async throws {
