@@ -34,6 +34,7 @@ struct ConnectionErrorView: View {
             Text(message)
         } actions: {
             Button("Try Again") {
+                Haptics.impact()
                 Task { await store.connect() }
             }
             .buttonStyle(.glassProminent)
@@ -55,6 +56,10 @@ private struct HomeDashboard: View {
     @State private var openedScore: ScoreKind?
     @State private var openedFinding: Finding?
     @State private var showsHousekeeping = false
+    @State private var showsSources = false
+    @State private var layout = HomeLayoutSetting.load()
+    @State private var editsLayout = false
+    @State private var editsShortcuts = false
     @State private var createdRule: AutomationRule?
     @State private var temperatureChange: Double?
     @State private var confirmsTurnOff = false
@@ -65,6 +70,10 @@ private struct HomeDashboard: View {
     #if DEBUG
     /// `-sheet describe` opens "Describe a Rule" at launch, to check its design without switching tabs.
     @State private var describesRule = false
+    @Environment(BelongingsStore.self) private var belongings
+    @State private var openedItem: Item?
+    @State private var showsDocuments = false
+    @State private var scansDocument = false
     #endif
     /// Height of the navigation bar area above the scroll content at rest. Kept from before the first
     /// scroll: the inset then shrinks as the large title folds away, and grows while refreshing.
@@ -90,27 +99,30 @@ private struct HomeDashboard: View {
             VStack(spacing: Theme.sectionSpacing) {
                 hero
                 ScoresCard(scores: scores, isDimmed: store.phase != .connected) { openedScore = $0 }
-                SummaryCard(summary: scoredSummary, digest: digest) { readsDigest = true }
-                if let attention = Attention.pick(from: scores) {
-                    AttentionCard(attention: attention) {
-                        if let id = attention.findingID, let finding = scores?.findings.first(where: { $0.id == id }) {
-                            openedFinding = finding
-                        } else {
-                            openedScore = attention.kind
-                        }
-                    }
-                    .transition(.opacity)
-                } else if let late = store.allChores().first(where: { $0.isLate() }),
-                          let room = store.layout.areas.first(where: { $0.id == late.roomID }) {
-                    // Housekeeping comes last: only when the three scores have nothing more urgent.
+                ForEach(arrangedSections) { section in
+                    sectionView(section)
+                        .transition(.opacity)
+                }
+                // Housekeeping comes last: the latest chore, after what the scores have to say.
+                if let late = store.allChores().first(where: { $0.isLate() }),
+                   let room = store.layout.areas.first(where: { $0.id == late.roomID }) {
                     HousekeepingAttentionCard(status: late, room: room) { showsHousekeeping = true }
                         .transition(.opacity)
                 }
+                Button("Edit Home", systemImage: "square.and.pencil") { editsLayout = true }
+                    .font(.roundedSubheadlineEmphasized)
+                    .buttonStyle(.glass)
+                    .controlSize(.large)
+                    .padding(.top, 6)
             }
-            .animation(.smooth, value: Attention.pick(from: scores))
+            .animation(.smooth, value: scores?.highlights)
+            .animation(.smooth, value: layout)
             .padding(.horizontal, Theme.screenPadding)
             .padding(.bottom, 24)
+            // Exactly the screen's width: a card wider than it with real data must not let the page slide sideways.
+            .containerRelativeFrame(.horizontal)
         }
+        .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
         .onScrollGeometryChange(for: CGFloat.self, of: { $0.contentInsets.top }) { _, inset in
             if !hasScrolled { topInset = inset }
         }
@@ -218,17 +230,27 @@ private struct HomeDashboard: View {
             await digest.refreshIfNeeded(from: store, now: summary.sentences + summary.more)
         }
         .sheet(item: $opened) { DeviceSheet(entityID: $0.id) }
+        .navigationDestination(isPresented: $showsSources) { AllSourcesPage() }
+        .sheet(isPresented: $editsLayout) { HomeLayoutEditor(layout: $layout) }
+        .sheet(isPresented: $editsShortcuts) { HomeFavoritesEditor() }
         .sheet(isPresented: $readsDigest) {
             if let digest { DaySummarySheet(digest: digest, current: summary.sentences + summary.more) }
         }
         #if DEBUG
         .sheet(isPresented: $describesRule) { DescribeRuleView() }
-        // `-sheet light.lampadaire` opens a device sheet at launch, to check its design; `-sheet day` the day summary.
+        .sheet(item: $openedItem) { ItemSheet(itemID: $0.id) }
+        .sheet(isPresented: $showsDocuments) { NavigationStack { DocumentsPage() } }
+        .fullScreenCover(isPresented: $scansDocument) { DocumentScanFlow(target: nil) }
+        // `-sheet light.lampadaire` opens a device sheet at launch, to check its design; `-sheet day` the day summary,
+        // `-sheet item` the first object of the demo home, `-sheet documents` the documents, `-sheet scan` the scanner.
         .onAppear {
             guard let id = UserDefaults.standard.string(forKey: "sheet") else { return }
             switch id {
             case "day": readsDigest = digest != nil
             case "describe": describesRule = true
+            case "item": openedItem = belongings.items.first { $0.parentItemID == nil && !belongings.consumables(of: $0).isEmpty }
+            case "documents": showsDocuments = true
+            case "scan": scansDocument = true
             case "comfort", "energy", "network": openedScore = ScoreKind(rawValue: id)
             default: opened = OpenedDevice(id: id)
             }
@@ -267,6 +289,35 @@ private struct HomeDashboard: View {
     }
 
     private var summary: HomeSummary { store.summary(temperatureChange: temperatureChange) }
+
+    /// The person's sections, a score with something to fix first.
+    private var arrangedSections: [HomeSection] {
+        let pressing = Set((scores?.highlights ?? []).filter(\.isPressing).map(\.score))
+        return layout.arranged(withFindings: pressing)
+    }
+
+    private func open(_ destination: HomeDestination) {
+        switch destination {
+        case .score(let kind): openedScore = kind
+        case .finding(let finding): openedFinding = finding
+        case .device(let id): opened = OpenedDevice(id: id)
+        case .sources: showsSources = true
+        }
+    }
+
+    @ViewBuilder
+    private func sectionView(_ section: HomeSection) -> some View {
+        let highlight = section.highlight(in: scores?.highlights ?? [])
+        switch section {
+        case .summary: SummaryCard(summary: scoredSummary, digest: digest) { readsDigest = true }
+        case .shortcuts: ShortcutsRow(edit: { editsShortcuts = true }, openDevice: { opened = OpenedDevice(id: $0) })
+        case .comfort: ComfortSection(scores: scores, highlight: highlight, open: open)
+        case .energy: EnergySection(scores: scores, highlight: highlight, open: open)
+        case .network: NetworkSection(scores: scores, highlight: highlight, open: open)
+        case .weather: WeatherSection(highlight: highlight, open: open)
+        case .monthCost: MonthCostSection(scores: scores, highlight: highlight, open: open)
+        }
+    }
 
     private func refreshScores() async {
         guard store.phase == .connected || scores == nil, !store.states.isEmpty else { return }
@@ -455,6 +506,7 @@ struct AllDevicesView: View {
 #Preview("Day") {
     HomeView()
         .environment(DemoHome.store())
+        .environment(BelongingsStore.demo())
 }
 
 #Preview("Offline") {

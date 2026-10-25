@@ -1,4 +1,5 @@
 import AuthenticationServices
+import CloudKit
 import Foundation
 import Observation
 
@@ -33,6 +34,8 @@ final class HomeStore {
     private(set) var currentUser: HomeAssistantUser?
     private(set) var serverConfig: ServerConfig?
     private(set) var integrations: [Integration] = []
+    /// Names of the NFC tags, by id, once `tags()` has listed them.
+    private(set) var tagNames: [String: String] = [:]
     /// Recent round-trip times to the server, oldest first.
     private(set) var latencies: [Duration] = []
     let discovery = ServerDiscovery()
@@ -109,7 +112,11 @@ final class HomeStore {
 
     func start() async {
         guard !isDemo else { return }
-        Task { await household.start() }
+        Task {
+            await household.start()
+            // Joined, but the app closed before signing in with the account made for this person.
+            await signInWithInvitation()
+        }
         // Without credentials, onboarding starts discovery once it has explained why it needs the local network.
         if credentials != nil {
             await connect()
@@ -555,6 +562,20 @@ final class HomeStore {
         return services["notify"]?.objectValue.map { Array($0.keys).sorted() } ?? []
     }
 
+    /// NFC tags registered in Home Assistant, by id, with their name when they have one.
+    func tags() async -> [(id: String, name: String)] {
+        var tags: [(id: String, name: String)] = [("entree", "Entrée"), ("table-de-nuit", "Table de nuit")]
+        if !isDemo {
+            guard let connection, let list = try? await connection.send(["type": "tag/list"]) else { return [] }
+            tags = (list.arrayValue ?? []).compactMap { tag in
+                guard let id = tag["id"]?.stringValue else { return nil }
+                return (id, tag["name"]?.stringValue ?? id)
+            }
+        }
+        tagNames = Dictionary(tags.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
+        return tags
+    }
+
     func runScript(_ scriptID: String, variables: [String: JSONValue] = [:]) async throws {
         guard !isDemo else { return }
         guard let connection else { throw HomeAssistantError.connectionClosed }
@@ -633,6 +654,63 @@ final class HomeStore {
         return states.values.contains {
             $0.domain == "person" && $0.attributes["user_id"]?.stringValue == userID
                 && !($0.attributes["device_trackers"]?.arrayValue?.isEmpty ?? true)
+        }
+    }
+
+    // MARK: - Household
+
+    /// Invites someone with the same controls as everyone: an administrator of the household, signed
+    /// in by an administrator account Maison makes on the server for them.
+    func invite(_ contact: String) async throws -> URL {
+        guard currentUser?.isAdmin == true, connection != nil else { throw MemberAccountError.needsAdministrator }
+        return try await household.invite(contact) { name, username, password in
+            guard let connection else { throw MemberAccountError.needsAdministrator }
+            return try await connection.createAdministrator(named: name, username: username, password: password)
+        }
+    }
+
+    /// Removes someone from the household, and the account Maison made for them on the server.
+    func remove(_ member: HouseholdMember) async throws {
+        try await household.remove(member) { accountID in
+            guard let connection else { throw HomeAssistantError.connectionClosed }
+            try await connection.deleteAccount(accountID)
+        }
+    }
+
+    /// Joins the household of an invitation, then signs in with the account made for this person.
+    func join(_ metadata: CKShare.Metadata) async {
+        await household.accept(metadata)
+        await signInWithInvitation()
+    }
+
+    /// Signs in with the account Maison made when this person was invited, so joining needs no typing.
+    /// The password is then replaced by one nobody knows and cleared from the household. Without
+    /// such an account, onboarding shows the server's sign-in page.
+    func signInWithInvitation() async {
+        guard !isDemo, credentials == nil, let server = household.household,
+              let access = await household.unusedAccess(), let password = access.password
+        else { return }
+        phase = .connecting
+        do {
+            let signedIn = try await connector.signIn(
+                username: access.username, password: password,
+                addresses: [server.serverURL, server.remoteURL].compactMap(\.self)
+            )
+            // Tokens work through every address: keep the local one first, whichever answered.
+            let credentials = Credentials(
+                serverURL: server.serverURL, accessToken: signedIn.accessToken, refreshToken: signedIn.refreshToken,
+                expiresAt: signedIn.expiresAt, remoteURL: server.remoteURL
+            )
+            try credentialStore.save(credentials)
+            self.credentials = credentials
+            serverURL = server.serverURL
+            remoteURL = server.remoteURL
+            discovery.stop()
+            await connect()
+            try? await connection?.changePassword(from: password, to: MemberAccess.makePassword())
+            await household.accessUsed(access)
+        } catch {
+            phase = .failed(error.localizedDescription)
         }
     }
 
@@ -732,8 +810,20 @@ final class HomeStore {
         household.toggleFavorite(entity.entityID)
     }
 
+    func setFavorites(_ entityIDs: [String]) {
+        household.setFavorites(entityIDs)
+    }
+
     func isFavorite(_ entity: EntityState) -> Bool {
         favoriteIDs.contains(entity.entityID)
+    }
+}
+
+enum MemberAccountError: LocalizedError, Equatable {
+    case needsAdministrator
+
+    var errorDescription: String? {
+        String(localized: "To invite someone, Maison must be connected to Home Assistant with an administrator account.")
     }
 }
 

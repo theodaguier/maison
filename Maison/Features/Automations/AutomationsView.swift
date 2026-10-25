@@ -207,7 +207,10 @@ private struct AutomationCard: View {
                     Spacer()
                     Toggle("Enabled", isOn: Binding(
                         get: { isOn },
-                        set: { on in Task { await store.call("automation", on ? "turn_on" : "turn_off", on: automation) } }
+                        set: { on in
+                            Haptics.impact()
+                            Task { await store.call("automation", on ? "turn_on" : "turn_off", on: automation) }
+                        }
                     ))
                     .labelsHidden()
                     .tint(.green)
@@ -245,6 +248,7 @@ private struct AutomationCard: View {
         .onTapGesture(perform: onOpen)
         .contextMenu {
             Button("Run Now", systemImage: "play.fill") {
+                Haptics.impact(.medium)
                 Task { await store.call("automation", "trigger", on: automation) }
             }
             if rule != nil {
@@ -287,4 +291,5 @@ private struct AutomationCard: View {
 #Preview {
     AutomationsView()
         .environment(DemoHome.store())
+        .environment(BelongingsStore.demo())
 }

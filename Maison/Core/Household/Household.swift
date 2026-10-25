@@ -39,7 +39,8 @@ enum HouseholdRole: String, Sendable, Hashable, CaseIterable {
     case administrator
     case resident
 
-    /// Owners and administrators can invite and remove people.
+    /// Owners and administrators can invite and remove people. Residents only come from households
+    /// shared before everyone was invited as an administrator.
     var canManageMembers: Bool { self != .resident }
 
     init(_ role: CKShare.ParticipantRole) {
@@ -48,11 +49,6 @@ enum HouseholdRole: String, Sendable, Hashable, CaseIterable {
         case .administrator: self = .administrator
         default: self = .resident
         }
-    }
-
-    /// The share role given to someone invited with this role. Everyone can edit their favourites.
-    var participantRole: CKShare.ParticipantRole {
-        self == .administrator ? .administrator : .privateUser
     }
 }
 
@@ -167,10 +163,6 @@ struct HouseholdMember: Sendable, Hashable, Identifiable {
     }
 
     func withName(_ name: String?) -> HouseholdMember {
-        HouseholdMember(id: id, name: name, role: role, isPending: isPending, isCurrentUser: isCurrentUser, contact: contact)
-    }
-
-    func withRole(_ role: HouseholdRole) -> HouseholdMember {
         HouseholdMember(id: id, name: name, role: role, isPending: isPending, isCurrentUser: isCurrentUser, contact: contact)
     }
 
@@ -314,6 +306,56 @@ enum MemberProfile {
     static func record(_ displayName: String, for memberID: String, updating record: CKRecord? = nil, in zoneID: CKRecordZone.ID) -> CKRecord {
         let record = record ?? CKRecord(recordType: recordType, recordID: recordID(for: memberID, in: zoneID))
         record[Field.displayName] = HouseholdMember.nonEmpty(displayName)
+        return record
+    }
+}
+
+/// The account on the home's server that Maison made for someone it invited, so they're signed in
+/// without typing anything. The password is used once, then replaced on the server and cleared here.
+struct MemberAccess: Sendable, Hashable {
+    /// The share participant it was made for: only that person reads it.
+    let participantID: String
+    /// The server's id for the account, so it goes when the person is removed from the household.
+    let accountID: String
+    let username: String
+    var password: String?
+}
+
+/// `MemberAccess` in the household's zone. The password is end-to-end encrypted, never a plain field.
+extension MemberAccess {
+    static let recordType = "MemberAccess"
+
+    private enum Field {
+        static let participantID = "participantID"
+        static let accountID = "accountID"
+        static let username = "username"
+        static let password = "password"
+    }
+
+    static func recordID(for participantID: String, in zoneID: CKRecordZone.ID) -> CKRecord.ID {
+        CKRecord.ID(recordName: "access-\(participantID)", zoneID: zoneID)
+    }
+
+    init?(record: CKRecord) {
+        guard record.recordType == Self.recordType,
+              let participantID = record[Field.participantID] as? String,
+              let accountID = record[Field.accountID] as? String,
+              let username = record[Field.username] as? String
+        else { return nil }
+        self.init(
+            participantID: participantID,
+            accountID: accountID,
+            username: username,
+            password: HouseholdMember.nonEmpty(record.encryptedValues[Field.password] as? String)
+        )
+    }
+
+    func record(updating record: CKRecord? = nil, in zoneID: CKRecordZone.ID) -> CKRecord {
+        let record = record ?? CKRecord(recordType: Self.recordType, recordID: Self.recordID(for: participantID, in: zoneID))
+        record[Field.participantID] = participantID
+        record[Field.accountID] = accountID
+        record[Field.username] = username
+        record.encryptedValues[Field.password] = password
         return record
     }
 }

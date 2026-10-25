@@ -61,6 +61,19 @@ struct HouseholdStoreTests {
         #expect(await cloud.storedFavorites(of: "_me", in: .owned) == ["lock.porte"])
     }
 
+    @Test func reorderedShortcutsAreSavedInTheirNewOrder() async {
+        let cloud = FakeHouseholdCloud()
+        let store = HouseholdStore(cloud: cloud, defaults: defaults)
+        await store.serverConnected(server)
+
+        store.setFavorites(["scene.cinema", "lock.porte", "scene.cinema", "light.salon"])
+        await store.waitForUploads()
+
+        #expect(store.favoriteIDs == ["scene.cinema", "lock.porte", "light.salon"])
+        #expect(defaults.stringArray(forKey: "favoriteEntityIDs") == ["scene.cinema", "lock.porte", "light.salon"])
+        #expect(await cloud.storedFavorites(of: "_me", in: .owned) == ["scene.cinema", "lock.porte", "light.salon"])
+    }
+
     @Test func aFavoriteToggledBeforeLoadingWinsOverICloud() async {
         let cloud = FakeHouseholdCloud()
         _ = try? await cloud.create(server)
@@ -125,10 +138,10 @@ struct HouseholdStoreTests {
         let store = HouseholdStore(cloud: cloud, defaults: defaults)
         await store.serverConnected(server)
 
-        let link = try await store.invite("camille@icloud.com", as: .administrator)
+        let link = try await store.invite("camille@icloud.com") { _, _, _ in "u1" }
 
         #expect(link.host() == "www.icloud.com")
-        #expect(await cloud.invitations.map(\.role) == [.administrator])
+        #expect(await cloud.invitations == ["camille@icloud.com"])
         #expect(store.members.last?.name == "camille@icloud.com")
         #expect(store.members.last?.isPending == true)
     }

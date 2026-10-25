@@ -199,6 +199,7 @@ private struct LinkButton: View {
         Button(title, action: action)
             .font(.roundedSubheadlineEmphasized)
             .tint(.accentColor)
+            .tapFeedback(.selection)
     }
 }
 
@@ -355,6 +356,7 @@ private struct JoinStep: View {
 
     private func choice(_ value: Bool, symbol: String, title: LocalizedStringKey, detail: LocalizedStringKey) -> some View {
         Button {
+            if joins != value { Haptics.selection() }
             withAnimation(.smooth) { joins = value }
         } label: {
             VStack(alignment: .leading, spacing: 4) {
@@ -446,7 +448,7 @@ private struct ServerFoundStep: View {
                 .font(.onboardingTitle)
                 .padding(.top, 14)
             if let joinedHousehold {
-                Text("You joined \(joinedHousehold). Sign in with your own Home Assistant account to control it.")
+                Text("You joined \(joinedHousehold). Sign in to Home Assistant to control it.")
                     .font(.roundedBody)
                     .foregroundStyle(.secondary)
                     .padding(.top, 8)
@@ -516,6 +518,7 @@ private struct ServerPicker: View {
                     Section("Found on Your Network") {
                         ForEach(candidates) { server in
                             Button {
+                                Haptics.impact()
                                 pick(server)
                             } label: {
                                 HStack(spacing: 12) {
@@ -539,6 +542,7 @@ private struct ServerPicker: View {
                         .autocorrectionDisabled()
                         .onSubmit(useAddress)
                     Button("Use This Address", action: useAddress)
+                        .tapFeedback(.impact(weight: .light))
                         .disabled(typedURL == nil)
                 } header: {
                     Text("Address")
@@ -934,6 +938,7 @@ struct FavoritesEditor: View {
         Section(title) {
             ForEach(devices) { entity in
                 Button {
+                    Haptics.selection()
                     store.toggleFavorite(entity)
                 } label: {
                     HStack(spacing: 12) {

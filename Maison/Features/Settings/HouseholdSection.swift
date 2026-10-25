@@ -111,13 +111,15 @@ struct HouseholdSection: View {
             presenting: memberToRemove
         ) { member in
             Button("Remove", role: .destructive) {
-                Task { await run { try await household.remove(member) } }
+                Haptics.impact(.medium)
+                Task { await run { try await store.remove(member) } }
             }
         } message: { _ in
-            Text("They’ll lose access to the household’s favorites and settings. Their Home Assistant account isn’t affected.")
+            Text("They’ll lose access to this home, Home Assistant included.")
         }
         .confirmationDialog("Leave this household?", isPresented: $isConfirmingLeave, titleVisibility: .visible) {
             Button("Leave Household", role: .destructive) {
+                Haptics.impact(.medium)
                 Task { await run { try await household.leave() } }
             }
         } message: {
@@ -236,4 +238,5 @@ extension HouseholdRole {
     }
     .background(Theme.background)
     .environment(DemoHome.store())
+    .environment(BelongingsStore.demo())
 }

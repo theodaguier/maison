@@ -180,28 +180,60 @@ final class HouseholdStore {
         members = members.map { $0.isCurrentUser ? $0.withName(trimmed) : $0 }
     }
 
+    /// Adds the person to the household, then has `makeAccount` create their account on the home's
+    /// server, which signs them in by itself once they join. Inviting someone again reuses theirs.
+    /// `makeAccount` takes a name, a username and a password, and returns the account's id.
     /// Returns the link to send to the person invited.
-    func invite(_ contact: String, as role: HouseholdRole) async throws -> URL {
+    func invite(
+        _ contact: String,
+        makeAccount: (_ name: String, _ username: String, _ password: String) async throws -> String
+    ) async throws -> URL {
         guard let cloud, let household, let location else { throw HouseholdError.noShareLink }
-        let url = try await cloud.invite(contact, as: role, to: household, in: location)
+        let invitation = try await cloud.invite(contact, to: household, in: location)
         try? await refreshMembers()
-        return url
-    }
-
-    func setRole(_ role: HouseholdRole, of member: HouseholdMember) async throws {
-        guard let cloud, let location else {
-            // The demo household has no iCloud: change it in place.
-            members = members.map { $0.id == member.id ? $0.withRole(role) : $0 }
-            return
+        if try await cloud.memberAccess(of: invitation.participantID, in: location) == nil {
+            let username = MemberAccess.makeUsername()
+            let password = MemberAccess.makePassword()
+            let accountID = try await makeAccount(invitation.name, username, password)
+            try await cloud.saveMemberAccess(
+                MemberAccess(participantID: invitation.participantID, accountID: accountID, username: username, password: password),
+                in: location
+            )
         }
-        try await cloud.setRole(role, of: member, in: location)
+        return invitation.url
+    }
+
+    /// Removes the person, and first the account Maison made for them, so they lose the home as well
+    /// as the household. `deleteAccount` takes the account's id.
+    func remove(_ member: HouseholdMember, deleteAccount: (String) async throws -> Void) async throws {
+        guard let cloud, let location else { return }
+        let access = try await cloud.memberAccess(of: member.id, in: location)
+        if let access {
+            try await deleteAccount(access.accountID)
+        }
+        try await cloud.remove(member, from: location)
+        if access != nil {
+            try? await cloud.deleteMemberAccess(of: member.id, in: location)
+        }
         try? await refreshMembers()
     }
 
-    func remove(_ member: HouseholdMember) async throws {
+    /// The sign-in made for the current user when they were invited, while it hasn't been used.
+    func unusedAccess() async -> MemberAccess? {
+        guard let cloud, let location, location.isShared,
+              let participantID = try? await cloud.currentParticipantID(in: location),
+              let access = try? await cloud.memberAccess(of: participantID, in: location),
+              access.password != nil
+        else { return nil }
+        return access
+    }
+
+    /// Clears the password once it got the person in. The account's id stays, to remove them later.
+    func accessUsed(_ access: MemberAccess) async {
         guard let cloud, let location else { return }
-        try await cloud.remove(member, from: location)
-        try? await refreshMembers()
+        var used = access
+        used.password = nil
+        try? await cloud.saveMemberAccess(used, in: location)
     }
 
     /// Leaves a household someone else shared. Favourites stay on the device.
@@ -235,6 +267,14 @@ final class HouseholdStore {
         } else {
             favoriteIDs.append(entityID)
         }
+        defaults.set(favoriteIDs, forKey: Self.favoritesKey)
+        uploadFavorites()
+    }
+
+    /// Replaces the favourites, in this order: the home's shortcuts, edited.
+    func setFavorites(_ entityIDs: [String]) {
+        var seen = Set<String>()
+        favoriteIDs = entityIDs.filter { seen.insert($0).inserted }
         defaults.set(favoriteIDs, forKey: Self.favoritesKey)
         uploadFavorites()
     }

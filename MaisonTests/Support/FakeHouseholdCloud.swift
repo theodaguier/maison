@@ -12,7 +12,9 @@ actor FakeHouseholdCloud: HouseholdCloud {
     private var displayNames: [String: String] = [:]
     private(set) var createdCount = 0
     private(set) var savedHouseholds: [Household] = []
-    private(set) var invitations: [(contact: String, role: HouseholdRole)] = []
+    private(set) var invitations: [String] = []
+    private var accesses: [String: MemberAccess] = [:]
+    private var currentParticipants: [HouseholdLocation: String] = [:]
 
     init(userID: String? = "_me") {
         self.userID = userID
@@ -24,6 +26,15 @@ actor FakeHouseholdCloud: HouseholdCloud {
         households[location] = household
         participants[location] = members
         return location
+    }
+
+    /// The current user's participant id in a household shared with them.
+    func setCurrentParticipant(_ participantID: String, in location: HouseholdLocation) {
+        currentParticipants[location] = participantID
+    }
+
+    func storedAccess(of participantID: String, in location: HouseholdLocation) -> MemberAccess? {
+        accesses[key(participantID, location)]
     }
 
     func setMembers(_ members: [HouseholdMember], in location: HouseholdLocation) {
@@ -90,18 +101,31 @@ actor FakeHouseholdCloud: HouseholdCloud {
         displayNames[key(memberID, location)] = name
     }
 
-    func invite(_ contact: String, as role: HouseholdRole, to household: Household, in location: HouseholdLocation) async throws -> URL {
-        invitations.append((contact, role))
+    /// The participant id is the contact, so inviting someone again finds them.
+    func invite(_ contact: String, to household: Household, in location: HouseholdLocation) async throws -> Invitation {
+        invitations.append(contact)
         var members = participants[location] ?? [HouseholdMember(id: "owner", name: "Owner", role: .owner, isCurrentUser: true)]
-        members.append(HouseholdMember(id: contact, name: contact, role: role, isPending: true))
+        if !members.contains(where: { $0.id == contact }) {
+            members.append(HouseholdMember(id: contact, name: contact, role: .administrator, isPending: true))
+        }
         participants[location] = members
-        return URL(string: "https://www.icloud.com/share/fake")!
+        return Invitation(url: URL(string: "https://www.icloud.com/share/fake")!, participantID: contact, name: contact)
     }
 
-    func setRole(_ role: HouseholdRole, of member: HouseholdMember, in location: HouseholdLocation) async throws {
-        guard let index = participants[location]?.firstIndex(where: { $0.id == member.id }) else { return }
-        let old = participants[location]![index]
-        participants[location]![index] = old.withRole(role)
+    func currentParticipantID(in location: HouseholdLocation) async throws -> String? {
+        currentParticipants[location]
+    }
+
+    func memberAccess(of participantID: String, in location: HouseholdLocation) async throws -> MemberAccess? {
+        accesses[key(participantID, location)]
+    }
+
+    func saveMemberAccess(_ access: MemberAccess, in location: HouseholdLocation) async throws {
+        accesses[key(access.participantID, location)] = access
+    }
+
+    func deleteMemberAccess(of participantID: String, in location: HouseholdLocation) async throws {
+        accesses[key(participantID, location)] = nil
     }
 
     func remove(_ member: HouseholdMember, from location: HouseholdLocation) async throws {

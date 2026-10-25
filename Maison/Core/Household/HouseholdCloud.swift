@@ -28,13 +28,27 @@ protocol HouseholdCloud: Sendable {
     /// Names members chose to show. Missing records are left out. Not an Apple ID identity.
     func displayNames(of memberIDs: [String], in location: HouseholdLocation) async throws -> [String: String]
     func saveDisplayName(_ name: String, of memberID: String, in location: HouseholdLocation) async throws
-    /// Adds the person to the household's share with `role` and returns the link to send them.
-    func invite(_ contact: String, as role: HouseholdRole, to household: Household, in location: HouseholdLocation) async throws -> URL
+    /// Adds the person to the household's share as an administrator, like everyone in it.
+    func invite(_ contact: String, to household: Household, in location: HouseholdLocation) async throws -> Invitation
     func remove(_ member: HouseholdMember, from location: HouseholdLocation) async throws
-    func setRole(_ role: HouseholdRole, of member: HouseholdMember, in location: HouseholdLocation) async throws
+    /// The current user's id in the household's share, `nil` for the owner of a household never shared.
+    func currentParticipantID(in location: HouseholdLocation) async throws -> String?
+    /// The server account made for a member, `nil` when Maison made none.
+    func memberAccess(of participantID: String, in location: HouseholdLocation) async throws -> MemberAccess?
+    func saveMemberAccess(_ access: MemberAccess, in location: HouseholdLocation) async throws
+    func deleteMemberAccess(of participantID: String, in location: HouseholdLocation) async throws
     func accept(_ metadata: CKShare.Metadata) async throws -> HouseholdLocation
     /// Stops participating in a household someone else shared.
     func leave(_ location: HouseholdLocation) async throws
+}
+
+/// Someone just added to the household's share.
+struct Invitation: Sendable, Hashable {
+    /// The iCloud link to send them.
+    let url: URL
+    let participantID: String
+    /// Their name when iCloud has it, otherwise the address they were invited at.
+    let name: String
 }
 
 enum HouseholdError: LocalizedError, Equatable {
@@ -172,7 +186,7 @@ struct CloudKitHousehold: HouseholdCloud {
         try await save(MemberProfile.record(name, for: memberID, updating: existing, in: location.zoneID), in: location)
     }
 
-    func invite(_ contact: String, as role: HouseholdRole, to household: Household, in location: HouseholdLocation) async throws -> URL {
+    func invite(_ contact: String, to household: Household, in location: HouseholdLocation) async throws -> Invitation {
         let contact = contact.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !contact.isEmpty else { throw HouseholdError.invalidContact }
         let share = try await share(in: location) ?? {
@@ -185,18 +199,23 @@ struct CloudKitHousehold: HouseholdCloud {
         let participant = contact.contains("@")
             ? try await container.shareParticipant(forEmailAddress: contact)
             : try await container.shareParticipant(forPhoneNumber: contact)
-        // Inviting someone again changes their role instead of adding them twice.
+        // Inviting someone again keeps the participant instead of adding them twice.
         let existing = share.participants.first { $0.userIdentity.lookupInfo == participant.userIdentity.lookupInfo }
         let invited = existing ?? participant
         invited.permission = .readWrite
-        invited.role = role.participantRole
+        invited.role = .administrator
         if existing == nil {
             share.addParticipant(invited)
         }
 
-        let saved = try await save(share, in: location, policy: .ifServerRecordUnchanged)
-        guard let url = (saved as? CKShare)?.url ?? share.url else { throw HouseholdError.noShareLink }
-        return url
+        let saved = try await save(share, in: location, policy: .ifServerRecordUnchanged) as? CKShare ?? share
+        guard let url = saved.url else { throw HouseholdError.noShareLink }
+        // The saved share holds the participant's lasting id.
+        let added = saved.participants.first { $0.userIdentity.lookupInfo == invited.userIdentity.lookupInfo } ?? invited
+        let name = added.userIdentity.nameComponents
+            .map { $0.formatted(.name(style: .medium)) }
+            .flatMap { HouseholdMember.nonEmpty($0) }
+        return Invitation(url: url, participantID: added.participantID, name: name ?? contact)
     }
 
     func remove(_ member: HouseholdMember, from location: HouseholdLocation) async throws {
@@ -207,12 +226,25 @@ struct CloudKitHousehold: HouseholdCloud {
         try await save(share, in: location, policy: .ifServerRecordUnchanged)
     }
 
-    func setRole(_ role: HouseholdRole, of member: HouseholdMember, in location: HouseholdLocation) async throws {
-        guard let share = try await share(in: location),
-              let participant = share.participants.first(where: { $0.participantID == member.id })
-        else { return }
-        participant.role = role.participantRole
-        try await save(share, in: location, policy: .ifServerRecordUnchanged)
+    func currentParticipantID(in location: HouseholdLocation) async throws -> String? {
+        try await share(in: location)?.currentUserParticipant?.participantID
+    }
+
+    func memberAccess(of participantID: String, in location: HouseholdLocation) async throws -> MemberAccess? {
+        try await record(MemberAccess.recordID(for: participantID, in: location.zoneID), in: location)
+            .flatMap(MemberAccess.init(record:))
+    }
+
+    func saveMemberAccess(_ access: MemberAccess, in location: HouseholdLocation) async throws {
+        let existing = try await record(MemberAccess.recordID(for: access.participantID, in: location.zoneID), in: location)
+        try await save(access.record(updating: existing, in: location.zoneID), in: location)
+    }
+
+    func deleteMemberAccess(of participantID: String, in location: HouseholdLocation) async throws {
+        let id = MemberAccess.recordID(for: participantID, in: location.zoneID)
+        do {
+            _ = try await database(for: location).modifyRecords(saving: [], deleting: [id])
+        } catch let error as CKError where [.unknownItem, .zoneNotFound].contains(error.code) {}
     }
 
     func accept(_ metadata: CKShare.Metadata) async throws -> HouseholdLocation {

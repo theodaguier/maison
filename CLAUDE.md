@@ -48,7 +48,7 @@ SF Symbols for every control and status (`Image(systemName:)`, `Label` with `sys
 
 ## Data
 
-Local first. CloudKit (`iCloud.com.theodaguier.maison`, zone `Household`) is only for what the household shares: its name, the server's addresses, favourites, and the plan. Never a device's state or history. Home Assistant credentials stay in the keychain. Unsigned builds (`CODE_SIGNING_ALLOWED=NO`, as in CI) have no iCloud entitlement; tests use the in-memory `HouseholdCloud` fake.
+Local first. CloudKit (`iCloud.com.theodaguier.maison`, zone `Household`) is only for what the household shares: its name, the server's addresses, favourites, and the plan. Never a device's state or history. Home Assistant credentials stay in the keychain. The one exception is the first sign-in of someone invited (`MemberAccess`): a one-time password, end-to-end encrypted, replaced on the server and cleared once used. Unsigned builds (`CODE_SIGNING_ALLOWED=NO`, as in CI) have no iCloud entitlement; tests use the in-memory `HouseholdCloud` fake.
 
 ## Changes
 
