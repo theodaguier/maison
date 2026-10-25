@@ -49,7 +49,6 @@ struct OpenedDevice: Identifiable {
 
 private struct HomeDashboard: View {
     @Environment(HomeStore.self) private var store
-    @Environment(\.colorScheme) private var colorScheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var opened: OpenedDevice?
     @State private var scores: HomeScores?
@@ -75,22 +74,7 @@ private struct HomeDashboard: View {
     @State private var showsDocuments = false
     @State private var scansDocument = false
     #endif
-    /// Height of the navigation bar area above the scroll content at rest. Kept from before the first
-    /// scroll: the inset then shrinks as the large title folds away, and grows while refreshing.
-    @State private var topInset: CGFloat = 0
-    @State private var hasScrolled = false
-    @State private var heroScroll = HeroScroll()
-    /// The bar gets its opaque edge only once the illustration has scrolled away.
-    @State private var isPastHero = false
-    /// The clock the hero follows, a minute at a time.
-    @State private var now = Date.now
-    /// The painting shown for each scene, keyed by the scene's first painting, drawn again at each opening
-    /// of the app. Kept per scene: the system snapshots the app in both appearances on its way out.
-    @State private var shownPaintings: [String: String] = [:]
 
-    private let heroHeight: CGFloat = 358
-    /// Share of the scroll the painting follows: half, so it reads as further away than the cards.
-    private let parallaxRate: CGFloat = 0.5
     /// Space between the large-title bar and the scores (design: they start at 238 pt, the bar ends at 187 pt).
     private let heroSpace: CGFloat = 51
 
@@ -123,47 +107,8 @@ private struct HomeDashboard: View {
             .containerRelativeFrame(.horizontal)
         }
         .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
-        .onScrollGeometryChange(for: CGFloat.self, of: { $0.contentInsets.top }) { _, inset in
-            if !hasScrolled { topInset = inset }
-        }
-        .onScrollGeometryChange(for: CGFloat.self, of: { [topInset] in topInset == 0 ? 0 : $0.contentOffset.y + topInset }) { _, distance in
-            heroScroll.distance = distance
-        }
-        .onScrollPhaseChange { _, phase in
-            if phase != .idle { hasScrolled = true }
-        }
-        .scrollEdgeEffectHidden(!isPastHero, for: .top)
-        // Measured from rest: while the large title folds, the offset and the inset move together and their
-        // sum hardly changes. The scores reach the folded bar after about 110 pt.
-        .onScrollGeometryChange(for: Bool.self, of: { [topInset] in topInset > 0 && $0.contentOffset.y + topInset > 110 }) { _, isPast in
-            isPastHero = isPast
-        }
-        // Behind the scroll view rather than in it, so the refresh spinner stays over the painting.
-        .background(alignment: .top) {
-            HeroBackdrop(
-                asset: shownPaintings[paintings[0]] ?? paintings[0], scroll: heroScroll,
-                height: heroHeight, rate: reduceMotion ? 1 : parallaxRate
-            )
-            .ignoresSafeArea(edges: .top)
-        }
         .background(Theme.background)
         .scrollEdgeEffectStyle(.hard, for: .top)
-        .onChange(of: paintings, initial: true) { _, paintings in
-            // The hour, the weather or the appearance turned: a scene not shown yet gets its painting.
-            if shownPaintings[paintings[0]] == nil { drawPainting(among: paintings) }
-        }
-        // Each time the app comes back; the scene phase can skip the background while the screen is not drawn.
-        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
-            let current = shownPaintings[paintings[0]]
-            shownPaintings = [:]
-            drawPainting(among: paintings, after: current)
-        }
-        .task {
-            while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(60))
-                now = .now
-            }
-        }
         .navigationTitle(store.serverConfig?.locationName ?? String(localized: "Home"))
         .navigationSubtitle(subtitle)
         .toolbar {
@@ -362,32 +307,6 @@ private struct HomeDashboard: View {
 
     // MARK: Hero
 
-    /// The scene outside, lit in light mode and at night in dark mode, as in the mock-ups: the title stays
-    /// readable over it.
-    private var paintings: [String] { scene.paintings { UIImage(named: $0) != nil } }
-
-    /// Another painting than the one on screen, or than the one shown at the last launch.
-    private func drawPainting(among paintings: [String], after current: String? = nil) {
-        var generator = SystemRandomNumberGenerator()
-        let key = "heroPainting.\(paintings[0])"
-        let last = current ?? UserDefaults.standard.string(forKey: key)
-        let next = HeroScene.next(among: paintings, after: last, using: &generator)
-        shownPaintings[paintings[0]] = next
-        UserDefaults.standard.set(next, forKey: key)
-    }
-
-    private var scene: HeroScene {
-        var outside = store.heroScene(at: now)
-        #if DEBUG
-        // `-hero dusk-rain` shows one painting of the bank, whatever the hour and the weather.
-        if let forced = UserDefaults.standard.string(forKey: "hero")?.split(separator: "-"), forced.count == 2,
-           let period = HeroScene.Period(rawValue: String(forced[0])), let weather = HeroScene.Weather(rawValue: String(forced[1])) {
-            outside = HeroScene(period: period, weather: weather, season: outside.season)
-        }
-        #endif
-        return colorScheme == .dark ? outside.dark : outside.light
-    }
-
     private var hero: some View {
         VStack(spacing: 0) {
             if case .offline(let since) = store.phase {
@@ -398,53 +317,6 @@ private struct HomeDashboard: View {
         }
         .animation(.smooth, value: store.phase)
         .frame(minHeight: heroSpace - Theme.sectionSpacing, alignment: .bottom)
-    }
-}
-
-/// How far the home screen has scrolled from rest, negative when pulled down. Only the backdrop reads it,
-/// so a scroll moves the painting without redrawing the screen.
-@Observable @MainActor
-private final class HeroScroll {
-    var distance: CGFloat = 0
-}
-
-/// The painting behind the home screen. Scrolled up, it follows the cards at `rate`, so it reads as further
-/// away, and fades out; pulled down, it stretches from the top of the screen instead of leaving a gap.
-private struct HeroBackdrop: View {
-    let asset: String
-    let scroll: HeroScroll
-    let height: CGFloat
-    let rate: CGFloat
-
-    var body: some View {
-        let pulled = max(-scroll.distance, 0)
-        let scrolled = max(scroll.distance, 0)
-        ZStack {
-            // When the hour or the weather turns, the new painting fades in over the old one.
-            Image(asset)
-                .resizable()
-                .scaledToFill()
-                .id(asset)
-                .transition(.opacity)
-        }
-        .animation(.smooth(duration: 1.2), value: asset)
-        .frame(height: height)
-        .frame(maxWidth: .infinity)
-        .clipped()
-        .overlay(alignment: .top) {
-            // A veil of the screen's background under the title, so it stays readable over any painting.
-            LinearGradient(colors: [Theme.background.opacity(0.55), Theme.background.opacity(0)], startPoint: .top, endPoint: .bottom)
-                .frame(height: height * 0.6)
-        }
-        // No hard edge where the painting ends, beside and between the cards: it melts into the background.
-        .mask {
-            LinearGradient(stops: [.init(color: .black, location: 0.62), .init(color: .clear, location: 1)], startPoint: .top, endPoint: .bottom)
-        }
-        .scaleEffect((height + pulled) / height, anchor: .top)
-        .offset(y: -scrolled * rate)
-        // Gone by the time the cards reach the bar, so the folded title never sits over it.
-        .opacity(1 - min(scrolled / (height * 0.7), 1))
-        .accessibilityHidden(true)
     }
 }
 
