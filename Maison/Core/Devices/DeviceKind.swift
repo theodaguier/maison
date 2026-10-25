@@ -34,7 +34,7 @@ enum DeviceKind: String, CaseIterable, Sendable {
     /// The inline control shown in lists, without opening the device sheet.
     var quickAction: QuickAction {
         switch self {
-        case .light, .cover, .fan: .gauge
+        case .light, .cover, .fan: .level
         case .switch, .valve, .automation: .toggle
         case .climate, .humidifier: .setpoint
         case .mediaPlayer: .playback
@@ -45,12 +45,24 @@ enum DeviceKind: String, CaseIterable, Sendable {
 }
 
 enum QuickAction: Sendable, Equatable {
-    case gauge
+    case level
     case toggle
     case setpoint
     case playback
     case run
     case state
+}
+
+/// The steps of the level pill in lists: each tap moves to the next 10 % in its direction.
+enum LevelStep {
+    /// The level after one tap, snapped to a multiple of 10 % within 0…1.
+    /// From 83 %, "+" gives 90 % and "−" gives 80 %; "−" at 10 % gives 0, which turns the device off.
+    static func next(from level: Double, increasing: Bool) -> Double {
+        // The tolerance keeps a level already on a step, such as 0.3 stored as 0.30000000000000004, on that step.
+        let tenths = level * 10
+        let step = increasing ? (tenths + 1e-6).rounded(.down) + 1 : (tenths - 1e-6).rounded(.up) - 1
+        return min(max(step, 0), 10) / 10
+    }
 }
 
 extension DeviceKind {

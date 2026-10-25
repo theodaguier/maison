@@ -222,6 +222,7 @@ struct SwitchControls: View {
                 set: { on in
                     var ids = NeverTurnOff.ids(from: neverTurnOff)
                     if on { ids.insert(entity.entityID) } else { ids.remove(entity.entityID) }
+                    Haptics.impact()
                     neverTurnOff = NeverTurnOff.raw(from: ids)
                 }
             )) {
@@ -415,6 +416,8 @@ struct LockControls: View {
                 .filter { ["locked", "unlocked", "jammed", "open"].contains($0.state ?? "") }
                 .reversed()
         }
+        // Felt when the door actually locks or unlocks, Face ID included.
+        .sensoryFeedback(.success, trigger: entity.state) { old, new in old != new && ["locked", "unlocked"].contains(new) }
         .errorFeedback(error)
     }
 
@@ -488,6 +491,7 @@ struct MediaControls: View {
                         }
                     }
                     .tint(.primary)
+                    .sensoryFeedback(.selection, trigger: volume.map { Int($0 * 10) })
                     Image(systemName: "speaker.wave.3.fill").foregroundStyle(.tertiary)
                 }
             }
@@ -678,6 +682,7 @@ struct FanControls: View {
                         }
                     }
                     .tint(.blue)
+                    .sensoryFeedback(.selection, trigger: speed.map { Int($0 / 10) })
                 }
                 .padding(16)
                 .cardStyle()
@@ -698,7 +703,10 @@ struct FanControls: View {
                 if let oscillating = entity.attributes["oscillating"]?.boolValue {
                     Toggle("Oscillation", isOn: Binding(
                         get: { oscillating },
-                        set: { on in Task { await store.call("fan", "oscillate", on: entity, data: ["oscillating": .bool(on)]) } }
+                        set: { on in
+                            Haptics.impact()
+                            Task { await store.call("fan", "oscillate", on: entity, data: ["oscillating": .bool(on)]) }
+                        }
                     ))
                     .font(.roundedBody)
                     .tint(.green)
@@ -710,9 +718,9 @@ struct FanControls: View {
                     Spacer()
                     Menu {
                         ForEach([30, 60, 120], id: \.self) { minutes in
-                            Button(String(localized: "In \(AutoOffPills.title(minutes))")) { Task { await setTimer(minutes) } }
+                            Button(String(localized: "In \(AutoOffPills.title(minutes))")) { Haptics.selection(); Task { await setTimer(minutes) } }
                         }
-                        Button("Never") { Task { await setTimer(0) } }
+                        Button("Never") { Haptics.selection(); Task { await setTimer(0) } }
                     } label: {
                         HStack(spacing: 4) {
                             Text(timerEnd.map { String(localized: "At \(Phrasing.time($0))") } ?? String(localized: "Never"))
@@ -973,9 +981,9 @@ struct OpeningControls: View {
                         Spacer()
                         Menu {
                             ForEach([10, 30, 60], id: \.self) { minutes in
-                                Button(AutoOffPills.title(minutes)) { Task { await setAlert(minutes) } }
+                                Button(AutoOffPills.title(minutes)) { Haptics.selection(); Task { await setAlert(minutes) } }
                             }
-                            Button("Never") { Task { await setAlert(nil) } }
+                            Button("Never") { Haptics.selection(); Task { await setAlert(nil) } }
                         } label: {
                             HStack(spacing: 4) {
                                 Text(alertMinutes.map(AutoOffPills.title) ?? String(localized: "Never"))

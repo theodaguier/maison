@@ -34,6 +34,7 @@ struct ConnectionErrorView: View {
             Text(message)
         } actions: {
             Button("Try Again") {
+                Haptics.impact()
                 Task { await store.connect() }
             }
             .buttonStyle(.glassProminent)
@@ -65,6 +66,10 @@ private struct HomeDashboard: View {
     #if DEBUG
     /// `-sheet describe` opens "Describe a Rule" at launch, to check its design without switching tabs.
     @State private var describesRule = false
+    @Environment(BelongingsStore.self) private var belongings
+    @State private var openedItem: Item?
+    @State private var showsDocuments = false
+    @State private var scansDocument = false
     #endif
     /// Height of the navigation bar area above the scroll content; the hero extends under it.
     @State private var topInset: CGFloat = 0
@@ -184,12 +189,19 @@ private struct HomeDashboard: View {
         }
         #if DEBUG
         .sheet(isPresented: $describesRule) { DescribeRuleView() }
-        // `-sheet light.lampadaire` opens a device sheet at launch, to check its design; `-sheet day` the day summary.
+        .sheet(item: $openedItem) { ItemSheet(itemID: $0.id) }
+        .sheet(isPresented: $showsDocuments) { NavigationStack { DocumentsPage() } }
+        .fullScreenCover(isPresented: $scansDocument) { DocumentScanFlow(target: nil) }
+        // `-sheet light.lampadaire` opens a device sheet at launch, to check its design; `-sheet day` the day summary,
+        // `-sheet item` the first object of the demo home, `-sheet documents` the documents, `-sheet scan` the scanner.
         .onAppear {
             guard let id = UserDefaults.standard.string(forKey: "sheet") else { return }
             switch id {
             case "day": readsDigest = digest != nil
             case "describe": describesRule = true
+            case "item": openedItem = belongings.items.first { $0.parentItemID == nil && !belongings.consumables(of: $0).isEmpty }
+            case "documents": showsDocuments = true
+            case "scan": scansDocument = true
             case "comfort", "energy", "network": openedScore = ScoreKind(rawValue: id)
             default: opened = OpenedDevice(id: id)
             }
@@ -362,6 +374,7 @@ struct AllDevicesView: View {
 #Preview("Day") {
     HomeView()
         .environment(DemoHome.store())
+        .environment(BelongingsStore.demo())
 }
 
 #Preview("Offline") {

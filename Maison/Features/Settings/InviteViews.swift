@@ -66,6 +66,7 @@ struct InviteSheet: View {
             .safeAreaInset(edge: .bottom) {
                 VStack(spacing: 12) {
                     Button {
+                        Haptics.impact()
                         Task { if await prepare() { sharing = true } }
                     } label: {
                         ZStack {
@@ -293,6 +294,7 @@ struct InvitationView: View {
             }
             VStack(spacing: 10) {
                 Button {
+                    Haptics.impact()
                     Task {
                         isJoining = true
                         await store.join(metadata)

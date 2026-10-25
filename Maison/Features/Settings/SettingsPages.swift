@@ -120,6 +120,7 @@ struct ServerPage: View {
                     Label("Reconnect", systemImage: "arrow.clockwise").frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.glass)
+                .tapFeedback(.impact(weight: .light))
             }
             .font(.roundedHeadline)
             .controlSize(.large)
@@ -275,6 +276,7 @@ struct DaySummaryPage: View {
                     .labelStyle(.compact)
                 }
                 .tint(.green)
+                .sensoryFeedback(.impact(weight: .light), trigger: isOn)
                 .disabled(!DayDigest.isAvailable)
                 .padding(.vertical, 8)
             }
@@ -386,7 +388,10 @@ struct MemberPage: View {
             Button("Remove", role: .destructive) {
                 Task {
                     await run { try await store.remove(person) }
-                    if error == nil { dismiss() }
+                    if error == nil {
+                        Haptics.success()
+                        dismiss()
+                    }
                 }
             }
         } message: {

@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// One device as a 66 pt card row. The trailing control depends on the device type
-/// (light = level, plug = switch, climate = setpoint, media = play/pause, lock or sensor = state);
+/// (light = level pill, plug = switch, climate = setpoint, media = play/pause, lock or sensor = state);
 /// tapping the row opens the device sheet.
 struct DeviceRow: View {
     @Environment(HomeStore.self) private var store
@@ -54,9 +54,16 @@ struct DeviceRow: View {
 
     private var detail: String? {
         let room = showsRoom ? store.area(of: entity)?.name : nil
-        let status = usesStateLabel ? nil : entity.statusText
         let parts = [room, status].compactMap(\.self).filter { !$0.isEmpty }
         return parts.isEmpty ? nil : parts.joined(separator: ", ")
+    }
+
+    /// The status under the name, without what the trailing control already says.
+    private var status: String? {
+        if usesStateLabel { return nil }
+        // The level pill shows the percentage, or the state when off: only "On" or "Open" is left to say.
+        if entity.kind.quickAction == .level { return entity.isActive ? entity.stateLabel : nil }
+        return entity.statusText
     }
 
     /// Rows whose trailing control is a text label don't repeat the status underneath.
@@ -64,7 +71,7 @@ struct DeviceRow: View {
         if entity.isUnavailable { return true }
         switch entity.kind.quickAction {
         case .state: return entity.kind != .lock
-        case .gauge: return !(entity.supportsLevel && entity.isActive)
+        case .level: return !entity.supportsLevel
         case .playback: return entity.state == "off"
         default: return false
         }
@@ -76,16 +83,19 @@ struct DeviceRow: View {
             StateLabel(text: String(localized: "No Response"), color: Color(.tertiaryLabel))
         } else {
             switch entity.kind.quickAction {
-            case .gauge where entity.supportsLevel && entity.isActive:
-                LevelGauge(level: entity.level ?? 0, tint: entity.accent) { level in
+            case .level where entity.supportsLevel:
+                LevelStepper(level: entity.level ?? 0, offLabel: entity.stateLabel) { level in
                     Task { await store.setLevel(level, on: entity) }
                 }
-            case .gauge:
+            case .level:
                 StateLabel(text: entity.stateLabel, color: Color(.tertiaryLabel))
             case .toggle:
                 Toggle("", isOn: Binding(
                     get: { entity.isActive },
-                    set: { _ in Task { await store.performPrimaryAction(on: entity) } }
+                    set: { _ in
+                        Haptics.impact()
+                        Task { await store.performPrimaryAction(on: entity) }
+                    }
                 ))
                 .labelsHidden()
                 .tint(.green)
