@@ -62,6 +62,42 @@ struct HomeAssistantConnectionTests {
         #expect(ids == [1, 2])
     }
 
+    @Test func sendsSimultaneousCommandsInTheOrderOfTheirIDs() async throws {
+        // The first command takes longer to write than the others: it must still leave first.
+        let transport = StaggeredTransport()
+        let connection = HomeAssistantConnection(transport: transport, accessToken: "token")
+        try await connection.connect()
+
+        try await withThrowingTaskGroup(of: Void.self) { group in
+            for index in 0..<8 {
+                group.addTask {
+                    try await connection.callService(domain: "light", service: "toggle", entityID: "light.\(index)")
+                }
+            }
+            try await group.waitForAll()
+        }
+
+        let ids = await transport.writtenIDs
+        #expect(ids.count == 8)
+        #expect(ids == ids.sorted())
+        #expect(Set(ids).count == 8)
+    }
+
+    @Test func failsCommandsAtOnceOnceTheConnectionIsClosed() async throws {
+        let transport = FakeTransport()
+        let connection = HomeAssistantConnection(transport: transport, accessToken: "token")
+        try await connection.connect()
+        await connection.disconnect()
+
+        await #expect(throws: HomeAssistantError.connectionClosed) {
+            try await connection.send(["type": "ping"])
+        }
+        await #expect(throws: HomeAssistantError.connectionClosed) {
+            _ = try await connection.subscribe(["type": "subscribe_entities"])
+        }
+        #expect(await transport.sentMessages(ofType: "ping").isEmpty)
+    }
+
     @Test func callsAService() async throws {
         let transport = FakeTransport { message in
             message["type"]?.stringValue == "auth" ? [["type": "auth_ok"]] : [result(for: message)]
@@ -148,4 +184,32 @@ struct HomeAssistantConnectionTests {
     func webSocketURL(server: String, expected: String) {
         #expect(HomeAssistantConnection.webSocketURL(for: URL(string: server)!).absoluteString == expected)
     }
+}
+
+/// A socket where the first command after sign-in is slow to write and the rest go out at once,
+/// as when a large message is still being written. `writtenIDs` is the order they reached the server.
+actor StaggeredTransport: WebSocketTransport {
+    private let replies = FakeTransport { message in
+        message["type"]?.stringValue == "auth" ? [["type": "auth_ok"]] : [result(for: message)]
+    }
+    private var commands = 0
+    private(set) var writtenIDs: [Int] = []
+
+    func send(_ text: String) async throws {
+        let message = try JSONDecoder().decode(JSONValue.self, from: Data(text.utf8))
+        if let id = message["id"]?.intValue {
+            commands += 1
+            if commands == 1 {
+                try await Task.sleep(for: .milliseconds(50))
+            }
+            writtenIDs.append(id)
+        }
+        try await replies.send(text)
+    }
+
+    func receive() async throws -> String {
+        try await replies.receive()
+    }
+
+    nonisolated func close() {}
 }
