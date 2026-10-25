@@ -124,7 +124,7 @@ Paused, not abandoned. This waits outside V1. It comes back only after the valid
 - General documents attached to an object: warranties, manuals, insurance, leases.
 - Scan from the object, scan from the home: match the object and prefill its sheet (a photo, a barcode, the QR code of the European energy label).
 
-The Belongings code prototyped locally — models, matcher, prefill, the replacement schedule, and the tests — stays on a branch. It stays off V1.
+The Belongings code prototyped locally — models, matcher, prefill, the replacement schedule, its GRDB store, its screens, and the tests — stays on the `parking/belongings` branch. It stays off V1.
 
 ## Later
 

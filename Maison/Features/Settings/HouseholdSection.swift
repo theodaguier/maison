@@ -238,5 +238,4 @@ extension HouseholdRole {
     }
     .background(Theme.background)
     .environment(DemoHome.store())
-    .environment(BelongingsStore.demo())
 }

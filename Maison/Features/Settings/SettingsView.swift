@@ -23,7 +23,6 @@ enum Appearance: String, CaseIterable {
 struct SettingsView: View {
     @Environment(HomeStore.self) private var store
     @Environment(\.setDemoMode) private var setDemoMode
-    @Environment(BelongingsStore.self) private var belongings
     @AppStorage("appearance") private var appearance: Appearance = .system
     @AppStorage(DaySummarySetting.key) private var daySummary = true
     @AppStorage(Analytics.enabledKey) private var analyticsEnabled = false
@@ -100,14 +99,6 @@ struct SettingsView: View {
                         }
                         .buttonStyle(.plain)
                     }
-                    SettingsGroup("Paperwork") {
-                        NavigationLink { DocumentsPage() } label: {
-                            SettingsRow(symbol: "doc.text.fill", color: .indigo, title: "Documents",
-                                        value: belongings.documents.isEmpty ? nil : "\(belongings.documents.count)",
-                                        showsChevron: true)
-                        }
-                    }
-                    .buttonStyle(.plain)
                     SettingsGroup("Appearance") {
                         HStack(spacing: 12) {
                             SettingsIcon(symbol: "sun.max.fill", color: .orange)
@@ -564,5 +555,4 @@ extension Bundle {
 #Preview {
     SettingsView()
         .environment(DemoHome.store())
-        .environment(BelongingsStore.demo())
 }

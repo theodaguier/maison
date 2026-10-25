@@ -9,9 +9,6 @@ options:
   generateEmptyDirectories: true
 
 packages:
-  GRDB:
-    url: https://github.com/groue/GRDB.swift
-    from: 7.0.0
   PostHog:
     url: https://github.com/PostHog/posthog-ios
     exactVersion: 3.92.0
@@ -41,7 +38,7 @@ targets:
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
-        INFOPLIST_KEY_NSCameraUsageDescription: Maison uses the camera to scan your documents and, with the LiDAR sensor, to draw the plan of your home. Everything stays on your iPhone.
+        INFOPLIST_KEY_NSCameraUsageDescription: Maison uses the camera and the LiDAR sensor to draw the plan of your home. The scan stays on your iPhone.
         INFOPLIST_KEY_NSFaceIDUsageDescription: Face ID confirms it’s you before Maison unlocks a door.
         INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: Maison tells Home Assistant when you leave or come home, so your rules can react.
         INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription: Maison tells Home Assistant when you leave or come home, even when the app is closed, so rules like “When everyone leaves” work.
@@ -68,7 +65,6 @@ targets:
         # Maison's relay (https), which holds the grid operators' client credentials. Empty: none offered.
         MaisonRelayURL: "$(MAISON_RELAY_URL)"
     dependencies:
-      - package: GRDB
       - package: PostHog
         product: PostHog
     configFiles:
