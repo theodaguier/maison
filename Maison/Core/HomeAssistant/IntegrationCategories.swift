@@ -70,6 +70,11 @@ enum IntegrationCategories {
     static func matches(_ category: String, _ prefix: String) -> Bool {
         category == prefix || category.hasPrefix(prefix + ".")
     }
+
+    /// A weather forecast service (Met.no, OpenWeatherMap…): what it measures is outside.
+    static func isForecast(_ domain: String) -> Bool {
+        all[domain]?.categories.contains { matches($0, "weather_alerts.forecasts") } ?? false
+    }
 }
 
 extension IntegrationDescription {

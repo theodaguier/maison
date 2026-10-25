@@ -100,7 +100,56 @@ struct HomeScoresTests {
         #expect(sensors.dropLast().map(\.id) == store.roomTemperatureSensors.map(\.area.id))
     }
 
+    @MainActor
+    @Test func outdoorThermometersAreToldByTheirRoomAndIntegrationNotTheirName() {
+        func thermometer(_ id: String, _ name: String) -> EntityState {
+            EntityState(entityID: id, state: "12", attributes: [
+                "friendly_name": .string(name), "device_class": "temperature", "unit_of_measurement": "°C",
+            ])
+        }
+        var layout = DemoHome.layout
+        layout.areas.append(Area(id: "jardin", name: "Jardin", icon: "mdi:tree"))
+        layout.areaByEntity["sensor.jardin"] = "jardin"
+        layout.areaByEntity["sensor.sonde_salon"] = "living_room"
+        layout.platformByEntity["sensor.prevision"] = "met"
+        let store = HomeStore(
+            demo: DemoHome.states + [
+                thermometer("sensor.jardin", "Sonde"),
+                thermometer("sensor.prevision", "Temperatur"),
+                thermometer("sensor.sonde_salon", "Outdoor probe"),
+                thermometer("sensor.sonde_libre", "Außentemperatur"),
+            ],
+            layout: layout,
+            household: HouseholdStore(demo: DemoHome.household, members: DemoHome.members, plan: DemoHome.plan)
+        )
+        let indoor = Set(store.indoorTemperatureSensors.map(\.entityID))
+        // In a garden, or from a forecast service: outside, whatever the name.
+        #expect(!indoor.contains("sensor.jardin"))
+        #expect(!indoor.contains("sensor.prevision"))
+        // In the living room: inside, even named "outdoor".
+        #expect(indoor.contains("sensor.sonde_salon"))
+        // In no room: it counts until it is placed outdoors, in any language.
+        #expect(indoor.contains("sensor.sonde_libre"))
+        #expect(indoor.contains("sensor.salon_temperature"))
+    }
+
     // MARK: Energy
+
+    @Test func energyComparesWithTheDayBeforeAtTheSameTime() throws {
+        let calendar = Calendar.current
+        let midnight = calendar.startOfDay(for: Date(timeIntervalSince1970: 1_790_000_000))
+        let yesterday = try #require(calendar.date(byAdding: .day, value: -1, to: midnight))
+        // 1 kWh an hour all day yesterday, 2 kWh an hour today until 10:00.
+        let hourly = (0..<24).map { (start: yesterday.addingTimeInterval(Double($0) * 3600), value: 1.0) }
+            + (0..<10).map { (start: midnight.addingTimeInterval(Double($0) * 3600), value: 2.0) }
+        let now = midnight.addingTimeInterval(10 * 3600 + 600)
+        let score = try #require(EnergyScore.compute(hourly: hourly, unit: "kWh", now: now))
+        #expect(score.today == 20)
+        #expect(score.dayBeforeAtThisTime == 10)
+
+        let firstDay = try #require(EnergyScore.compute(hourly: Array(hourly.suffix(10)), unit: "kWh", now: now))
+        #expect(firstDay.dayBeforeAtThisTime == nil)
+    }
 
     @Test func energyScoresTheRatioToTheHabit() {
         #expect(EnergyScore.percent(ratio: 0.5) == 100)

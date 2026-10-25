@@ -14,6 +14,15 @@ struct IntegrationCategoriesTests {
         #expect(IntegrationCategories.all.count > 500)
     }
 
+    @Test func knowsAForecastServiceByItsCategory() {
+        #expect(IntegrationCategories.isForecast("met"))
+        #expect(IntegrationCategories.isForecast("openweathermap"))
+        // A weather station has indoor modules too: its thermometers stay the room's.
+        #expect(!IntegrationCategories.isForecast("netatmo"))
+        #expect(!IntegrationCategories.isForecast("zha"))
+        #expect(!IntegrationCategories.isForecast("not_an_integration"))
+    }
+
     @Test func groupsByThePartOfTheHomeServed() {
         #expect(IntegrationGroup.of(["computers_network.monitoring", "presence_location.network_presence"]) == [.network, .presence])
         #expect(IntegrationGroup.of(["plugs_switches", "lighting.bulbs_lamps"]) == [.energy])
