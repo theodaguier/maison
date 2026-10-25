@@ -12747,6 +12747,566 @@
           }
         }
       }
+    },
+    "About %@ %@ this month": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Environ %1$@ %2$@ ce mois-ci"
+          }
+        }
+      }
+    },
+    "A thermometer gives the Comfort score": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un thermomètre donne le score Confort"
+          }
+        }
+      }
+    },
+    "Keep Closed": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gardez fermé"
+          }
+        }
+      }
+    },
+    "Usually": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "D’habitude"
+          }
+        }
+      }
+    },
+    "Month’s Cost": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coût du mois"
+          }
+        }
+      }
+    },
+    "Good to Air": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bon pour aérer"
+          }
+        }
+      }
+    },
+    "No reading": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas de relevé"
+          }
+        }
+      }
+    },
+    "A good moment to air": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un bon moment pour aérer"
+          }
+        }
+      }
+    },
+    "Even at night, read on your meter": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Même la nuit, relevé sur votre compteur"
+          }
+        }
+      }
+    },
+    "On the Home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur l’accueil"
+          }
+        }
+      }
+    },
+    "Maison adds a weather service to your server by itself.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maison ajoute elle-même un service météo à votre serveur."
+          }
+        }
+      }
+    },
+    "%@ kWh, measured by its plug": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ kWh, mesurés par sa prise"
+          }
+        }
+      }
+    },
+    "Now": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maint."
+          }
+        }
+      }
+    },
+    "%lld ms to answer": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld ms pour répondre"
+          }
+        }
+      }
+    },
+    "%@: %lld %% of your electricity yesterday": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ : %2$lld %% de votre électricité hier"
+          }
+        }
+      }
+    },
+    "Even at night, about %@ %@ a year": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Même la nuit, environ %1$@ %2$@ par an"
+          }
+        }
+      }
+    },
+    "Maison adds it as soon as it’s on your network": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maison l’ajoute dès qu’il est sur votre réseau"
+          }
+        }
+      }
+    },
+    "%lld W never switch off": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld W ne s’éteignent jamais"
+          }
+        }
+      }
+    },
+    "Hidden": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Masquées"
+          }
+        }
+      }
+    },
+    "At this month’s pace": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Au rythme de ce mois"
+          }
+        }
+      }
+    },
+    "Internet over the last 24 hours": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Internet sur les dernières 24 heures"
+          }
+        }
+      }
+    },
+    "With an outage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avec une coupure"
+          }
+        }
+      }
+    },
+    "This Month": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce mois-ci"
+          }
+        }
+      }
+    },
+    "Outages": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coupures"
+          }
+        }
+      }
+    },
+    "No temperature reaches your server yet.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune température n’arrive encore sur votre serveur."
+          }
+        }
+      }
+    },
+    "A section with something to fix moves to the top until it’s fixed, then goes back to its place.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une section qui a un constat passe en tête le temps de le régler, puis reprend sa place."
+          }
+        }
+      }
+    },
+    "No thermometer reaches your server yet. One in a room gives this score.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun thermomètre n’arrive encore sur votre serveur. Un seul dans une pièce donne ce score."
+          }
+        }
+      }
+    },
+    "%@: %lld %% of your electricity today": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ : %2$lld %% de votre électricité aujourd’hui"
+          }
+        }
+      }
+    },
+    "this month, at this pace": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ce mois-ci, à ce rythme"
+          }
+        }
+      }
+    },
+    "The first eight show on the home. Hold one there to open it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les huit premiers s’affichent sur l’accueil. Maintenez-en un pour l’ouvrir."
+          }
+        }
+      }
+    },
+    "Waiting for the first readings of your meter.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En attente des premiers relevés de votre compteur."
+          }
+        }
+      }
+    },
+    "Fix": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Régler"
+          }
+        }
+      }
+    },
+    "No meter is connected yet. Maison can read it with a small reader, or from your grid operator.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun compteur n’est encore relié. Maison peut le lire avec un petit lecteur, ou par votre gestionnaire de réseau."
+          }
+        }
+      }
+    },
+    "Seen by your box right now": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vus par votre box à l’instant"
+          }
+        }
+      }
+    },
+    "The air is stale in %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’air est confiné : %@"
+          }
+        }
+      }
+    },
+    "The heating runs with nobody home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le chauffage tourne sans personne"
+          }
+        }
+      }
+    },
+    "%lld devices on your network": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld appareils sur votre réseau"
+          }
+        }
+      }
+    },
+    "The month’s cost appears after three days of readings.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le coût du mois apparaît après trois jours de relevés."
+          }
+        }
+      }
+    },
+    "Outage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coupure"
+          }
+        }
+      }
+    },
+    "Download": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Débit"
+          }
+        }
+      }
+    },
+    "Weather and Airing": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Météo et aération"
+          }
+        }
+      }
+    },
+    "outside": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "dehors"
+          }
+        }
+      }
+    },
+    "over 24 h": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "sur 24 h"
+          }
+        }
+      }
+    },
+    "The heat goes outside": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La chaleur part dehors"
+          }
+        }
+      }
+    },
+    "%@ outside, and dry": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ dehors, et sec"
+          }
+        }
+      }
+    },
+    "To see what your electricity costs": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour voir ce que coûte votre électricité"
+          }
+        }
+      }
+    },
+    "Turn it off until someone is back": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coupez-le jusqu’au retour de quelqu’un"
+          }
+        }
+      }
+    },
+    "CO₂ at %lld ppm, air for a few minutes": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CO₂ à %lld ppm, aérez quelques minutes"
+          }
+        }
+      }
+    },
+    "Maison switches on an internet check on your server by itself.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maison active elle-même une vérification d’internet sur votre serveur."
+          }
+        }
+      }
+    },
+    "%@ is open while the heating runs": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ est ouverte pendant que le chauffage tourne"
+          }
+        }
+      }
+    },
+    "Waiting for the first readings of your thermometers.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En attente des premiers relevés de vos thermomètres."
+          }
+        }
+      }
+    },
+    "Edit Home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifier l’accueil"
+          }
+        }
+      }
+    },
+    "so far today": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "depuis ce matin"
+          }
+        }
+      }
+    },
+    "%lld %% humidity": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld %% d’humidité"
+          }
+        }
+      }
+    },
+    "Enter your tariff": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saisissez votre tarif"
+          }
+        }
+      }
+    },
+    "%lld ms, as usual": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld ms, comme d’habitude"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

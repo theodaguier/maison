@@ -767,6 +767,8 @@ struct SensorControls: View {
     let entity: EntityState
     @State private var range: Range = .day
     @State private var points: [ChartPoint] = []
+    /// Where the finger is on the chart.
+    @State private var touched: Date?
     @State private var usual: ClosedRange<Double>?
 
     enum Range: Hashable { case day, week, month }
@@ -833,6 +835,7 @@ struct SensorControls: View {
             ProgressView().frame(maxWidth: .infinity, minHeight: 200)
         } else {
             let peak = points.max { $0.value < $1.value }
+            let selected = touched.flatMap { nearest(points, to: $0, at: \.date) }
             Chart {
                 if let usual {
                     RectangleMark(
@@ -848,7 +851,18 @@ struct SensorControls: View {
                         .foregroundStyle(Color.orange)
                         .interpolationMethod(.monotone)
                 }
-                if let peak {
+                if let selected {
+                    RuleMark(x: .value("Time", selected.date))
+                        .foregroundStyle(Color.secondary.opacity(0.4))
+                        .annotation(position: .top, spacing: 0, overflowResolution: .init(x: .fit(to: .chart), y: .disabled)) {
+                            ChartCallout(time: range == .day ? Phrasing.time(selected.date) : selected.date.formatted(.dateTime.day().month(.abbreviated).hour()),
+                                         value: format(selected.value))
+                        }
+                    PointMark(x: .value("Time", selected.date), y: .value("Value", selected.value))
+                        .foregroundStyle(Color.orange)
+                        .symbolSize(60)
+                }
+                if let peak, selected == nil {
                     PointMark(x: .value("Time", peak.date), y: .value("Value", peak.value))
                         .foregroundStyle(Color.orange)
                         .symbolSize(30)
@@ -867,6 +881,8 @@ struct SensorControls: View {
                         .symbolSize(60)
                 }
             }
+            .chartXSelection(value: $touched)
+            .sensoryFeedback(.selection, trigger: selected?.date)
             .chartYScale(domain: yDomain)
             .chartXAxis {
                 AxisMarks(values: .automatic(desiredCount: 5)) { _ in

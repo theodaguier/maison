@@ -12,6 +12,8 @@ enum Theme {
     static let trendUpBackground = Color("TrendUpBackground")
     static let trendDownBackground = Color("TrendDownBackground")
     static let cardBorder = Color("CardBorder")
+    /// "Good", "Frugal", "Stable": a deeper green than the Energy score's own.
+    static let good = Color(red: 0.13, green: 0.60, blue: 0.30)
 
     /// Marks text written on the iPhone by the language model (the "Symbole/Génération" sparkles).
     static let generated = LinearGradient(

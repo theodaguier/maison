@@ -17,11 +17,22 @@ enum ScoreKind: String, CaseIterable, Identifiable {
         }
     }
 
+    /// Violet, green and blue: no orange or yellow, and no alarm colour. A problem takes its score's
+    /// colour, deeper.
     var color: Color {
         switch self {
-        case .comfort: .orange
-        case .energy: .yellow
-        case .network: .cyan
+        case .comfort: Color(red: 0.45, green: 0.40, blue: 0.95)
+        case .energy: Color(red: 0.20, green: 0.74, blue: 0.42)
+        case .network: Color(red: 0.20, green: 0.55, blue: 1.00)
+        }
+    }
+
+    /// What needs a look, in this score.
+    var deep: Color {
+        switch self {
+        case .comfort: Color(red: 0.27, green: 0.24, blue: 0.57)
+        case .energy: Color(red: 0.12, green: 0.44, blue: 0.25)
+        case .network: Color(red: 0.12, green: 0.33, blue: 0.60)
         }
     }
 
@@ -121,102 +132,6 @@ private struct ScoreRing: View {
         .accessibilityLabel(kind.title)
         .accessibilityValue(percent.map { "\($0) %" } ?? reading.map { "\($0.value) \($0.unit)" } ?? String(localized: "Not measured yet"))
         .accessibilityAddTraits(.isButton)
-    }
-}
-
-/// The one thing to look at today. Safety would come first; for now, the weakest score's reason.
-struct Attention: Equatable {
-    let kind: ScoreKind
-    let title: String
-    let detail: String
-    /// Set when the card opens a finding rather than the score's fiche.
-    var findingID: String?
-
-    static func pick(from scores: HomeScores?, meterProposalSeen: Bool = MeterProposalSetting.wasSeen) -> Attention? {
-        guard let scores else { return nil }
-        if let outage = scores.network?.outages.max(by: { $0.duration < $1.duration }) {
-            return Attention(
-                kind: .network,
-                title: String(localized: "The internet dropped at \(outage.start.formatted(date: .omitted, time: .shortened))"),
-                detail: String(localized: "Cut for \(Self.minutes(outage.duration))")
-            )
-        }
-        if let finding = scores.findings.first {
-            return Attention(
-                kind: .energy,
-                title: finding.title,
-                detail: String(localized: "About \(finding.yearlyValue.formatted(.number.precision(.fractionLength(0)))) \(finding.currency.currencySymbol) more a year"),
-                findingID: finding.id
-            )
-        }
-        if let room = scores.comfort?.rooms.first(where: { $0.excursion != nil }), let excursion = room.excursion {
-            let hour = hourText(excursion.interval.start)
-            return Attention(
-                kind: .comfort,
-                title: excursion.side == .tooWarm
-                    ? String(localized: "\(room.name) was too warm around \(hour)")
-                    : String(localized: "\(room.name) was too cold around \(hour)"),
-                detail: String(localized: "\(room.percent) % of the day in your range")
-            )
-        }
-        if !scores.hasElectricityMeter, !meterProposalSeen {
-            return Attention(
-                kind: .energy,
-                title: String(localized: "Your meter can talk to Maison"),
-                detail: String(localized: "A small reader, then nothing to set up")
-            )
-        }
-        if let energy = scores.energy, let difference = energy.difference, difference > 0.1 {
-            return Attention(
-                kind: .energy,
-                title: Calendar.current.isDateInToday(energy.day)
-                    ? String(localized: "More electricity than usual today")
-                    : String(localized: "More electricity than usual yesterday"),
-                detail: String(localized: "\(Int((difference * 100).rounded())) % over your habit")
-            )
-        }
-        return nil
-    }
-
-    static func minutes(_ duration: TimeInterval) -> String {
-        Duration.seconds(duration).formatted(.units(allowed: [.hours, .minutes], width: .abbreviated, maximumUnitCount: 2))
-    }
-}
-
-struct AttentionCard: View {
-    let attention: Attention
-    let open: () -> Void
-
-    var body: some View {
-        Button(action: open) {
-            HStack(spacing: 14) {
-                Image(systemName: attention.kind.symbol)
-                    .font(.system(size: 19, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(width: 40, height: 40)
-                    .background(attention.kind.color, in: .rect(cornerRadius: 11))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("To Look At Today, \(attention.kind.title)")
-                        .font(.roundedFootnoteEmphasized)
-                        .foregroundStyle(.secondary)
-                    Text(attention.title)
-                        .font(.roundedHeadline)
-                        .foregroundStyle(.primary)
-                        .multilineTextAlignment(.leading)
-                    Text(attention.detail)
-                        .font(.roundedSubheadline)
-                        .foregroundStyle(.orange)
-                }
-                Spacer(minLength: 0)
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(.tertiary)
-            }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .cardStyle()
-        }
-        .buttonStyle(.pressable)
     }
 }
 
@@ -381,11 +296,11 @@ private struct MissingScore: View {
 }
 
 /// Bien, Correct, À surveiller.
-private func health(_ percent: Int) -> (String, Color) {
+func health(_ percent: Int, kind: ScoreKind) -> (String, Color) {
     switch percent {
-    case 90...: (String(localized: "Good"), .green)
-    case 75...: (String(localized: "Fair"), .orange)
-    default: (String(localized: "Needs a Look"), .red)
+    case 90...: (String(localized: "Good"), Theme.good)
+    case 75...: (String(localized: "Fair"), kind.deep)
+    default: (String(localized: "Needs a Look"), kind.deep)
     }
 }
 
@@ -419,7 +334,7 @@ private struct ComfortFiche: View {
     private var scoreSection: some View {
         if let score {
             VStack(alignment: .leading, spacing: 18) {
-                let (status, color) = health(score.percent)
+                let (status, color) = health(score.percent, kind: .comfort)
                 FicheHeader(
                     value: "\(score.percent)",
                     unit: "%",
@@ -477,7 +392,7 @@ private struct RoomComfortRow: View {
     let room: ComfortScore.Room
 
     var body: some View {
-        let color: Color = room.excursion == nil ? .green : .orange
+        let color: Color = room.excursion == nil ? .green : ScoreKind.comfort.deep
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
                 Image(systemName: Area(id: room.id, name: room.name).symbol)
@@ -487,7 +402,7 @@ private struct RoomComfortRow: View {
                 Spacer()
                 Text(caption)
                     .font(.roundedFootnote)
-                    .foregroundStyle(room.excursion == nil ? Color.secondary : Color.orange)
+                    .foregroundStyle(room.excursion == nil ? Color.secondary : ScoreKind.comfort.deep)
             }
             GeometryReader { proxy in
                 ZStack(alignment: .leading) {
@@ -528,13 +443,13 @@ private struct RoomValues: View {
                     if index > 0 { Theme.separator.frame(height: 1).padding(.leading, 46) }
                     HStack(spacing: 12) {
                         Image(systemName: row.0.symbol)
-                            .foregroundStyle(range.contains(row.1) ? Color.green : Color.orange)
+                            .foregroundStyle(range.contains(row.1) ? Color.green : ScoreKind.comfort.deep)
                             .frame(width: 22)
                         Text(row.0.name).font(.roundedHeadline)
                         Spacer()
                         Text(degrees(row.1) + unit)
                             .font(.roundedHeadline)
-                            .foregroundStyle(range.contains(row.1) ? Color.primary : Color.orange)
+                            .foregroundStyle(range.contains(row.1) ? Color.primary : ScoreKind.comfort.deep)
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 14)
@@ -558,7 +473,7 @@ private struct RangeRow: View {
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(.white)
                     .frame(width: 32, height: 32)
-                    .background(.orange, in: .rect(cornerRadius: 9))
+                    .background(ScoreKind.comfort.color, in: .rect(cornerRadius: 9))
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Your Range").font(.roundedHeadline)
                     Text(origin == .entered ? String(localized: "Set by you")
@@ -715,9 +630,9 @@ private struct EnergyFiche: View {
     private var status: (String, Color) {
         guard let percent = score?.percent else { return (String(localized: "Measuring"), .secondary) }
         switch percent {
-        case 75...: return (String(localized: "Frugal"), .green)
+        case 75...: return (String(localized: "Frugal"), Theme.good)
         case 50...: return (String(localized: "Usual"), .secondary)
-        default: return (String(localized: "High"), .orange)
+        default: return (String(localized: "High"), ScoreKind.energy.deep)
         }
     }
 
@@ -751,7 +666,7 @@ struct GridLinkCard: View {
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(.white)
                     .frame(width: 40, height: 40)
-                    .background(.yellow, in: .rect(cornerRadius: 11))
+                    .background(ScoreKind.energy.color, in: .rect(cornerRadius: 11))
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Without Hardware").font(.roundedFootnoteEmphasized).foregroundStyle(.secondary)
                     Text("Your readings from \(gridOperator.name)").font(.roundedHeadline)
@@ -773,7 +688,7 @@ struct GridLinkCard: View {
             .controlSize(.large)
             .disabled(isLinking)
             if let error {
-                Text(error).font(.roundedFootnote).foregroundStyle(.orange)
+                Text(error).font(.roundedFootnote).foregroundStyle(.red)
             }
         }
         .padding(16)
@@ -821,7 +736,7 @@ struct MeterProposal: View {
                     .font(.system(size: 19, weight: .semibold))
                     .foregroundStyle(.white)
                     .frame(width: 40, height: 40)
-                    .background(.yellow, in: .rect(cornerRadius: 11))
+                    .background(ScoreKind.energy.color, in: .rect(cornerRadius: 11))
                 Text(title).font(.roundedTitle3)
                 Text("Measured, your electricity shows hour by hour, and Maison tells you when it drifts from your habit.")
                     .font(.roundedSubheadline)
@@ -829,9 +744,9 @@ struct MeterProposal: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             VStack(spacing: 0) {
-                step(symbol: "cable.connector", color: .yellow, title: what, detail: whatDetail)
+                step(symbol: "cable.connector", color: ScoreKind.energy.color, title: what, detail: whatDetail)
                 Theme.separator.frame(height: 1).padding(.leading, 60)
-                step(symbol: "wifi", color: .cyan, title: String(localized: "Connect it to your Wi-Fi"), detail: String(localized: "With the reader’s own app, once."))
+                step(symbol: "wifi", color: ScoreKind.network.color, title: String(localized: "Connect it to your Wi-Fi"), detail: String(localized: "With the reader’s own app, once."))
                 Theme.separator.frame(height: 1).padding(.leading, 60)
                 step(symbol: "sparkles", color: .indigo, title: String(localized: "Maison does the rest"), detail: String(localized: "It finds the reader on your network and adds it by itself."))
             }
@@ -889,29 +804,51 @@ struct MeterProposal: View {
     }
 }
 
-private struct EnergyChart: View {
+struct EnergyChart: View {
     let hours: [(start: Date, value: Double)]
     let unit: String
+    /// Drawn behind the bars, as a quiet band.
+    var offPeak: EnergyTariff.OffPeak?
+    var height: CGFloat = 240
+    /// Where the finger is on the chart.
+    @State private var touched: Date?
 
     var body: some View {
         let peak = hours.max { $0.value < $1.value }
+        let selected = touched.flatMap { date in hours.first { $0.start <= date && date < $0.start.addingTimeInterval(3600) } }
         Chart {
+            if let offPeak {
+                ForEach(hours.filter { offPeak.contains(hour: Calendar.current.component(.hour, from: $0.start)) }, id: \.start) { hour in
+                    RectangleMark(x: .value("Hour", hour.start, unit: .hour))
+                        .foregroundStyle(Theme.gaugeTrack.opacity(0.7))
+                }
+            }
             ForEach(hours, id: \.start) { hour in
                 BarMark(x: .value("Hour", hour.start, unit: .hour), y: .value("Energy", hour.value), width: .ratio(0.6))
-                    .foregroundStyle(hour.start == peak?.start ? Color.orange : Color.yellow)
+                    .foregroundStyle(hour.start == (selected ?? peak)?.start ? ScoreKind.energy.deep : ScoreKind.energy.color)
+                    .opacity(selected == nil || selected?.start == hour.start ? 1 : 0.45)
                     .clipShape(.capsule)
                     .annotation(position: .top, alignment: .center, spacing: 4) {
-                        if hour.start == peak?.start {
+                        if selected == nil, hour.start == peak?.start {
                             Text(hourText(hour.start))
                                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                                 .foregroundStyle(.white)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 3)
-                                .background(.orange, in: .capsule)
+                                .background(ScoreKind.energy.deep, in: .capsule)
                         }
                     }
             }
+            if let selected {
+                RuleMark(x: .value("Hour", selected.start, unit: .hour))
+                    .foregroundStyle(.clear)
+                    .annotation(position: .top, spacing: 0, overflowResolution: .init(x: .fit(to: .chart), y: .disabled)) {
+                        ChartCallout(time: hourText(selected.start), value: "\(selected.value.formatted(.number.precision(.fractionLength(0...2)))) \(unit)")
+                    }
+            }
         }
+        .chartXSelection(value: $touched)
+        .sensoryFeedback(.selection, trigger: selected?.start)
         .chartXAxis {
             AxisMarks(values: .stride(by: .hour, count: 6)) { value in
                 AxisValueLabel { value.as(Date.self).map { Text(hourText($0)) } }
@@ -920,7 +857,7 @@ private struct EnergyChart: View {
         .chartYAxis {
             AxisMarks { _ in AxisGridLine() }
         }
-        .frame(height: 240)
+        .frame(height: height)
         .padding(.top, 28)
         .accessibilityLabel("Electricity each hour over the last 24 hours")
     }
@@ -940,7 +877,7 @@ private struct NetworkFiche: View {
     var body: some View {
         if let score {
             VStack(alignment: .leading, spacing: 18) {
-                let (status, color) = health(score.percent)
+                let (status, color) = health(score.percent, kind: .network)
                 FicheHeader(
                     value: "\(score.percent)",
                     unit: "%",
@@ -1036,8 +973,10 @@ private extension NetworkFiche {
 
 private struct LatencyChart: View {
     let score: NetworkScore
+    @State private var touched: Date?
 
     var body: some View {
+        let selected = touched.flatMap { nearest(score.latency, to: $0, at: \.date) }
         Chart {
             if let usual = score.usualLatency {
                 RectangleMark(
@@ -1050,23 +989,36 @@ private struct LatencyChart: View {
             }
             ForEach(score.outages, id: \.start) { outage in
                 RectangleMark(xStart: .value("Start", outage.start), xEnd: .value("End", max(outage.end, outage.start.addingTimeInterval(900))))
-                    .foregroundStyle(Color.orange.opacity(0.25))
+                    .foregroundStyle(ScoreKind.network.deep.opacity(0.25))
                     .annotation(position: .top, spacing: 4) {
-                        Text("Outage at \(outage.start.formatted(date: .omitted, time: .shortened)), \(Attention.minutes(outage.duration))")
+                        Text("Outage at \(outage.start.formatted(date: .omitted, time: .shortened)), \(Highlight.minutes(outage.duration))")
                             .font(.system(size: 12, weight: .semibold, design: .rounded))
                             .foregroundStyle(.white)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 3)
-                            .background(.orange, in: .capsule)
+                            .background(ScoreKind.network.deep, in: .capsule)
                             .fixedSize()
                     }
             }
             ForEach(score.latency, id: \.date) { point in
                 LineMark(x: .value("Time", point.date), y: .value("Response", point.milliseconds))
-                    .foregroundStyle(Color.cyan)
+                    .foregroundStyle(ScoreKind.network.color)
                     .interpolationMethod(.monotone)
             }
+            if let selected {
+                RuleMark(x: .value("Time", selected.date))
+                    .foregroundStyle(Color.secondary.opacity(0.4))
+                    .annotation(position: .top, spacing: 0, overflowResolution: .init(x: .fit(to: .chart), y: .disabled)) {
+                        ChartCallout(time: selected.date.formatted(date: .omitted, time: .shortened),
+                                     value: "\(Int(selected.milliseconds.rounded())) ms")
+                    }
+                PointMark(x: .value("Time", selected.date), y: .value("Response", selected.milliseconds))
+                    .foregroundStyle(ScoreKind.network.deep)
+                    .symbolSize(60)
+            }
         }
+        .chartXSelection(value: $touched)
+        .sensoryFeedback(.selection, trigger: selected?.date)
         .chartXAxis {
             AxisMarks(values: .stride(by: .hour, count: 6)) { value in
                 AxisValueLabel { value.as(Date.self).map { Text(hourText($0)) } }
@@ -1147,7 +1099,7 @@ private struct AiringCard: View {
                 .font(.system(size: 18, weight: .semibold))
                 .foregroundStyle(.white)
                 .frame(width: 40, height: 40)
-                .background(.orange, in: .rect(cornerRadius: 11))
+                .background(ScoreKind.comfort.color, in: .rect(cornerRadius: 11))
             VStack(alignment: .leading, spacing: 2) {
                 Text("Comfort, weather").font(.roundedFootnoteEmphasized).foregroundStyle(.secondary)
                 Text("Air for 10 minutes now").font(.roundedHeadline)
@@ -1208,7 +1160,7 @@ private struct RoomExcursionCard: View {
                           systemImage: "exclamationmark.triangle")
                         .labelStyle(.compact)
                         .font(.roundedSubheadlineEmphasized)
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(ScoreKind.comfort.deep)
                 }
                 Spacer(minLength: 12)
                 Chart {
@@ -1216,7 +1168,7 @@ private struct RoomExcursionCard: View {
                         .foregroundStyle(Color.green.opacity(0.10))
                     ForEach(room.readings, id: \.date) { reading in
                         LineMark(x: .value("Time", reading.date), y: .value("Temperature", reading.value))
-                            .foregroundStyle(Color.orange)
+                            .foregroundStyle(ScoreKind.comfort.deep)
                             .interpolationMethod(.stepEnd)
                     }
                 }
@@ -1277,7 +1229,7 @@ private struct DeviceEnergyList: View {
                     GeometryReader { proxy in
                         ZStack(alignment: .leading) {
                             Capsule().fill(Theme.gaugeTrack)
-                            Capsule().fill(Color.yellow).frame(width: proxy.size.width * device.kilowattHours / peak)
+                            Capsule().fill(ScoreKind.energy.color).frame(width: proxy.size.width * device.kilowattHours / peak)
                         }
                     }
                     .frame(height: 8)
@@ -1333,7 +1285,7 @@ private struct CostTiles: View {
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundStyle(.white)
                         .frame(width: 40, height: 40)
-                        .background(.yellow, in: .rect(cornerRadius: 11))
+                        .background(ScoreKind.energy.color, in: .rect(cornerRadius: 11))
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Cost of the day").font(.roundedFootnoteEmphasized).foregroundStyle(.secondary)
                         Text("Add your kWh price to see the cost").font(.roundedHeadline).multilineTextAlignment(.leading)
@@ -1359,15 +1311,30 @@ private struct CostTiles: View {
 private struct ThroughputChart: View {
     let points: [(date: Date, value: Double)]
     let unit: String
+    @State private var touched: Date?
 
     var body: some View {
+        let selected = touched.flatMap { nearest(points, to: $0, at: \.date) }
         Chart {
             ForEach(points, id: \.date) { point in
                 LineMark(x: .value("Time", point.date), y: .value("Throughput", point.value))
-                    .foregroundStyle(Color.cyan)
+                    .foregroundStyle(ScoreKind.network.color)
                     .interpolationMethod(.monotone)
             }
+            if let selected {
+                RuleMark(x: .value("Time", selected.date))
+                    .foregroundStyle(Color.secondary.opacity(0.4))
+                    .annotation(position: .top, spacing: 0, overflowResolution: .init(x: .fit(to: .chart), y: .disabled)) {
+                        ChartCallout(time: selected.date.formatted(date: .omitted, time: .shortened),
+                                     value: "\(selected.value.formatted(.number.precision(.fractionLength(0...1)))) \(unit)")
+                    }
+                PointMark(x: .value("Time", selected.date), y: .value("Throughput", selected.value))
+                    .foregroundStyle(ScoreKind.network.deep)
+                    .symbolSize(60)
+            }
         }
+        .chartXSelection(value: $touched)
+        .sensoryFeedback(.selection, trigger: selected?.date)
         .chartXAxis {
             AxisMarks(values: .stride(by: .hour, count: 6)) { value in
                 AxisValueLabel { value.as(Date.self).map { Text(hourText($0)) } }
@@ -1378,5 +1345,34 @@ private struct ThroughputChart: View {
         }
         .frame(height: 200)
         .accessibilityLabel("Internet throughput over the last 24 hours, in \(unit)")
+    }
+}
+
+// MARK: - Touching a chart
+
+/// The point closest in time to where the finger is.
+func nearest<Point>(_ points: [Point], to date: Date, at time: KeyPath<Point, Date>) -> Point? {
+    points.min { abs($0[keyPath: time].timeIntervalSince(date)) < abs($1[keyPath: time].timeIntervalSince(date)) }
+}
+
+/// The time and the value under the finger, above the chart.
+struct ChartCallout: View {
+    let time: String
+    let value: String
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Text(value)
+                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .monospacedDigit()
+            Text(time)
+                .font(.system(size: 12, weight: .medium, design: .rounded))
+                .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(Theme.card, in: .rect(cornerRadius: 10))
+        .shadow(color: .black.opacity(0.12), radius: 6, y: 2)
+        .fixedSize()
     }
 }
