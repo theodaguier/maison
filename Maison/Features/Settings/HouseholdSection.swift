@@ -112,10 +112,10 @@ struct HouseholdSection: View {
         ) { member in
             Button("Remove", role: .destructive) {
                 Haptics.impact(.medium)
-                Task { await run { try await household.remove(member) } }
+                Task { await run { try await store.remove(member) } }
             }
         } message: { _ in
-            Text("They’ll lose access to the household’s favorites and settings. Their Home Assistant account isn’t affected.")
+            Text("They’ll lose access to this home, Home Assistant included.")
         }
         .confirmationDialog("Leave this household?", isPresented: $isConfirmingLeave, titleVisibility: .visible) {
             Button("Leave Household", role: .destructive) {
