@@ -24,6 +24,7 @@ struct DaySummarySheet: View {
                             .background(Theme.pill, in: .capsule)
                     }
                     .buttonStyle(.plain)
+                    .tapFeedback(.impact(weight: .light))
                     .disabled(digest.state == .writing)
                     Label("Written on your iPhone from your server’s history. Nothing is sent anywhere else.", systemImage: "iphone")
                         .font(.roundedFootnote)
@@ -33,6 +34,8 @@ struct DaySummarySheet: View {
                 .padding(.horizontal, Theme.screenPadding)
                 .padding(.bottom, 24)
             }
+            // A new summary, written again from the sheet.
+            .sensoryFeedback(.success, trigger: digest.writtenAt)
             .navigationTitle(Text(verbatim: title))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

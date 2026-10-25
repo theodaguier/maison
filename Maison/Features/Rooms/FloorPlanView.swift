@@ -26,7 +26,11 @@ struct FloorPlanView: View {
                     ForEach(placedDevices(frame: frame), id: \.id) { device in
                         DeviceMarker(entity: device.entity, isPlacing: device.id == placing)
                             .position(device.position)
-                            .onTapGesture { onOpenDevice?(device.id) }
+                            .onTapGesture {
+                                guard let onOpenDevice else { return }
+                                Haptics.impact()
+                                onOpenDevice(device.id)
+                            }
                     }
                 }
             }
@@ -36,7 +40,8 @@ struct FloorPlanView: View {
                     .onChanged { value in
                         guard placing != nil else { return }
                         onPlace?(frame.planPoint(value.location))
-                    },
+                    }
+                    .onEnded { _ in if placing != nil { Haptics.impact(.soft) } },
                 including: placing == nil ? .subviews : .all
             )
         }

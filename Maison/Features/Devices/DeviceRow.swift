@@ -85,7 +85,10 @@ struct DeviceRow: View {
             case .toggle:
                 Toggle("", isOn: Binding(
                     get: { entity.isActive },
-                    set: { _ in Task { await store.performPrimaryAction(on: entity) } }
+                    set: { _ in
+                        Haptics.impact()
+                        Task { await store.performPrimaryAction(on: entity) }
+                    }
                 ))
                 .labelsHidden()
                 .tint(.green)
