@@ -8,6 +8,7 @@ struct MaisonApp: App {
     @State private var belongings = DemoMode.isOn ? BelongingsStore.demo() : BelongingsStore.onDevice()
     @AppStorage("appearance") private var appearance: Appearance = .system
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
         WindowGroup {
@@ -29,6 +30,12 @@ struct MaisonApp: App {
                         store.household.pendingInvitation = metadata
                     }
                     await store.start()
+                }
+                // The connection may have died while the app was in the background.
+                .onChange(of: scenePhase) { _, phase in
+                    if phase == .active {
+                        Task { await store.becameActive() }
+                    }
                 }
         }
     }

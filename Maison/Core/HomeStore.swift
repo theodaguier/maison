@@ -52,6 +52,11 @@ final class HomeStore {
     @ObservationIgnored private(set) var activeURL: URL?
     @ObservationIgnored private var updatesTask: Task<Void, Never>?
     @ObservationIgnored private var retryTask: Task<Void, Never>?
+    /// Pings the server while connected, so that a dead connection is noticed within seconds.
+    @ObservationIgnored private var heartbeatTask: Task<Void, Never>?
+    @ObservationIgnored private var networkTask: Task<Void, Never>?
+    /// One attempt at a time: a network change and a return to the foreground often come together.
+    @ObservationIgnored private var isConnecting = false
     @ObservationIgnored private let timing: ConnectionTiming
     /// Updates received since the last redraw, applied together once `timing.batchWindow` has passed.
     @ObservationIgnored private var pendingUpdates: [EntityUpdate] = []
@@ -124,10 +129,39 @@ final class HomeStore {
             // Joined, but the app closed before signing in with the account made for this person.
             await signInWithInvitation()
         }
+        networkTask?.cancel()
+        networkTask = Task { [weak self] in
+            for await _ in NetworkRoute.changes() {
+                await self?.networkChanged()
+            }
+        }
         // Without credentials, onboarding starts discovery once it has explained why it needs the local network.
         if credentials != nil {
             await connect()
         }
+    }
+
+    /// The app is back in the foreground. A connection that died while it was away is replaced now,
+    /// not when the next ping fails; an unreachable server is tried again at once.
+    func becameActive() async {
+        guard !isDemo, credentials != nil else { return }
+        switch phase {
+        case .connected:
+            guard let connection, await !isAlive(connection) else { return }
+            stopUpdates()
+            await connect()
+        case .offline, .failed:
+            await connect()
+        case .connecting, .signedOut:
+            return
+        }
+    }
+
+    /// The iPhone moved to another network: the address that answers may not be the same (home Wi-Fi
+    /// against cellular), and a socket opened on the previous network may be dead without saying so.
+    func networkChanged() async {
+        guard !isDemo, credentials != nil, phase != .signedOut else { return }
+        await connect()
     }
 
     /// Runs Home Assistant's sign-in page through `authenticate`, which presents the URL and
@@ -160,17 +194,22 @@ final class HomeStore {
             phase = .signedOut
             return
         }
+        guard !isConnecting else { return }
+        isConnecting = true
+        defer { isConnecting = false }
         retryTask?.cancel()
         if states.isEmpty {
             phase = .connecting
         }
+        var opening: HomeAssistantConnection?
         do {
             // The local address at home, the remote one away.
             let opened = try await connector.connect(credentials)
+            let connection = opened.connection
+            opening = connection
             if opened.credentials != credentials {
                 try keep(opened.credentials)
             }
-            let connection = opened.connection
             async let layout = connection.layout()
             // One subscription gives every state, then only what changes, compressed.
             let (loadedStates, updates) = try await connection.entities()
@@ -178,6 +217,8 @@ final class HomeStore {
 
             // The old connection's stream ends when it closes: that is not a lost connection.
             stopUpdates()
+            // The old connection may have dropped while this one opened.
+            retryTask?.cancel()
             await self.connection?.disconnect()
             self.connection = connection
             activeURL = opened.address
@@ -200,9 +241,14 @@ final class HomeStore {
                 guard !Task.isCancelled else { return }
                 self?.connectionLost()
             }
+            heartbeatTask = Task { [weak self] in
+                await self?.keepAlive(connection)
+            }
         } catch HomeAssistantError.authenticationFailed(let message) {
+            await opening?.disconnect()
             phase = .failed(message ?? String(localized: "Home Assistant refused the sign-in."))
         } catch {
+            await opening?.disconnect()
             if states.isEmpty {
                 phase = .failed(error.localizedDescription)
             } else {
@@ -239,10 +285,41 @@ final class HomeStore {
         }
     }
 
+    /// Pings the server every `timing.heartbeat`. One that doesn't answer within `timing.pingTimeout`
+    /// counts as gone: its socket is closed and a new connection is tried.
+    private func keepAlive(_ connection: HomeAssistantConnection) async {
+        while !Task.isCancelled {
+            try? await Task.sleep(for: timing.heartbeat)
+            guard !Task.isCancelled else { return }
+            guard await isAlive(connection) else {
+                guard !Task.isCancelled, connection === self.connection else { return }
+                connectionLost()
+                return
+            }
+        }
+    }
+
+    /// Whether the server answers a ping in time. The round trip is kept for Settings.
+    /// A connection that doesn't answer is closed, so nothing waits on it any longer.
+    private func isAlive(_ connection: HomeAssistantConnection) async -> Bool {
+        do {
+            let duration = try await ServerConnector.run(within: timing.pingTimeout, onTimeout: { await connection.disconnect() }) {
+                try await connection.ping()
+            }
+            latencies = Array((latencies + [duration]).suffix(20))
+            return true
+        } catch {
+            await connection.disconnect()
+            return false
+        }
+    }
+
     /// Stops listening to the current connection. Updates already received are applied.
     private func stopUpdates() {
         updatesTask?.cancel()
         updatesTask = nil
+        heartbeatTask?.cancel()
+        heartbeatTask = nil
         flushTask?.cancel()
         flushUpdates()
     }
@@ -253,8 +330,8 @@ final class HomeStore {
             phase = .offline(since: lastUpdate ?? .now)
         }
         retryTask?.cancel()
-        retryTask = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(5))
+        retryTask = Task { [weak self, delay = timing.retryDelay] in
+            try? await Task.sleep(for: delay)
             guard !Task.isCancelled else { return }
             await self?.connect()
         }
@@ -1139,4 +1216,10 @@ extension Sequence<EntityState> {
 struct ConnectionTiming: Sendable {
     /// Updates arriving within this window are applied together, in one redraw.
     var batchWindow: Duration = .milliseconds(300)
+    /// How often the server is pinged while connected.
+    var heartbeat: Duration = .seconds(20)
+    /// How long a ping may take before the connection counts as dead.
+    var pingTimeout: Duration = .seconds(5)
+    /// How long to wait before trying again once the connection dropped.
+    var retryDelay: Duration = .seconds(5)
 }
