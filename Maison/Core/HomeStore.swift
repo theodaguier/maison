@@ -1100,11 +1100,18 @@ extension HomeStore {
         devices.filter { $0.kind == .light && $0.state == "on" }
     }
 
+    /// Thermometers inside the home. Told from outdoor ones by what the server knows of them, never by
+    /// their name, so it holds in any language. One in no room counts until it is placed outdoors.
     var indoorTemperatureSensors: [EntityState] {
         devices.filter {
-            $0.kind == .sensor && $0.deviceClass == "temperature" && $0.numericState != nil
-                && !$0.name.lowercased().contains("ext") && !$0.name.lowercased().contains("out")
+            $0.kind == .sensor && $0.deviceClass == "temperature" && $0.numericState != nil && !isOutdoors($0)
         }
+    }
+
+    /// In a room of the outdoor type, or reported by a weather forecast service.
+    func isOutdoors(_ entity: EntityState) -> Bool {
+        if let area = area(of: entity), roomKind(area) == .outdoor { return true }
+        return layout.platformByEntity[entity.entityID].map(IntegrationCategories.isForecast) ?? false
     }
 
     /// The temperature shown in the hero ring, with where it comes from.
@@ -1122,14 +1129,6 @@ extension HomeStore {
             return HeroTemperature(value: value, source: .outdoor)
         }
         return nil
-    }
-
-    /// Today's energy use, from the first energy sensor whose name says it is a daily total.
-    var energyToday: EntityState? {
-        devices.first {
-            $0.kind == .sensor && $0.deviceClass == "energy" && $0.numericState != nil
-                && ["today", "aujourd", "daily", "jour"].contains(where: $0.name.lowercased().contains)
-        }
     }
 
     func averageValue(of deviceClass: String, in area: Area) -> Double? {

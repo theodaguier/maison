@@ -158,6 +158,15 @@ struct EnergyScore: Sendable, Equatable {
         return today / usual - 1
     }
 
+    /// Energy used the day before, from midnight to the same time; `nil` without a reading that day.
+    var dayBeforeAtThisTime: Double? {
+        guard let previous = Calendar.current.date(byAdding: .day, value: -1, to: day) else { return nil }
+        let hours = history.filter { $0.start >= previous && $0.start < previous.addingTimeInterval(86_400) }
+        guard !hours.isEmpty else { return nil }
+        let end = previous.addingTimeInterval(asOf.timeIntervalSince(day))
+        return hours.filter { $0.start < end }.reduce(0) { $0 + $1.value }
+    }
+
     /// 100 at 30 % under the habit or less, 50 at the habit, 0 at 50 % over it.
     static func percent(ratio: Double) -> Int {
         let score = ratio <= 1 ? 100 - (ratio - 0.7) / 0.3 * 50 : 50 - (ratio - 1) / 0.5 * 50

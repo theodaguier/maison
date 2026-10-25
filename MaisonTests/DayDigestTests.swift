@@ -29,7 +29,9 @@ struct GroundedNumbersTests {
 
 @MainActor
 struct DayFactsTests {
-    @Test func demoHomeHasEnergyFact() async {
+    /// Before 1:00 the demo meter's last full hour is yesterday's, and today has nothing to tell yet.
+    @Test(.enabled(if: Calendar.current.component(.hour, from: .now) >= 1))
+    func demoHomeHasEnergyFact() async {
         let facts = await DemoHome.store().dayFacts()
         let energy = facts.first { $0.kind == .energy }
         #expect(energy != nil)

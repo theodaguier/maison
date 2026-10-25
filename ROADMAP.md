@@ -142,7 +142,6 @@ A Maison email, a bank connection, subscriptions that don't feed a score, a cond
 
 Dead ends that contradict the principles above:
 
-- The energy sensor is picked by its name (English or French words), so a sensor named in another language, or "Linky consumption", is never found (`HomeStore.energyToday`). Indoor temperature sensors are told from outdoor ones the same way, by "ext" or "out" in the name (`HomeStore.indoorTemperatureSensors`).
 - The temperature ring is fixed at 10–30 °C, saturated in a hot climate and wrong in °F (`Components.swift`).
 - The day summary and rule writing disappear when Apple Intelligence doesn't support the language.
 - The app is in English and French only.

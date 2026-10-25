@@ -144,7 +144,7 @@ extension HomeStore {
         return score
     }
 
-    private func energyScore(now: Date, weekAgo: Date) async -> EnergyScore? {
+    func energyScore(now: Date, weekAgo: Date) async -> EnergyScore? {
         let meters = await electricityMeters()
         guard !meters.ids.isEmpty else { return nil }
         var series: [(id: String, byHour: [Date: Double])] = []

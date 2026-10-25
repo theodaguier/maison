@@ -30,7 +30,7 @@ extension HomeStore {
         if let peak = await temperaturePeak(today: today) { facts.append(peak) }
         facts += await climateRuns(today: today, now: now)
         facts += await lockEvents(today: today)
-        if let energy = await energyUse() { facts.append(energy) }
+        if let energy = await energyUse(today: today, now: now) { facts.append(energy) }
         facts += await automationsRun(today: today)
         return facts
     }
@@ -119,15 +119,18 @@ extension HomeStore {
         return facts
     }
 
-    /// Today's energy use, compared with the same time yesterday.
-    private func energyUse() async -> DayFact? {
-        guard let energy = energyToday, let value = energy.numericState else { return nil }
-        let amount = value.formatted(.number.precision(.fractionLength(0...1)))
-        let title = String(localized: "\(amount) \(energy.unit ?? "kWh") used")
-        guard let change = await changeSinceYesterday(of: energy), value - change > 0 else {
+    /// Today's energy use, from the meter Energy reads, compared with the same time yesterday.
+    /// Nothing when the last reading is from another day, as with a meter read the next day.
+    private func energyUse(today: DateInterval, now: Date) async -> DayFact? {
+        guard let energy = await energyScore(now: now, weekAgo: now.addingTimeInterval(-8 * 86_400)),
+              energy.day == today.start else { return nil }
+        let amount = energy.today.formatted(.number.precision(.fractionLength(0...1)))
+        let title = String(localized: "\(amount) \(energy.unit) used")
+        guard let yesterday = energy.dayBeforeAtThisTime, yesterday > 0 else {
             return DayFact(kind: .energy, title: title)
         }
-        let percent = Int((abs(change) / (value - change) * 100).rounded())
+        let change = energy.today - yesterday
+        let percent = Int((abs(change) / yesterday * 100).rounded())
         let detail = switch percent {
         case 0: String(localized: "Same as yesterday at this time")
         case _ where change < 0: String(localized: "\(percent)% less than yesterday at this time")
