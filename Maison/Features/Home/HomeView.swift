@@ -75,13 +75,10 @@ private struct HomeDashboard: View {
     @State private var scansDocument = false
     #endif
 
-    /// Space between the large-title bar and the scores (design: they start at 238 pt, the bar ends at 187 pt).
-    private let heroSpace: CGFloat = 51
-
     var body: some View {
         ScrollView {
             VStack(spacing: Theme.sectionSpacing) {
-                hero
+                offlineBanner
                 ScoresCard(scores: scores, isDimmed: store.phase != .connected) { openedScore = $0 }
                 ForEach(arrangedSections) { section in
                     sectionView(section)
@@ -305,18 +302,17 @@ private struct HomeDashboard: View {
             .foregroundStyle(.secondary)
     }
 
-    // MARK: Hero
+    // MARK: Offline
 
-    private var hero: some View {
+    /// Above the scores, only while the server is unreachable; otherwise the scores sit right under the title.
+    private var offlineBanner: some View {
         VStack(spacing: 0) {
             if case .offline(let since) = store.phase {
                 OfflineBanner(since: since)
-                    .padding(.bottom, 10)
                     .transition(.opacity.combined(with: .scale(0.96, anchor: .bottom)))
             }
         }
         .animation(.smooth, value: store.phase)
-        .frame(minHeight: heroSpace - Theme.sectionSpacing, alignment: .bottom)
     }
 }
 
@@ -331,7 +327,7 @@ private struct ScoreInputs: Hashable {
     }
 }
 
-/// Shown over the hero when the server stops answering; cached data stays visible underneath.
+/// Shown above the scores when the server stops answering; cached data stays visible underneath.
 private struct OfflineBanner: View {
     let since: Date
 
