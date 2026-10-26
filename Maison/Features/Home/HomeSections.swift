@@ -29,8 +29,12 @@ extension Highlight {
                 : String(localized: "\(room) was too cold around \(hourText(start))")
         case .heatingWhileAway:
             String(localized: "The heating runs with nobody home")
+        case .coolingWhileAway:
+            String(localized: "The air conditioning runs with nobody home")
         case .windowOpenWhileHeating(let window, _):
             String(localized: "\(window) is open while the heating runs")
+        case .windowOpenWhileCooling(let window, _):
+            String(localized: "\(window) is open while the air conditioning runs")
         case .airNow(let room, _):
             String(localized: "The air is stale in \(room)")
         case .mildOutside:
@@ -64,10 +68,12 @@ extension Highlight {
             String(localized: "Cut for \(Highlight.minutes(duration))")
         case .roomOutOfRange(_, _, _, let percent):
             String(localized: "\(percent) % of the day in your range")
-        case .heatingWhileAway:
+        case .heatingWhileAway, .coolingWhileAway:
             String(localized: "Turn it off until someone is back")
         case .windowOpenWhileHeating:
             String(localized: "The heat goes outside")
+        case .windowOpenWhileCooling:
+            String(localized: "The cool air goes outside")
         case .airNow(_, let ppm):
             String(localized: "CO₂ at \(Int(ppm.rounded())) ppm, air for a few minutes")
         case .mildOutside(let temperature):
@@ -95,6 +101,9 @@ extension Highlight {
     /// What needs a look says it in its score's deeper colour; the rest stays quiet.
     var isPressing: Bool { rank == .now || rank == .worth || rank == .today }
 
+    /// A source still missing carries no value, so no origin to show.
+    var showsOrigin: Bool { rank != .missing }
+
     var destination: HomeDestination {
         switch fact {
         case .finding(let finding): .finding(finding)
@@ -105,16 +114,17 @@ extension Highlight {
     }
 
     /// The climates its button turns off, when the button acts rather than opens.
-    var heatingToTurnOff: [String] {
+    var climatesToTurnOff: [String] {
         switch fact {
-        case .heatingWhileAway(let ids), .windowOpenWhileHeating(_, let ids): ids
+        case .heatingWhileAway(let ids), .coolingWhileAway(let ids),
+             .windowOpenWhileHeating(_, let ids), .windowOpenWhileCooling(_, let ids): ids
         default: []
         }
     }
 
     /// Whether its button does more than open the score's fiche, which the section's header already does.
     var hasOwnAction: Bool {
-        if !heatingToTurnOff.isEmpty { return true }
+        if !climatesToTurnOff.isEmpty { return true }
         switch destination {
         case .score: return [.missingMeter, .missingTariff].contains(fact)
         default: return true
@@ -122,7 +132,7 @@ extension Highlight {
     }
 
     var actionTitle: String {
-        if !heatingToTurnOff.isEmpty { return String(localized: "Turn Off") }
+        if !climatesToTurnOff.isEmpty { return String(localized: "Turn Off") }
         switch fact {
         case .finding: return String(localized: "Fix")
         case .missingMeter, .missingTariff, .missingThermometer: return String(localized: "Add")
@@ -219,10 +229,13 @@ struct HomeSectionCard<Content: View>: View {
                         Text(highlight.title)
                             .font(.roundedHeadline)
                             .fixedSize(horizontal: false, vertical: true)
-                        Text(highlight.detail)
-                            .font(.roundedFootnote)
-                            .foregroundStyle(highlight.isPressing ? AnyShapeStyle(highlight.kind.deep) : AnyShapeStyle(.secondary))
-                            .fixedSize(horizontal: false, vertical: true)
+                        HStack(alignment: .firstTextBaseline, spacing: 6) {
+                            Text(highlight.detail)
+                                .font(.roundedFootnote)
+                                .foregroundStyle(highlight.isPressing ? AnyShapeStyle(highlight.kind.deep) : AnyShapeStyle(.secondary))
+                                .fixedSize(horizontal: false, vertical: true)
+                            if highlight.showsOrigin { OriginTag(origin: highlight.origin) }
+                        }
                     }
                     Spacer(minLength: 0)
                     if highlight.hasOwnAction {
@@ -249,9 +262,9 @@ struct HomeSectionCard<Content: View>: View {
     }
 
     private func act(on highlight: Highlight) {
-        guard !highlight.heatingToTurnOff.isEmpty else { return open(highlight.destination) }
+        guard !highlight.climatesToTurnOff.isEmpty else { return open(highlight.destination) }
         Task {
-            for id in highlight.heatingToTurnOff {
+            for id in highlight.climatesToTurnOff {
                 if let climate = store.states[id] { await store.call("climate", "turn_off", on: climate) }
             }
             turnedOff = true

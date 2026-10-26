@@ -1114,23 +1114,6 @@ extension HomeStore {
         return layout.platformByEntity[entity.entityID].map(IntegrationCategories.isForecast) ?? false
     }
 
-    /// The temperature shown in the hero ring, with where it comes from.
-    var heroTemperature: HeroTemperature? {
-        let indoorSensors = indoorTemperatureSensors
-        if !indoorSensors.isEmpty {
-            let values = indoorSensors.compactMap(\.numericState)
-            return HeroTemperature(value: values.reduce(0, +) / Double(values.count), source: .indoor)
-        }
-        if let climate = devices.first(where: { $0.kind == .climate && $0.currentTemperature != nil }) {
-            return HeroTemperature(value: climate.currentTemperature!, source: .indoor)
-        }
-        if let weather = states.values.first(where: { $0.domain == "weather" }),
-           let value = weather.attributes["temperature"]?.doubleValue {
-            return HeroTemperature(value: value, source: .outdoor)
-        }
-        return nil
-    }
-
     func averageValue(of deviceClass: String, in area: Area) -> Double? {
         let values = devices(in: area).filter { $0.kind == .sensor && $0.deviceClass == deviceClass }.compactMap(\.numericState)
         guard !values.isEmpty else { return nil }
@@ -1239,12 +1222,6 @@ struct IntegrationSummary: Equatable {
     let domain: String
     let title: String
     let count: Int
-}
-
-struct HeroTemperature: Equatable {
-    enum Source { case indoor, outdoor }
-    let value: Double
-    let source: Source
 }
 
 struct HomeSummary: Equatable {
