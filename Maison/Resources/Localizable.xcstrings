@@ -41,6 +41,16 @@
         }
       }
     },
+    "%@ (new room)": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ (nouvelle pièce)"
+          }
+        }
+      }
+    },
     "%@ a year": {
       "localizations": {
         "fr": {
@@ -461,6 +471,46 @@
         }
       }
     },
+    "%@ would like a new rule. Open Maison to create it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ aimerait une nouvelle règle. Ouvrez Maison pour la créer."
+          }
+        }
+      }
+    },
+    "%@ would like a turn-off timer on %@. Open Maison to set it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ aimerait une minuterie d’arrêt sur %2$@. Ouvrez Maison pour la régler."
+          }
+        }
+      }
+    },
+    "%@ would like an alert when %@ stays open. Open Maison to set it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ aimerait une alerte quand %2$@ reste ouvert. Ouvrez Maison pour la régler."
+          }
+        }
+      }
+    },
+    "%@ would like the devices put in their rooms. Open Maison to confirm the rooms it suggests.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ aimerait que les appareils soient rangés dans leurs pièces. Ouvrez Maison pour confirmer les pièces suggérées."
+          }
+        }
+      }
+    },
     "%@ yesterday": {
       "localizations": {
         "fr": {
@@ -626,6 +676,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@° de plus qu’hier"
+          }
+        }
+      }
+    },
+    "%@’s iPhone tells the server when they leave or come home. Maison counts them in “When everyone leaves” the next time an administrator opens it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’iPhone de %@ indique au serveur ses départs et ses retours. Maison le compte dans « Quand tout le monde part » la prochaine fois qu’un administrateur l’ouvre."
           }
         }
       }
@@ -2158,6 +2218,16 @@
         }
       }
     },
+    "A turn-off timer needs an administrator account.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une minuterie d’arrêt demande un compte administrateur."
+          }
+        }
+      }
+    },
     "A usual range, until Maison learns yours": {
       "localizations": {
         "fr": {
@@ -2314,6 +2384,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ajoutez votre prix du kWh pour voir le coût"
+          }
+        }
+      }
+    },
+    "Add your rooms, then Maison suggests which devices go where.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajoutez vos pièces, puis Maison propose où va chaque appareil."
           }
         }
       }
@@ -2548,12 +2628,32 @@
         }
       }
     },
-    "An administrator of your home adds them from Maison.": {
+    "An administrator confirms them from Maison.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un administrateur de votre maison les ajoute depuis Maison."
+            "value": "Un administrateur les confirme depuis Maison."
+          }
+        }
+      }
+    },
+    "An administrator of your home puts the devices in their rooms from Maison.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un administrateur de votre maison range les appareils dans leurs pièces depuis Maison."
+          }
+        }
+      }
+    },
+    "An alert when it stays open needs an administrator account.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une alerte quand il reste ouvert demande un compte administrateur."
           }
         }
       }
@@ -2654,6 +2754,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Arrivées et départs"
+          }
+        }
+      }
+    },
+    "Ask an Administrator": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demander à un administrateur"
+          }
+        }
+      }
+    },
+    "Asked": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demandé"
           }
         }
       }
@@ -3388,6 +3508,26 @@
         }
       }
     },
+    "Confirm": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirmer"
+          }
+        }
+      }
+    },
+    "Confirm the rooms Maison suggests, or add your own.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirmez les pièces que Maison propose, ou ajoutez les vôtres."
+          }
+        }
+      }
+    },
     "Connect it to your Wi-Fi": {
       "localizations": {
         "fr": {
@@ -3658,6 +3798,16 @@
         }
       }
     },
+    "Couldn’t put the devices in this room. Try again in a moment.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de ranger les appareils dans cette pièce. Réessayez dans un instant."
+          }
+        }
+      }
+    },
     "Couldn’t save the alert. It needs an administrator account in Home Assistant.": {
       "localizations": {
         "fr": {
@@ -3684,6 +3834,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Impossible d’enregistrer la connexion dans le trousseau : %@"
+          }
+        }
+      }
+    },
+    "Couldn’t send the request. Try again in a moment.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’envoyer la demande. Réessayez dans un instant."
           }
         }
       }
@@ -7288,6 +7448,26 @@
         }
       }
     },
+    "Only an administrator can create or change rules.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seul un administrateur peut créer ou modifier des règles."
+          }
+        }
+      }
+    },
+    "Only an administrator can create rules.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seul un administrateur peut créer des règles."
+          }
+        }
+      }
+    },
     "Only if": {
       "localizations": {
         "fr": {
@@ -8874,6 +9054,16 @@
         }
       }
     },
+    "Someone at home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quelqu’un de la maison"
+          }
+        }
+      }
+    },
     "Someone is home": {
       "localizations": {
         "fr": {
@@ -9020,6 +9210,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Favoris proposés"
+          }
+        }
+      }
+    },
+    "Suggested Rooms": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pièces suggérées"
           }
         }
       }
@@ -11080,6 +11280,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Votre tarif"
+          }
+        }
+      }
+    },
+    "Your iPhone reports its location, but doesn’t count for you yet in “When everyone leaves”.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre iPhone transmet sa position, mais ne compte pas encore pour vous dans « Quand tout le monde part »."
           }
         }
       }

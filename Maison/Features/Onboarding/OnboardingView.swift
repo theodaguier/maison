@@ -837,6 +837,7 @@ private struct PresenceStep: View {
             .padding(16)
             .cardStyle()
             .padding(.top, 14)
+            PresenceLinkNote().padding(.top, 10)
             if let error {
                 Text(error).font(.roundedFootnote).foregroundStyle(.orange).padding(.top, 10)
             }

@@ -4,9 +4,13 @@ import Observation
 import Testing
 
 /// A Home Assistant that answers everything `HomeStore.connect()` asks: `entities` is the first
-/// `subscribe_entities` message, registries and server details are empty.
-func fakeHomeServer(entities: JSONValue = [:], answersPings: Bool = true) -> FakeTransport {
+/// `subscribe_entities` message, registries and server details are empty unless `replies` has
+/// an answer for their command type.
+func fakeHomeServer(entities: JSONValue = [:], answersPings: Bool = true, replies: [String: JSONValue] = [:]) -> FakeTransport {
     FakeTransport { message in
+        if let type = message["type"]?.stringValue, let reply = replies[type] {
+            return [result(for: message, reply)]
+        }
         switch message["type"]?.stringValue {
         case "auth":
             return [["type": "auth_ok", "ha_version": "2026.8.1"]]
@@ -39,7 +43,9 @@ enum FakeHome {
         _ transports: [any WebSocketTransport],
         timing: ConnectionTiming = ConnectionTiming(),
         opened: Log<URL> = Log(),
-        lastKnownHome: (any LastKnownHomeStorage)? = nil
+        lastKnownHome: (any LastKnownHomeStorage)? = nil,
+        webhooks: MemoryWebhookStorage = MemoryWebhookStorage(),
+        http: any HTTPClient = URLSessionHTTPClient()
     ) throws -> HomeStore {
         let defaults = UserDefaults(suiteName: "FakeHome.\(UUID().uuidString)")!
         let keychain = MemoryCredentialStorage()
@@ -52,10 +58,11 @@ enum FakeHome {
         return HomeStore(
             credentialStore: keychain, defaults: defaults,
             household: HouseholdStore(cloud: nil, defaults: defaults),
-            presence: PresenceReporter(webhooks: MemoryWebhookStorage(), defaults: defaults),
+            presence: PresenceReporter(webhooks: webhooks, defaults: defaults),
             connector: connector,
             timing: timing,
-            lastKnownHome: lastKnownHome
+            lastKnownHome: lastKnownHome,
+            http: http
         )
     }
 }

@@ -197,7 +197,12 @@ struct SwitchControls: View {
             .padding(.vertical, 6)
 
             if entity.isActive {
-                AutoOffPills(entity: entity, timerEnd: $timerEnd)
+                if store.isResident {
+                    ResidentNote(text: "A turn-off timer needs an administrator account.",
+                                 request: .turnOffTimer(entityID: entity.entityID, name: entity.name))
+                } else {
+                    AutoOffPills(entity: entity, timerEnd: $timerEnd)
+                }
             }
 
             if let power {
@@ -713,24 +718,30 @@ struct FanControls: View {
                     .padding(.vertical, 10)
                     Theme.separator.frame(height: 1)
                 }
-                HStack {
-                    Text("Automatic Off").font(.roundedBody)
-                    Spacer()
-                    Menu {
-                        ForEach([30, 60, 120], id: \.self) { minutes in
-                            Button(String(localized: "In \(AutoOffPills.title(minutes))")) { Haptics.selection(); Task { await setTimer(minutes) } }
+                if store.isResident {
+                    ResidentNote(text: "A turn-off timer needs an administrator account.",
+                                 request: .turnOffTimer(entityID: entity.entityID, name: entity.name))
+                        .padding(.vertical, 12)
+                } else {
+                    HStack {
+                        Text("Automatic Off").font(.roundedBody)
+                        Spacer()
+                        Menu {
+                            ForEach([30, 60, 120], id: \.self) { minutes in
+                                Button(String(localized: "In \(AutoOffPills.title(minutes))")) { Haptics.selection(); Task { await setTimer(minutes) } }
+                            }
+                            Button("Never") { Haptics.selection(); Task { await setTimer(0) } }
+                        } label: {
+                            HStack(spacing: 4) {
+                                Text(timerEnd.map { String(localized: "At \(Phrasing.time($0))") } ?? String(localized: "Never"))
+                                Image(systemName: "chevron.up.chevron.down").font(.footnote)
+                            }
+                            .font(.roundedSubheadline)
+                            .foregroundStyle(.secondary)
                         }
-                        Button("Never") { Haptics.selection(); Task { await setTimer(0) } }
-                    } label: {
-                        HStack(spacing: 4) {
-                            Text(timerEnd.map { String(localized: "At \(Phrasing.time($0))") } ?? String(localized: "Never"))
-                            Image(systemName: "chevron.up.chevron.down").font(.footnote)
-                        }
-                        .font(.roundedSubheadline)
-                        .foregroundStyle(.secondary)
                     }
+                    .padding(.vertical, 12)
                 }
-                .padding(.vertical, 12)
             }
             .padding(.horizontal, 16)
             .cardStyle()
@@ -989,7 +1000,12 @@ struct OpeningControls: View {
                 .cardStyle()
             }
 
-            if isOpening {
+            if isOpening, store.isResident {
+                ResidentNote(text: "An alert when it stays open needs an administrator account.",
+                             request: .openingAlert(entityID: entity.entityID, name: entity.name))
+                    .padding(16)
+                    .cardStyle()
+            } else if isOpening {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(spacing: 10) {
                         Image(systemName: "bell.fill").foregroundStyle(.red)
@@ -1027,7 +1043,7 @@ struct OpeningControls: View {
             events = changes.filter { $0.date > start }
         }
         .task(id: entity.entityID) {
-            if isOpening { alertMinutes = await OpenTooLongAlert.minutes(for: entity, in: store) }
+            if isOpening, !store.isResident { alertMinutes = await OpenTooLongAlert.minutes(for: entity, in: store) }
         }
     }
 

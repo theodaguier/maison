@@ -19,10 +19,19 @@ final class HomeStore {
     private(set) var phase: Phase
     /// Counts service calls the server rejected or couldn't take, so the interface can signal them.
     private(set) var failedCommands = 0
-    private(set) var states: [String: EntityState] = [:]
-    private(set) var layout = HomeLayout() {
-        didSet { noteRoomsSeen() }
+    private(set) var states: [String: EntityState] = [:] {
+        didSet { findDuplicates() }
     }
+
+    private(set) var layout = HomeLayout() {
+        didSet {
+            noteRoomsSeen()
+            findDuplicates()
+        }
+    }
+
+    /// Entities that are another one shown twice, kept out of device lists (`DuplicateEntities`).
+    private(set) var duplicateEntities: Set<String> = []
 
     /// The chores done in each room, kept on this iPhone.
     private(set) var housekeepingLog: HousekeepingLog
@@ -48,6 +57,8 @@ final class HomeStore {
     @ObservationIgnored private var credentials: Credentials?
     @ObservationIgnored private(set) var connection: HomeAssistantConnection?
     @ObservationIgnored private let connector: ServerConnector
+    /// Carries the REST calls that set the server up.
+    @ObservationIgnored private let http: any HTTPClient
     /// The address the current connection goes through; REST calls use it too.
     @ObservationIgnored private(set) var activeURL: URL?
     @ObservationIgnored private var updatesTask: Task<Void, Never>?
@@ -81,9 +92,11 @@ final class HomeStore {
         presence: PresenceReporter? = nil,
         connector: ServerConnector = ServerConnector(),
         timing: ConnectionTiming = ConnectionTiming(),
-        lastKnownHome: (any LastKnownHomeStorage)? = nil
+        lastKnownHome: (any LastKnownHomeStorage)? = nil,
+        http: any HTTPClient = URLSessionHTTPClient()
     ) {
         self.credentialStore = credentialStore
+        self.http = http
         self.household = household ?? HouseholdStore(cloud: CloudKitHousehold.isEntitled ? CloudKitHousehold() : nil, defaults: defaults)
         self.presence = presence ?? .shared
         self.connector = connector
@@ -103,6 +116,7 @@ final class HomeStore {
             layout = home.layout
             lastUpdate = home.savedAt
         }
+        findDuplicates()
     }
 
     /// A store filled with sample data, for previews and the `-demo` launch argument.
@@ -112,6 +126,7 @@ final class HomeStore {
         // The demo never asks for the location nor registers with a server.
         presence = PresenceReporter(webhooks: MemoryWebhookStorage(), credentialStore: credentialStore, isDemo: true)
         connector = ServerConnector()
+        http = URLSessionHTTPClient()
         timing = ConnectionTiming()
         lastKnownHome = nil
         isDemo = true
@@ -121,6 +136,7 @@ final class HomeStore {
         self.layout = layout
         self.phase = phase
         noteRoomsSeen()
+        findDuplicates()
         serverURL = URL(string: "http://homeassistant.local:8123")
         serverVersion = "2026.8.1"
         lastUpdate = .now
@@ -469,6 +485,7 @@ final class HomeStore {
     }
 
     func signOut() async {
+        await removeRegistration()
         stopUpdates()
         retryTask?.cancel()
         await connection?.disconnect()
@@ -493,6 +510,19 @@ final class HomeStore {
         reportedConnection = false
         phase = .signedOut
         discovery.start()
+    }
+
+    /// What Maison registered for this iPhone leaves the server with it, when the account may remove it.
+    /// A server that doesn't answer quickly keeps it: signing out never waits on it.
+    private func removeRegistration() async {
+        guard let webhook = presence.webhook, let connection, phase == .connected else { return }
+        var user = currentUser
+        if user == nil { user = try? await connection.currentUser() }
+        guard user?.isAdmin == true, let credentials = try? await freshCredentials() else { return }
+        let flows = ConfigFlowClient(serverURL: activeURL ?? credentials.serverURL, accessToken: credentials.accessToken, client: http)
+        _ = try? await ServerConnector.run(within: timing.pingTimeout) {
+            await Self.removeRegistration(webhookID: webhook.id, through: connection, flows: flows)
+        }
     }
 
     // MARK: - Device details
@@ -537,6 +567,35 @@ final class HomeStore {
         layout = try await connection.layout()
     }
 
+    /// Puts the suggested devices in their room, making the room first when it doesn't exist yet.
+    /// A device's room is set on the device, so that its other entities follow; an entity without a
+    /// device gets its own. Administrators only.
+    func place(_ suggestion: RoomSuggestion) async throws {
+        if isDemo {
+            let areaID = suggestion.areaID ?? suggestion.roomName.lowercased().replacingOccurrences(of: " ", with: "_")
+            if suggestion.areaID == nil { layout.areas.append(Area(id: areaID, name: suggestion.roomName)) }
+            for id in suggestion.entityIDs { layout.areaByEntity[id] = areaID }
+            return
+        }
+        guard let connection else { throw HomeAssistantError.connectionClosed }
+        var areaID = suggestion.areaID
+        if areaID == nil {
+            let created = try await connection.send(["type": "config/area_registry/create", "name": .string(suggestion.roomName)])
+            areaID = created["area_id"]?.stringValue
+        }
+        guard let areaID else { throw HomeAssistantError.invalidResponse(statusCode: 200) }
+        var placedDevices: Set<String> = []
+        for entityID in suggestion.entityIDs {
+            if let device = layout.deviceByEntity[entityID] {
+                guard placedDevices.insert(device).inserted else { continue }
+                _ = try await connection.send(["type": "config/device_registry/update", "device_id": .string(device), "area_id": .string(areaID)])
+            } else {
+                _ = try await connection.send(["type": "config/entity_registry/update", "entity_id": .string(entityID), "area_id": .string(areaID)])
+            }
+        }
+        layout = try await connection.layout()
+    }
+
     /// Everything Maison sets up on the server by itself, so the person never has to open Home Assistant:
     /// devices it found, integrations that failed, remote access, the internet check. Administrators only.
     /// `true` when something changed on the server, and the devices were read again.
@@ -547,7 +606,7 @@ final class HomeStore {
         var user = currentUser
         if user == nil { user = try? await connection.currentUser() }
         guard user?.isAdmin == true, let credentials = try? await freshCredentials() else { return false }
-        let flows = ConfigFlowClient(serverURL: activeURL ?? credentials.serverURL, accessToken: credentials.accessToken)
+        let flows = ConfigFlowClient(serverURL: activeURL ?? credentials.serverURL, accessToken: credentials.accessToken, client: http)
         var changed = await adoptDiscoveredDevices(flows: flows, connection: connection)
         changed = await repairIntegrations(flows: flows, now: now) || changed
         changed = await turnOnCloudRemoteAccess(connection: connection) || changed
@@ -556,6 +615,8 @@ final class HomeStore {
         }
         changed = await ensureInternetResponseTime(connection: connection) || changed
         changed = await ensureWeather(flows: flows, now: now) || changed
+        // A person's trackers arrive with the states: nothing to read again.
+        await linkRequestedTrackers(through: connection)
         await syncGridConsumption(now: now)
         // New integrations bring entities and registry entries: reconnecting reads them.
         if changed { await connect() }
@@ -620,7 +681,7 @@ final class HomeStore {
         var user = currentUser
         if user == nil { user = try? await connection.currentUser() }
         guard user?.isAdmin == true, let credentials = try? await freshCredentials() else { return nil }
-        let flows = ConfigFlowClient(serverURL: activeURL ?? credentials.serverURL, accessToken: credentials.accessToken)
+        let flows = ConfigFlowClient(serverURL: activeURL ?? credentials.serverURL, accessToken: credentials.accessToken, client: http)
         var added: [String] = [], waiting: [String] = []
         for flow in (try? await connection.discoveredFlows()) ?? [] {
             if case .created? = try? await flows.confirmIfNothingToAsk(flowID: flow.flowID) {
@@ -798,26 +859,6 @@ final class HomeStore {
             remoteURL: credentials.remoteURL,
             cloudhookURL: registration.cloudhookURL
         )
-    }
-
-    /// Adds the iPhone's tracker to the person linked to the signed-in user, so they count as home or away.
-    func attachTracker(webhookID: String) async throws {
-        guard !isDemo, let connection, let userID = currentUser?.id else { return }
-        let entities = try await connection.send(["type": "config/entity_registry/list"])
-        guard let tracker = entities.arrayValue?.first(where: {
-            $0["platform"]?.stringValue == "mobile_app" && $0["unique_id"]?.stringValue == webhookID
-                && $0["entity_id"]?.stringValue?.hasPrefix("device_tracker.") == true
-        })?["entity_id"]?.stringValue else { return }
-        let persons = try await connection.send(["type": "person/list"])
-        guard let person = persons["storage"]?.arrayValue?.first(where: { $0["user_id"]?.stringValue == userID }),
-              let personID = person["id"]?.stringValue else { return }
-        let trackers = person["device_trackers"]?.arrayValue?.compactMap(\.stringValue) ?? []
-        guard !trackers.contains(tracker) else { return }
-        _ = try await connection.send([
-            "type": "person/update",
-            "person_id": .string(personID),
-            "device_trackers": .array((trackers + [tracker]).map { .string($0) }),
-        ])
     }
 
     /// Whether the signed-in user's person already has a tracker (often Home Assistant's own app).
@@ -1002,12 +1043,40 @@ enum MemberAccountError: LocalizedError, Equatable {
 // MARK: - Derived data
 
 extension HomeStore {
-    /// Entities that belong in device lists: controllable or informative, not hidden in Home Assistant.
+    /// Entities that belong in device lists: controllable or informative, not hidden in Home Assistant,
+    /// and not another one shown twice.
     var devices: [EntityState] {
-        states.values.filter { entity in
-            !layout.hiddenEntities.contains(entity.entityID)
-                && ![.other, .scene, .script, .automation, .button].contains(entity.kind)
-        }
+        states.values.filter { isDevice($0) && !duplicateEntities.contains($0.entityID) }
+    }
+
+    /// Every device, those shown twice included: an integration's page still lists them all.
+    var devicesWithDuplicates: [EntityState] {
+        states.values.filter(isDevice)
+    }
+
+    private func isDevice(_ entity: EntityState) -> Bool {
+        !layout.hiddenEntities.contains(entity.entityID)
+            && ![.other, .scene, .script, .automation, .button].contains(entity.kind)
+    }
+
+    private func findDuplicates() {
+        let found = DuplicateEntities.find(in: Array(states.values), layout: layout)
+        if found != duplicateEntities { duplicateEntities = found }
+    }
+
+    /// The device's name without its room, which the screen already shows, nor what its integration added.
+    func displayName(of entity: EntityState) -> String {
+        DeviceNaming.clearName(entity.name, room: area(of: entity)?.name)
+    }
+
+    /// Rooms suggested for devices that are in none, from their names.
+    var roomSuggestions: [RoomSuggestion] {
+        RoomSuggestion.suggest(for: devices, layout: layout)
+    }
+
+    /// A resident: a Home Assistant account that isn't an administrator. Unknown until the account is read.
+    var isResident: Bool {
+        !isDemo && currentUser?.isAdmin == false
     }
 
     func area(of entity: EntityState) -> Area? {

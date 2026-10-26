@@ -71,6 +71,26 @@ enum RoomKind: String, CaseIterable, Codable, Sendable {
         (.garage, ["garage"]),
     ]
 
+    /// The words of `name` that name a kind of room, as written there ("Lampe Cuisine" gives "Cuisine"),
+    /// to suggest a room for a device that is in none. Whole words only.
+    static func roomWord(in name: String) -> String? {
+        let characters = Array(name)
+        // Folded one character at a time, so that a match in the folded name maps back onto the name.
+        let foldedCharacters = characters.map { DeviceNaming.fold(String($0)) }
+        guard foldedCharacters.allSatisfy({ $0.count == 1 }) else { return nil }
+        let folded = foldedCharacters.joined()
+        for (_, words) in nameWords {
+            for word in words.sorted(by: { $0.count > $1.count }) {
+                guard let range = DeviceNaming.wholeWordRange(of: word, in: folded) else { continue }
+                let start = folded.distance(from: folded.startIndex, to: range.lowerBound)
+                let length = folded.distance(from: range.lowerBound, to: range.upperBound)
+                let found = String(characters[start..<(start + length)])
+                return found.prefix(1).uppercased() + found.dropFirst()
+            }
+        }
+        return nil
+    }
+
     private static func kind(icon: String) -> RoomKind? {
         let name = icon.hasPrefix("mdi:") ? String(icon.dropFirst(4)) : icon
         return iconPrefixes.first { $0.1.contains(where: name.hasPrefix) }?.0

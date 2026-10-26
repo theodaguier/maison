@@ -248,6 +248,13 @@ struct PresenceRow: View {
     @State private var error: String?
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            row
+            PresenceLinkNote().padding(.leading, 42)
+        }
+    }
+
+    private var row: some View {
         HStack(spacing: 12) {
             SettingsIcon(symbol: "location.fill", color: .blue)
             VStack(alignment: .leading, spacing: 1) {
@@ -512,7 +519,7 @@ extension HomeStore {
 
     /// Devices the integration provides: "2 speakers", "3 devices".
     func devices(of integration: IntegrationSummary) -> [EntityState] {
-        devices.filter { layout.platformByEntity[$0.entityID] == integration.domain }.sortedByName()
+        devicesWithDuplicates.filter { layout.platformByEntity[$0.entityID] == integration.domain }.sortedByName()
     }
 
     func integrationDetail(_ integration: IntegrationSummary) -> String? {

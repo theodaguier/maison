@@ -17,7 +17,7 @@ struct DeviceSheet: View {
                             .padding(.bottom, 24)
                     }
                     .toolbar { toolbar(for: entity) }
-                    .navigationTitle(entity.name)
+                    .navigationTitle(store.displayName(of: entity))
                 } else {
                     ContentUnavailableView("Device Unavailable", systemImage: "questionmark.circle")
                 }
