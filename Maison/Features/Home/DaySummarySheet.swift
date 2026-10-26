@@ -143,22 +143,22 @@ private struct FactRow: View {
     }
 
     private var symbol: String {
-        switch fact.kind {
-        case .temperature: "thermometer.medium"
-        case .climate(let heating): heating ? "flame.fill" : "snowflake"
-        case .lock(let locked): locked ? "lock.fill" : "lock.open.fill"
-        case .energy: "bolt.fill"
-        case .automations: "clock.fill"
+        switch fact {
+        case .temperaturePeak: "thermometer.medium"
+        case .climateRun(_, _, _, _, _, let heating): heating ? "flame.fill" : "snowflake"
+        case .lock(_, _, let locked, _, _): locked ? "lock.fill" : "lock.open.fill"
+        case .energyUse: "bolt.fill"
+        case .automationRuns: "clock.fill"
         }
     }
 
     private var color: Color {
-        switch fact.kind {
-        case .temperature: .orange
-        case .climate(let heating): heating ? .orange : .blue
-        case .lock(let locked): locked ? .green : .orange
-        case .energy: .yellow
-        case .automations: .indigo
+        switch fact {
+        case .temperaturePeak: .orange
+        case .climateRun(_, _, _, _, _, let heating): heating ? .orange : .blue
+        case .lock(_, _, let locked, _, _): locked ? .green : .orange
+        case .energyUse: .yellow
+        case .automationRuns: .indigo
         }
     }
 }
