@@ -74,6 +74,17 @@ extension HomeAssistantConnection {
             .compactMap { $0["stat_energy_from"]?.stringValue }
     }
 
+    /// Makes the statistic the grid meter of Home Assistant's Energy dashboard, the same way its own
+    /// settings do, keeping every other source. Needs an administrator account.
+    func setGridMeter(_ statisticID: String) async throws {
+        // A server whose dashboard was never set up has no preferences yet.
+        let sources = (try? await send(["type": "energy/get_prefs"]))?["energy_sources"]?.arrayValue ?? []
+        _ = try await send([
+            "type": "energy/save_prefs",
+            "energy_sources": .array(EnergyPrefs.settingGridMeter(statisticID, in: sources)),
+        ])
+    }
+
     /// The price set for grid electricity in the Energy dashboard: a fixed number, or an entity whose
     /// state is the price (a tariff that changes).
     func gridEnergyPrice() async throws -> (fixed: Double?, entityID: String?) {
@@ -138,5 +149,34 @@ struct ConfigEditor: Sendable {
         request.httpMethod = method
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
         return request
+    }
+}
+
+/// Home Assistant's Energy dashboard preferences.
+enum EnergyPrefs {
+    /// `sources` with `statisticID` as what the grid delivers: added to the grid source, or a grid source
+    /// made for it. Solar, gas, water and the price already set stay as they are.
+    static func settingGridMeter(_ statisticID: String, in sources: [JSONValue]) -> [JSONValue] {
+        let flow: JSONValue = .object([
+            "stat_energy_from": .string(statisticID),
+            "stat_cost": .null,
+            "entity_energy_price": .null,
+            "number_energy_price": .null,
+        ])
+        guard let index = sources.firstIndex(where: { $0["type"]?.stringValue == "grid" }),
+              case .object(var grid) = sources[index] else {
+            return sources + [.object([
+                "type": "grid",
+                "flow_from": .array([flow]),
+                "flow_to": .array([]),
+                "cost_adjustment_day": .number(0),
+            ])]
+        }
+        let flows = grid["flow_from"]?.arrayValue ?? []
+        guard !flows.contains(where: { $0["stat_energy_from"]?.stringValue == statisticID }) else { return sources }
+        grid["flow_from"] = .array(flows + [flow])
+        var result = sources
+        result[index] = .object(grid)
+        return result
     }
 }

@@ -30,8 +30,14 @@ enum ComfortRangeSetting {
         return lower...upper
     }
 
-    /// Where the score starts until three days of readings teach the household's own range.
-    static let starting: ClosedRange<Double> = 19...22
+    /// Where the score starts until three days of readings teach the household's own range,
+    /// in the unit the server measures in.
+    static func starting(fahrenheit: Bool) -> ClosedRange<Double> { fahrenheit ? 66...72 : 19...22 }
+
+    /// The bounds the person can set a range within, and the step, in the server's unit.
+    static func editable(fahrenheit: Bool) -> (bounds: ClosedRange<Double>, step: Double) {
+        fahrenheit ? (50...90, 1) : (10...32, 0.5)
+    }
 
     static func set(_ range: ClosedRange<Double>, in defaults: UserDefaults = .standard) {
         defaults.set(range.lowerBound, forKey: lowerKey)
@@ -39,10 +45,11 @@ enum ComfortRangeSetting {
     }
 
     /// The range Comfort scores against: the one entered, else the one learned, else the starting one.
-    static func resolve(entered: ClosedRange<Double>?, hourlyMeans: [Double]) -> (range: ClosedRange<Double>, origin: ValueOrigin, isStarting: Bool) {
+    static func resolve(entered: ClosedRange<Double>?, hourlyMeans: [Double],
+                        fahrenheit: Bool = false) -> (range: ClosedRange<Double>, origin: ValueOrigin, isStarting: Bool) {
         if let entered { return (entered, .entered, false) }
         if let learned = learned(from: hourlyMeans) { return (learned, .estimated, false) }
-        return (starting, .estimated, true)
+        return (starting(fahrenheit: fahrenheit), .estimated, true)
     }
 
     /// The 10th to 90th percentile of the previous week's hourly means, to the half degree.
@@ -82,6 +89,22 @@ extension HomeStore {
         return (connectivity, roundTrips.count >= 2 ? roundTrips[roundTrips.count - 2] : roundTrips.first)
     }
 
+    /// The box's or router's own internet check, from its integration: what Network counts when
+    /// Home Assistant has no Ping check, such as for a resident who can't add one.
+    var routerInternet: EntityState? {
+        // The box itself: an integration in the routers' category that also reports throughput or the
+        // devices it sees. A VPN's or a DNS filter's own connectivity sensors are about something else.
+        let boxes = Set(states.values.compactMap { entity -> String? in
+            guard entity.deviceClass == "data_rate" || (entity.domain == "device_tracker" && entity.attributes["source_type"]?.stringValue == "router"),
+                  let platform = layout.platformByEntity[entity.entityID], IntegrationCategories.isRouter(platform) else { return nil }
+            return platform
+        })
+        return states.values
+            .filter { $0.domain == "binary_sensor" && $0.deviceClass == "connectivity" }
+            .filter { layout.platformByEntity[$0.entityID].map(boxes.contains) ?? false }
+            .min { $0.entityID < $1.entityID }
+    }
+
     func loadScores(now: Date = .now) async -> HomeScores {
         let window = DateInterval(start: now.addingTimeInterval(-86_400), end: now)
         let weekAgo = now.addingTimeInterval(-8 * 86_400)
@@ -94,7 +117,7 @@ extension HomeStore {
             comfort: comfort,
             energy: energy,
             network: network,
-            hasNetworkSource: internetSources != nil,
+            hasNetworkSource: internetSources != nil || routerInternet != nil,
             hasElectricityMeter: !meters.ids.isEmpty,
             findings: findings,
             computedAt: now
@@ -128,7 +151,7 @@ extension HomeStore {
                 means += values
             }
             // Without three days to learn from, a usual range gives a score from the first day.
-            resolved = ComfortRangeSetting.resolve(entered: nil, hourlyMeans: means)
+            resolved = ComfortRangeSetting.resolve(entered: nil, hourlyMeans: means, fahrenheit: serverConfig?.usesFahrenheit ?? false)
         }
         var rooms: [(id: String, name: String, series: TimeSeries)] = []
         for (id, name, sensor) in sensors {
@@ -170,14 +193,26 @@ extension HomeStore {
             used = [largest.id]
         }
         let unit = used.lazy.compactMap { self.states[$0]?.unit }.first ?? "kWh"
-        return EnergyScore.compute(hourly: byHour.map { (start: $0.key, value: $0.value) }, unit: unit, now: now)
+        var score = EnergyScore.compute(hourly: byHour.map { (start: $0.key, value: $0.value) }, unit: unit, now: now)
+        score?.meterIDs = used
+        score?.meterIsConfirmed = meters.addUp
+        return score
+    }
+
+    /// Sets the meter Maison picked as the home's meter in Home Assistant's Energy dashboard, so the
+    /// server counts it too. Only an administrator can; `false` when it didn't work.
+    func confirmMeter(_ id: String) async -> Bool {
+        if isDemoHome { return true }
+        guard currentUser?.isAdmin == true, let connection else { return false }
+        return (try? await connection.setGridMeter(id)) != nil
     }
 
     private func networkScore(window: DateInterval, weekAgo: Date) async -> NetworkScore? {
-        guard let source = internetSources else { return nil }
-        let connectivity = await changes(of: source.connectivity.entityID, since: window.start)
+        // Ping first: it also times the round trip. Otherwise the router says whether the line is up.
+        guard let connectivitySensor = internetSources?.connectivity ?? routerInternet else { return nil }
+        let connectivity = await changes(of: connectivitySensor.entityID, since: window.start)
         var today: TimeSeries?, past: TimeSeries?
-        if let latency = source.latency {
+        if let latency = internetSources?.latency {
             let week = await changes(of: latency.entityID, since: weekAgo)
             today = TimeSeries(changes: week.filter { $0.date >= window.start })
             past = TimeSeries(changes: week.filter { $0.date < window.start })

@@ -145,6 +145,11 @@ struct EnergyScore: Sendable, Equatable {
     let lastDay: [(start: Date, value: Double)]
     /// Every hour read, for the cost of the month.
     var history: [(start: Date, value: Double)] = []
+    /// The meters counted.
+    var meterIDs: [String] = []
+    /// Whether the meters are the ones set in Home Assistant's Energy dashboard; otherwise Maison picked
+    /// the energy total that used the most, and suggests it.
+    var meterIsConfirmed = true
 
     /// `nil` while there is no habit to compare with.
     var percent: Int? {

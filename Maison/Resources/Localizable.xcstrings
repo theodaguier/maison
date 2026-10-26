@@ -13247,6 +13247,56 @@
           }
         }
       }
+    },
+    "Maison counts %@ as your meter": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maison compte %@ comme votre compteur"
+          }
+        }
+      }
+    },
+    "It couldn’t be set on your server. Try again in a moment.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de l’enregistrer sur votre serveur. Réessayez dans un instant."
+          }
+        }
+      }
+    },
+    "It’s the energy total that used the most. Confirm it to make it your home’s meter on your server too.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "C’est le total d’énergie qui a le plus consommé. Confirmez-le pour en faire aussi le compteur de la maison sur votre serveur."
+          }
+        }
+      }
+    },
+    "Confirm": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirmer"
+          }
+        }
+      }
+    },
+    "Confirmed": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirmé"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
