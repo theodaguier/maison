@@ -412,7 +412,7 @@ struct EnergySection: View {
                 }
                 SectionStats(items: Self.stats(energy, scores: scores))
             } else if scores?.hasElectricityMeter == false {
-                MissingSource(text: String(localized: "No meter is connected yet. Maison can read it with a small reader, or from your grid operator.")) { open(.score(.energy)) }
+                MissingSource(text: String(localized: "No meter is connected yet. Maison can read it with a small reader.")) { open(.score(.energy)) }
             } else if scores != nil, highlight == nil {
                 SectionWaiting(text: String(localized: "Waiting for the first readings of your meter."))
             }

@@ -134,7 +134,7 @@ struct ComfortScore: Sendable, Equatable {
 struct EnergyScore: Sendable, Equatable {
     /// Energy used on `day`, from midnight to `asOf`, in `unit`.
     let today: Double
-    /// The midnight the score is about: today with a live meter, yesterday with readings from the grid operator.
+    /// The midnight the score is about: today with a live meter, yesterday when the readings stop at midnight.
     var day: Date = .distantPast
     /// The end of the last hour with a reading.
     var asOf: Date = .distantPast

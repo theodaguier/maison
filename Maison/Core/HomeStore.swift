@@ -556,7 +556,6 @@ final class HomeStore {
         }
         changed = await ensureInternetResponseTime(connection: connection) || changed
         changed = await ensureWeather(flows: flows, now: now) || changed
-        await syncGridConsumption(now: now)
         // New integrations bring entities and registry entries: reconnecting reads them.
         if changed { await connect() }
         return changed
@@ -567,37 +566,6 @@ final class HomeStore {
         guard let connection, let price = try? await connection.gridEnergyPrice() else { return nil }
         if let fixed = price.fixed, fixed > 0 { return fixed }
         return price.entityID.flatMap { states[$0]?.numericState }
-    }
-
-    static let gridStatisticID = "maison:grid_consumption"
-
-    /// Brings the grid operator's readings since the last import into the server's statistics. They
-    /// arrive the day after, so this runs with every refresh and only asks for the days not imported yet.
-    @discardableResult
-    func syncGridConsumption(now: Date = .now) async -> Bool {
-        guard !isDemo, var link = GridLink.load(), link.operatorID == "enedis", let relay = MaisonRelay.url, let connection else { return false }
-        let today = Calendar.current.startOfDay(for: now)
-        // Enedis keeps three years; a first import goes back a month, enough for a habit.
-        let start = link.importedUntil ?? today.addingTimeInterval(-30 * 86_400)
-        guard start < today else { return false }
-        do {
-            let hourly = try await EnedisDataConnect(relay: relay)
-                .hourlyConsumption(meter: link.meterID, accessKey: link.accessKey, from: start, to: today)
-            guard let first = hourly.first?.start else { return false }
-            let before = await statistics(of: Self.gridStatisticID, since: first.addingTimeInterval(-3 * 86_400), period: "hour")
-            let previousSum = before.last { $0.start < first }?.sum ?? 0
-            try await connection.importEnergyStatistics(
-                id: Self.gridStatisticID,
-                name: String(localized: "Electricity from the grid"),
-                hourly: hourly,
-                previousSum: previousSum
-            )
-            link.importedUntil = today
-            link.save()
-            return true
-        } catch {
-            return false
-        }
     }
 
     /// Confirms the devices Home Assistant found on the network when it only waits for a "Submit".
@@ -705,8 +673,6 @@ final class HomeStore {
             return (["sensor.energy_today"], true)
         }
         if let connection, let grid = try? await connection.gridConsumptionStatistics(), !grid.isEmpty { return (grid, true) }
-        // Readings from the grid operator, imported into the server's statistics.
-        if GridLink.load() != nil { return ([Self.gridStatisticID], true) }
         let totals = devices
             .filter { $0.deviceClass == "energy" && ["total_increasing", "total"].contains($0.attributes["state_class"]?.stringValue ?? "") }
             .map(\.entityID)
