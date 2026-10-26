@@ -6,6 +6,9 @@
 # Builds
 build/
 DerivedData/
+DerivedData-*/
+# Swift packages built on their own (swift build / swift test)
+.build/
 *.xcarchive
 *.ipa
 *.dSYM.zip

@@ -1,5 +1,5 @@
 import Foundation
-@testable import Maison
+@testable import MaisonIntelligence
 import Testing
 
 struct DayUsageTests {

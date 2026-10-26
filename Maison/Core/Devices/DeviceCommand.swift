@@ -29,10 +29,3 @@ struct DeviceCommand: Sendable, Equatable {
         }
     }
 }
-
-extension EntityState {
-    /// Whether the device is in its active state (on, open, unlocked, playing…).
-    var isActive: Bool {
-        ["on", "open", "opening", "unlocked", "playing", "cleaning", "heat", "cool", "heat_cool", "auto"].contains(state)
-    }
-}

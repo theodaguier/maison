@@ -46,6 +46,10 @@ jobs:
           restore-keys: |
             spm-xcode-${{ steps.xcode.outputs.version }}-
 
+      # The intelligence layer is a Swift package of its own: its tests run without the app or a simulator.
+      - name: Intelligence layer tests
+        run: swift test --package-path Packages/MaisonIntelligence
+
       - name: XcodeGen
         run: |
           export HOMEBREW_NO_AUTO_UPDATE=1
@@ -84,3 +88,15 @@ jobs:
           path: build/Tests.xcresult
           if-no-files-found: ignore
           retention-days: 14
+
+  # The add-on will run the intelligence layer on Linux. Not a required check yet.
+  linux:
+    name: Intelligence layer on Linux
+    runs-on: ubuntu-latest
+    container: swift:6.2
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Tests
+        run: swift test --package-path Packages/MaisonIntelligence

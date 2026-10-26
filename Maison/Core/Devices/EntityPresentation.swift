@@ -3,47 +3,6 @@ import SwiftUI
 
 /// How an entity looks in lists: its symbol, accent colour, short status and inline control.
 extension EntityState {
-    var deviceClass: String? { attributes["device_class"]?.stringValue }
-    var unit: String? { attributes["unit_of_measurement"]?.stringValue }
-    var numericState: Double? { Double(state) }
-
-    // MARK: Values
-
-    /// Light brightness or cover position, 0…1, when the device exposes one.
-    var level: Double? {
-        switch kind {
-        case .light:
-            guard state == "on" else { return 0 }
-            return attributes["brightness"]?.doubleValue.map { $0 / 255 } ?? 1
-        case .cover:
-            return attributes["current_position"]?.doubleValue.map { $0 / 100 }
-        case .fan:
-            guard state == "on" else { return 0 }
-            return attributes["percentage"]?.doubleValue.map { $0 / 100 }
-        default:
-            return nil
-        }
-    }
-
-    var supportsLevel: Bool {
-        switch kind {
-        case .light:
-            let modes = attributes["supported_color_modes"]?.arrayValue?.compactMap(\.stringValue) ?? []
-            return attributes["brightness"] != nil || modes.contains { $0 != "onoff" }
-        case .cover:
-            return attributes["current_position"] != nil
-        case .fan:
-            return attributes["percentage"] != nil
-        default:
-            return false
-        }
-    }
-
-    var targetTemperature: Double? { attributes["temperature"]?.doubleValue }
-    var currentTemperature: Double? { attributes["current_temperature"]?.doubleValue }
-    var temperatureStep: Double { attributes["target_temp_step"]?.doubleValue ?? 0.5 }
-    var hvacAction: String? { attributes["hvac_action"]?.stringValue }
-
     // MARK: Appearance
 
     var symbolName: String {

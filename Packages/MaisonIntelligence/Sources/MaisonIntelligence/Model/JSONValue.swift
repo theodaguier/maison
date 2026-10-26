@@ -1,7 +1,7 @@
 import Foundation
 
 /// A loosely typed JSON value, used for Home Assistant payloads whose shape depends on the domain.
-enum JSONValue: Sendable, Hashable {
+public enum JSONValue: Sendable, Hashable {
     case null
     case bool(Bool)
     case number(Double)
@@ -9,45 +9,45 @@ enum JSONValue: Sendable, Hashable {
     case array([JSONValue])
     case object([String: JSONValue])
 
-    subscript(key: String) -> JSONValue? {
+    public subscript(key: String) -> JSONValue? {
         guard case .object(let object) = self else { return nil }
         return object[key]
     }
 
-    var stringValue: String? {
+    public var stringValue: String? {
         guard case .string(let value) = self else { return nil }
         return value
     }
 
-    var doubleValue: Double? {
+    public var doubleValue: Double? {
         guard case .number(let value) = self else { return nil }
         return value
     }
 
-    var intValue: Int? {
+    public var intValue: Int? {
         doubleValue.map { Int($0) }
     }
 
-    var boolValue: Bool? {
+    public var boolValue: Bool? {
         guard case .bool(let value) = self else { return nil }
         return value
     }
 
-    var arrayValue: [JSONValue]? {
+    public var arrayValue: [JSONValue]? {
         guard case .array(let value) = self else { return nil }
         return value
     }
 
-    var objectValue: [String: JSONValue]? {
+    public var objectValue: [String: JSONValue]? {
         guard case .object(let value) = self else { return nil }
         return value
     }
 
-    var isNull: Bool { self == .null }
+    public var isNull: Bool { self == .null }
 }
 
 extension JSONValue: Codable {
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         if container.decodeNil() {
             self = .null
@@ -64,7 +64,7 @@ extension JSONValue: Codable {
         }
     }
 
-    func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         switch self {
         case .null: try container.encodeNil()
@@ -79,18 +79,18 @@ extension JSONValue: Codable {
 
 extension JSONValue: ExpressibleByNilLiteral, ExpressibleByBooleanLiteral, ExpressibleByIntegerLiteral,
     ExpressibleByFloatLiteral, ExpressibleByStringLiteral, ExpressibleByArrayLiteral, ExpressibleByDictionaryLiteral {
-    init(nilLiteral: ()) { self = .null }
-    init(booleanLiteral value: Bool) { self = .bool(value) }
-    init(integerLiteral value: Int) { self = .number(Double(value)) }
-    init(floatLiteral value: Double) { self = .number(value) }
-    init(stringLiteral value: String) { self = .string(value) }
-    init(arrayLiteral elements: JSONValue...) { self = .array(elements) }
-    init(dictionaryLiteral elements: (String, JSONValue)...) {
+    public init(nilLiteral: ()) { self = .null }
+    public init(booleanLiteral value: Bool) { self = .bool(value) }
+    public init(integerLiteral value: Int) { self = .number(Double(value)) }
+    public init(floatLiteral value: Double) { self = .number(value) }
+    public init(stringLiteral value: String) { self = .string(value) }
+    public init(arrayLiteral elements: JSONValue...) { self = .array(elements) }
+    public init(dictionaryLiteral elements: (String, JSONValue)...) {
         self = .object(Dictionary(elements, uniquingKeysWith: { _, last in last }))
     }
 }
 
-extension JSONValue {
+public extension JSONValue {
     /// Decodes a typed value from this JSON tree.
     func decode<T: Decodable>(_ type: T.Type) throws -> T {
         try JSONDecoder().decode(T.self, from: JSONEncoder().encode(self))

@@ -4,18 +4,22 @@ import Foundation
 // `StateChange`, so the same code can run in the add-on later. Wording stays in the views.
 
 /// Where a value comes from. Every number Maison shows carries one.
-enum ValueOrigin: String, Sendable, Hashable, Codable {
+public enum ValueOrigin: String, Sendable, Hashable, Codable {
     case measured
     case estimated
     case entered
 }
 
 /// One series of values over time, as a sensor reported them.
-struct TimeSeries: Sendable, Equatable {
-    var changes: [StateChange]
+public struct TimeSeries: Sendable, Equatable {
+    public var changes: [StateChange]
+
+    public init(changes: [StateChange]) {
+        self.changes = changes
+    }
 
     /// Each value with the interval it held, clipped to `window`. Unreadable states (unavailable) leave gaps.
-    func segments(in window: DateInterval) -> [(value: Double, interval: DateInterval)] {
+    public func segments(in window: DateInterval) -> [(value: Double, interval: DateInterval)] {
         let sorted = changes.sorted { $0.date < $1.date }
         var result: [(Double, DateInterval)] = []
         for (index, change) in sorted.enumerated() {
@@ -31,48 +35,69 @@ struct TimeSeries: Sendable, Equatable {
 // MARK: - Comfort
 
 /// The share of the day each room spent inside the household's temperature range.
-struct ComfortScore: Sendable, Equatable {
-    struct Room: Sendable, Equatable, Identifiable {
-        let id: String
-        let name: String
-        let percent: Int
+public struct ComfortScore: Sendable, Equatable {
+    public struct Room: Sendable, Equatable, Identifiable {
+        public let id: String
+        public let name: String
+        public let percent: Int
         /// The longest stretch outside the range, if any lasted 15 minutes or more.
-        let excursion: Excursion?
+        public let excursion: Excursion?
         /// The readings over the window, oldest first, for the room's small chart.
-        var readings: [(date: Date, value: Double)] = []
+        public var readings: [(date: Date, value: Double)] = []
 
-        static func == (lhs: Room, rhs: Room) -> Bool {
+        public init(id: String, name: String, percent: Int, excursion: Excursion?, readings: [(date: Date, value: Double)] = []) {
+            self.id = id
+            self.name = name
+            self.percent = percent
+            self.excursion = excursion
+            self.readings = readings
+        }
+
+        public static func == (lhs: Room, rhs: Room) -> Bool {
             lhs.id == rhs.id && lhs.percent == rhs.percent && lhs.excursion == rhs.excursion
                 && lhs.readings.map(\.date) == rhs.readings.map(\.date) && lhs.readings.map(\.value) == rhs.readings.map(\.value)
         }
 
         /// The reading closest to the middle of the excursion, if any.
-        var excursionValue: Double? {
+        public var excursionValue: Double? {
             guard let excursion else { return nil }
             let middle = excursion.interval.start.addingTimeInterval(excursion.interval.duration / 2)
             return readings.min { abs($0.date.timeIntervalSince(middle)) < abs($1.date.timeIntervalSince(middle)) }?.value
         }
     }
 
-    enum Side: Sendable, Equatable { case tooWarm, tooCold }
+    public enum Side: Sendable, Equatable { case tooWarm, tooCold }
 
-    struct Excursion: Sendable, Equatable {
-        let side: Side
-        let interval: DateInterval
+    public struct Excursion: Sendable, Equatable {
+        public let side: Side
+        public let interval: DateInterval
+
+        public init(side: Side, interval: DateInterval) {
+            self.side = side
+            self.interval = interval
+        }
     }
 
-    let percent: Int
+    public let percent: Int
     /// Worst room first.
-    let rooms: [Room]
-    let range: ClosedRange<Double>
-    let rangeOrigin: ValueOrigin
+    public let rooms: [Room]
+    public let range: ClosedRange<Double>
+    public let rangeOrigin: ValueOrigin
     /// The range is the usual one Maison starts from, not yet learned from the household's readings.
-    var rangeIsStarting = false
+    public var rangeIsStarting = false
 
-    static let minimumExcursion: TimeInterval = 15 * 60
+    public init(percent: Int, rooms: [Room], range: ClosedRange<Double>, rangeOrigin: ValueOrigin, rangeIsStarting: Bool = false) {
+        self.percent = percent
+        self.rooms = rooms
+        self.range = range
+        self.rangeOrigin = rangeOrigin
+        self.rangeIsStarting = rangeIsStarting
+    }
+
+    public static let minimumExcursion: TimeInterval = 15 * 60
 
     /// `nil` when no room has a reading in the window.
-    static func compute(
+    public static func compute(
         rooms: [(id: String, name: String, series: TimeSeries)],
         range: ClosedRange<Double>,
         rangeOrigin: ValueOrigin,
@@ -131,40 +156,62 @@ struct ComfortScore: Sendable, Equatable {
 // MARK: - Energy
 
 /// Today's electricity compared with the household's own habit at the same time of day.
-struct EnergyScore: Sendable, Equatable {
+public struct EnergyScore: Sendable, Equatable {
     /// Energy used on `day`, from midnight to `asOf`, in `unit`.
-    let today: Double
+    public let today: Double
     /// The midnight the score is about: today with a live meter, yesterday when the readings stop at midnight.
-    var day: Date = .distantPast
+    public var day: Date = .distantPast
     /// The end of the last hour with a reading.
-    var asOf: Date = .distantPast
+    public var asOf: Date = .distantPast
     /// The median of the previous days at the same time; `nil` until there are three of them.
-    let usual: Double?
-    let unit: String
+    public let usual: Double?
+    public let unit: String
     /// The last 24 hours, oldest first, each hour's energy in `unit`.
-    let lastDay: [(start: Date, value: Double)]
+    public let lastDay: [(start: Date, value: Double)]
     /// Every hour read, for the cost of the month.
-    var history: [(start: Date, value: Double)] = []
+    public var history: [(start: Date, value: Double)] = []
     /// The meters counted.
-    var meterIDs: [String] = []
+    public var meterIDs: [String] = []
     /// Whether the meters are the ones set in Home Assistant's Energy dashboard; otherwise Maison picked
     /// the energy total that used the most, and suggests it.
-    var meterIsConfirmed = true
+    public var meterIsConfirmed = true
+
+    public init(
+        today: Double,
+        day: Date = .distantPast,
+        asOf: Date = .distantPast,
+        usual: Double?,
+        unit: String,
+        lastDay: [(start: Date, value: Double)],
+        history: [(start: Date, value: Double)] = [],
+        meterIDs: [String] = [],
+        meterIsConfirmed: Bool = true
+    ) {
+        self.today = today
+        self.day = day
+        self.asOf = asOf
+        self.usual = usual
+        self.unit = unit
+        self.lastDay = lastDay
+        self.history = history
+        self.meterIDs = meterIDs
+        self.meterIsConfirmed = meterIsConfirmed
+    }
 
     /// `nil` while there is no habit to compare with.
-    var percent: Int? {
+    public var percent: Int? {
         guard let usual, usual > 0 else { return nil }
         return Self.percent(ratio: today / usual)
     }
 
     /// −0.18 is 18 % under the habit.
-    var difference: Double? {
+    public var difference: Double? {
         guard let usual, usual > 0 else { return nil }
         return today / usual - 1
     }
 
     /// Energy used the day before, from midnight to the same time; `nil` without a reading that day.
-    var dayBeforeAtThisTime: Double? {
+    public var dayBeforeAtThisTime: Double? {
         guard let previous = Calendar.current.date(byAdding: .day, value: -1, to: day) else { return nil }
         let hours = history.filter { $0.start >= previous && $0.start < previous.addingTimeInterval(86_400) }
         guard !hours.isEmpty else { return nil }
@@ -173,16 +220,16 @@ struct EnergyScore: Sendable, Equatable {
     }
 
     /// 100 at 30 % under the habit or less, 50 at the habit, 0 at 50 % over it.
-    static func percent(ratio: Double) -> Int {
+    public static func percent(ratio: Double) -> Int {
         let score = ratio <= 1 ? 100 - (ratio - 0.7) / 0.3 * 50 : 50 - (ratio - 1) / 0.5 * 50
         return Int(min(100, max(0, score)).rounded())
     }
 
-    static let minimumDays = 3
+    public static let minimumDays = 3
 
     /// `hourly` is the energy used each hour (the statistics' `change`), over the last eight days or more.
     /// The score stops at the last hour with a reading: a meter read the next day scores yesterday, whole.
-    static func compute(hourly: [(start: Date, value: Double)], unit: String, now: Date, calendar: Calendar = .current) -> EnergyScore? {
+    public static func compute(hourly: [(start: Date, value: Double)], unit: String, now: Date, calendar: Calendar = .current) -> EnergyScore? {
         guard let latest = hourly.map(\.start).max() else { return nil }
         let asOf = min(now, latest.addingTimeInterval(3600))
         let midnight = calendar.startOfDay(for: asOf.addingTimeInterval(-1))
@@ -202,7 +249,7 @@ struct EnergyScore: Sendable, Equatable {
         return EnergyScore(today: today, day: midnight, asOf: asOf, usual: usual, unit: unit, lastDay: lastDay, history: hourly)
     }
 
-    static func == (lhs: EnergyScore, rhs: EnergyScore) -> Bool {
+    public static func == (lhs: EnergyScore, rhs: EnergyScore) -> Bool {
         lhs.today == rhs.today && lhs.day == rhs.day && lhs.asOf == rhs.asOf && lhs.usual == rhs.usual && lhs.unit == rhs.unit
             && lhs.lastDay.map(\.start) == rhs.lastDay.map(\.start) && lhs.lastDay.map(\.value) == rhs.lastDay.map(\.value)
     }
@@ -211,27 +258,34 @@ struct EnergyScore: Sendable, Equatable {
 // MARK: - Network
 
 /// Whether the internet was there today, and how fast it answered compared with the household's habit.
-struct NetworkScore: Sendable, Equatable {
+public struct NetworkScore: Sendable, Equatable {
     /// Share of the day the connection was up, from 0 to 1.
-    let availability: Double
+    public let availability: Double
     /// Interruptions of a minute or more.
-    let outages: [DateInterval]
+    public let outages: [DateInterval]
     /// Round-trip times today, in milliseconds.
-    let latency: [(date: Date, milliseconds: Double)]
+    public let latency: [(date: Date, milliseconds: Double)]
     /// The 10th to 90th percentile of the previous days; `nil` without enough history.
-    let usualLatency: ClosedRange<Double>?
+    public let usualLatency: ClosedRange<Double>?
+
+    public init(availability: Double, outages: [DateInterval], latency: [(date: Date, milliseconds: Double)], usualLatency: ClosedRange<Double>?) {
+        self.availability = availability
+        self.outages = outages
+        self.latency = latency
+        self.usualLatency = usualLatency
+    }
 
     /// Availability weighs 60 %, answering within the habit 40 %; without a habit, availability alone.
-    var percent: Int {
+    public var percent: Int {
         guard let usualLatency, !latency.isEmpty else { return Int((100 * availability).rounded()) }
         let within = Double(latency.filter { $0.milliseconds <= usualLatency.upperBound }.count) / Double(latency.count)
         return Int((100 * (0.6 * availability + 0.4 * within)).rounded())
     }
 
-    static let minimumOutage: TimeInterval = 60
+    public static let minimumOutage: TimeInterval = 60
 
     /// `connectivity` is an on/off sensor; `latency` today's round trips; `pastLatency` the previous days'.
-    static func compute(connectivity: [StateChange], latency: TimeSeries?, pastLatency: TimeSeries?, window: DateInterval) -> NetworkScore? {
+    public static func compute(connectivity: [StateChange], latency: TimeSeries?, pastLatency: TimeSeries?, window: DateInterval) -> NetworkScore? {
         let sorted = connectivity.sorted { $0.date < $1.date }
         var up: TimeInterval = 0, known: TimeInterval = 0
         var outages: [DateInterval] = []
@@ -257,7 +311,7 @@ struct NetworkScore: Sendable, Equatable {
         )
     }
 
-    static func == (lhs: NetworkScore, rhs: NetworkScore) -> Bool {
+    public static func == (lhs: NetworkScore, rhs: NetworkScore) -> Bool {
         lhs.availability == rhs.availability && lhs.outages == rhs.outages && lhs.usualLatency == rhs.usualLatency
             && lhs.latency.map(\.date) == rhs.latency.map(\.date) && lhs.latency.map(\.milliseconds) == rhs.latency.map(\.milliseconds)
     }
@@ -265,12 +319,12 @@ struct NetworkScore: Sendable, Equatable {
 
 // MARK: - Helpers
 
-func median(_ values: [Double]) -> Double {
+public func median(_ values: [Double]) -> Double {
     percentile(values, 0.5)
 }
 
 /// Linear interpolation between the closest ranks.
-func percentile(_ values: [Double], _ p: Double) -> Double {
+public func percentile(_ values: [Double], _ p: Double) -> Double {
     let sorted = values.sorted()
     guard !sorted.isEmpty else { return 0 }
     let rank = p * Double(sorted.count - 1)
