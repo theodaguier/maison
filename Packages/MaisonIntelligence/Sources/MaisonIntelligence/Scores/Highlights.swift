@@ -4,15 +4,23 @@ import Foundation
 // Structured facts only; the wording stays in the views. Each one keeps the origin of its value and
 // ends in one tap.
 
-struct Highlight: Identifiable, Equatable, Sendable {
-    let id: String
-    let score: Finding.ScoreKindID
-    let fact: Fact
-    let origin: ValueOrigin
-    let rank: Rank
+public struct Highlight: Identifiable, Equatable, Sendable {
+    public let id: String
+    public let score: Finding.ScoreKindID
+    public let fact: Fact
+    public let origin: ValueOrigin
+    public let rank: Rank
+
+    public init(id: String, score: Finding.ScoreKindID, fact: Fact, origin: ValueOrigin, rank: Rank) {
+        self.id = id
+        self.score = score
+        self.fact = fact
+        self.origin = origin
+        self.rank = rank
+    }
 
     /// Lower comes first.
-    enum Rank: Int, Comparable, Sendable {
+    public enum Rank: Int, Comparable, Sendable {
         /// To act on now.
         case now
         /// Worth money or comfort over the year.
@@ -24,10 +32,10 @@ struct Highlight: Identifiable, Equatable, Sendable {
         /// A source that would let Maison say more.
         case missing
 
-        static func < (lhs: Rank, rhs: Rank) -> Bool { lhs.rawValue < rhs.rawValue }
+        public static func < (lhs: Rank, rhs: Rank) -> Bool { lhs.rawValue < rhs.rawValue }
     }
 
-    enum Fact: Equatable, Sendable {
+    public enum Fact: Equatable, Sendable {
         case finding(Finding)
         case outage(start: Date, duration: TimeInterval)
         case roomOutOfRange(room: String, side: ComfortScore.Side, start: Date, percent: Int)
@@ -49,35 +57,64 @@ struct Highlight: Identifiable, Equatable, Sendable {
 }
 
 /// What the home measures right now, besides the scores.
-struct HighlightInputs: Sendable {
+public struct HighlightInputs: Sendable {
     /// Climates heating at this moment.
-    var heating: [String] = []
+    public var heating: [String] = []
     /// Climates cooling at this moment.
-    var cooling: [String] = []
+    public var cooling: [String] = []
     /// Whether someone is home; `nil` when nobody is tracked.
-    var someoneHome: Bool?
+    public var someoneHome: Bool?
     /// Open windows, by name, while heating or cooling runs.
-    var openWindows: [String] = []
-    var carbonDioxide: [(room: String, ppm: Double)] = []
-    var outdoor: OutdoorWeather?
+    public var openWindows: [String] = []
+    public var carbonDioxide: [(room: String, ppm: Double)] = []
+    public var outdoor: OutdoorWeather?
     /// The devices that used electricity on the scored day, most first.
-    var devices: [DeviceEnergy] = []
-    var price: EnergyPrice?
-    var cost: EnergyCost?
-    var connectedDevices: Int?
-    var hasThermometer = false
-    var meterProposalSeen = false
+    public var devices: [DeviceEnergy] = []
+    public var price: EnergyPrice?
+    public var cost: EnergyCost?
+    public var connectedDevices: Int?
+    public var hasThermometer = false
+    public var meterProposalSeen = false
+
+    public init(
+        heating: [String] = [],
+        cooling: [String] = [],
+        someoneHome: Bool? = nil,
+        openWindows: [String] = [],
+        carbonDioxide: [(room: String, ppm: Double)] = [],
+        outdoor: OutdoorWeather? = nil,
+        devices: [DeviceEnergy] = [],
+        price: EnergyPrice? = nil,
+        cost: EnergyCost? = nil,
+        connectedDevices: Int? = nil,
+        hasThermometer: Bool = false,
+        meterProposalSeen: Bool = false
+    ) {
+        self.heating = heating
+        self.cooling = cooling
+        self.someoneHome = someoneHome
+        self.openWindows = openWindows
+        self.carbonDioxide = carbonDioxide
+        self.outdoor = outdoor
+        self.devices = devices
+        self.price = price
+        self.cost = cost
+        self.connectedDevices = connectedDevices
+        self.hasThermometer = hasThermometer
+        self.meterProposalSeen = meterProposalSeen
+    }
 }
 
-enum Highlights {
+public enum Highlights {
     /// A device worth naming uses at least this share of the day's electricity.
-    static let minimumDeviceShare = 0.2
+    public static let minimumDeviceShare = 0.2
     /// The day is worth mentioning above this much over the habit.
-    static let minimumOverHabit = 0.1
+    public static let minimumOverHabit = 0.1
     /// Hours needed to tell what never switches off.
-    static let minimumHoursForBaseline = 72
+    public static let minimumHoursForBaseline = 72
 
-    static func compute(scores: HomeScores, inputs: HighlightInputs, calendar: Calendar = .current) -> [Highlight] {
+    /// `now` tells whether the scored day is today or yesterday.
+    public static func compute(scores: HomeScores, inputs: HighlightInputs, now: Date, calendar: Calendar = .current) -> [Highlight] {
         var result: [Highlight] = []
         func add(_ id: String, _ score: Finding.ScoreKindID, _ fact: Highlight.Fact, _ origin: ValueOrigin, _ rank: Highlight.Rank) {
             result.append(Highlight(id: id, score: score, fact: fact, origin: origin, rank: rank))
@@ -107,7 +144,7 @@ enum Highlights {
 
         // Worth it
         for finding in scores.findings {
-            add(finding.id, .energy, .finding(finding), .estimated, .worth)
+            add(finding.id, finding.score, .finding(finding), finding.yearlyValueOrigin, .worth)
         }
 
         // Today
@@ -116,14 +153,14 @@ enum Highlights {
                 .measured, .today)
         }
         if let energy = scores.energy, let difference = energy.difference, difference > minimumOverHabit {
-            add("energy-habit", .energy, .energyAboveHabit(difference: difference, isToday: calendar.isDateInToday(energy.day)), .measured, .today)
+            add("energy-habit", .energy, .energyAboveHabit(difference: difference, isToday: calendar.isDate(energy.day, inSameDayAs: now)), .measured, .today)
         }
         if let energy = scores.energy, let top = inputs.devices.first {
             let total = scores.hasElectricityMeter && energy.today > 0 ? energy.today : inputs.devices.reduce(0) { $0 + $1.kilowattHours }
             let share = total > 0 ? min(1, top.kilowattHours / total) : 0
             if share >= minimumDeviceShare {
                 add("top-device:\(top.id)", .energy, .topDevice(entityID: top.id, name: top.name, share: share, kilowattHours: top.kilowattHours,
-                                                                isToday: calendar.isDateInToday(energy.day)), .measured, .today)
+                                                                isToday: calendar.isDate(energy.day, inSameDayAs: now)), .measured, .today)
             }
         }
 
@@ -158,71 +195,9 @@ enum Highlights {
 
     /// What the home draws when everything is off: the lowest hours of the week, in watts. `nil` with
     /// fewer than three days of hourly readings.
-    static func alwaysOnWatts(_ hourly: [(start: Date, value: Double)]) -> Double? {
+    public static func alwaysOnWatts(_ hourly: [(start: Date, value: Double)]) -> Double? {
         let values = hourly.map(\.value).filter { $0 > 0 }
         guard values.count >= minimumHoursForBaseline else { return nil }
         return percentile(values, 0.05) * 1000
-    }
-}
-
-extension HomeStore {
-    /// Climates heating at this moment.
-    var heatingClimates: [EntityState] { climates(running: "heating", mode: "heat") }
-
-    /// Climates cooling at this moment.
-    var coolingClimates: [EntityState] { climates(running: "cooling", mode: "cool") }
-
-    /// Climates doing `action` now; without `hvac_action`, the ones set to `mode`.
-    private func climates(running action: String, mode: String) -> [EntityState] {
-        devices.filter { entity in
-            guard entity.domain == "climate" else { return false }
-            if let current = entity.attributes["hvac_action"]?.stringValue { return current == action }
-            return entity.state == mode
-        }
-    }
-
-    /// Whether someone is home; `nil` when no person is tracked.
-    var someoneHome: Bool? {
-        let people = states.values.filter { $0.domain == "person" && $0.state != "unknown" && $0.state != "unavailable" }
-        guard !people.isEmpty else { return nil }
-        return people.contains { $0.state == "home" }
-    }
-
-    /// Windows open in a room that is heated or cooled, or anywhere when the climate has no room.
-    func openWindows(whileRunning climates: [EntityState]) -> [EntityState] {
-        guard !climates.isEmpty else { return [] }
-        let heatedRooms = Set(climates.compactMap { area(of: $0)?.id })
-        return measuring(["window"], domains: ["binary_sensor"]).filter { window in
-            window.state == "on" && (heatedRooms.isEmpty || area(of: window).map { heatedRooms.contains($0.id) } ?? true)
-        }
-    }
-
-    /// What the highlights are computed from, besides the scores.
-    func highlightInputs(for scores: HomeScores) async -> HighlightInputs {
-        let heating = heatingClimates
-        let cooling = coolingClimates
-        var inputs = HighlightInputs(
-            heating: heating.map(\.entityID),
-            cooling: cooling.map(\.entityID),
-            someoneHome: someoneHome,
-            openWindows: openWindows(whileRunning: heating + cooling).map(\.name),
-            carbonDioxide: roomCarbonDioxide,
-            outdoor: outdoorWeather,
-            hasThermometer: !comfortSensors.isEmpty,
-            meterProposalSeen: MeterProposalSetting.wasSeen
-        )
-        if let energy = scores.energy {
-            let meters = await electricityMeters().ids
-            inputs.devices = await deviceEnergy(day: energy.day, asOf: energy.asOf, excluding: meters)
-            inputs.price = await energyPrice()
-            if let price = inputs.price {
-                inputs.cost = EnergyCost.compute(hourly: energy.history, price: price.price(atHour:), day: energy.day, asOf: energy.asOf)
-            }
-        } else {
-            inputs.price = await energyPrice()
-        }
-        let trackers = states.values.filter { $0.domain == "device_tracker" && $0.attributes["source_type"]?.stringValue == "router" }
-        if !trackers.isEmpty { inputs.connectedDevices = trackers.count { $0.state == "home" } }
-        return inputs
     }
 }
