@@ -183,6 +183,27 @@ struct HomeScoresTests {
         #expect(score.lastDay.count == 24)
     }
 
+    /// Readings that stop at midnight (a meter that reports the day after) score the day before, whole.
+    @Test func readingsThatStopAtMidnightScoreYesterdayWhole() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = try #require(TimeZone(identifier: "Europe/Paris"))
+        let midnight = calendar.startOfDay(for: start)
+        var hourly: [(start: Date, value: Double)] = []
+        // Seven full days of 1 kWh an hour, then yesterday at 0.8: nothing for today yet.
+        for day in 2...8 {
+            for hour in 0..<24 { hourly.append((midnight.addingTimeInterval(Double(-day * 24 + hour) * 3600), 1)) }
+        }
+        for hour in 0..<24 { hourly.append((midnight.addingTimeInterval(Double(-24 + hour) * 3600), 0.8)) }
+
+        let score = try #require(EnergyScore.compute(hourly: hourly, unit: "kWh", now: midnight.addingTimeInterval(9 * 3600), calendar: calendar))
+
+        #expect(score.day == midnight.addingTimeInterval(-86_400))
+        #expect(score.asOf == midnight)
+        #expect(abs(score.today - 19.2) < 0.0001)
+        #expect(score.usual == 24)
+        #expect(score.percent == 83)
+    }
+
     @Test func energyHasNoScoreBeforeThreeDaysOfHabit() throws {
         let midnight = Calendar.current.startOfDay(for: start)
         let hourly = (0..<30).map { (start: midnight.addingTimeInterval(Double($0 - 24) * 3600), value: 1.0) }

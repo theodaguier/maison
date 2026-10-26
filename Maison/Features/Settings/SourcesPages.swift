@@ -490,16 +490,7 @@ struct SourceDetailPage: View {
     @ViewBuilder private var ownWays: some View {
         switch source.setup {
         case .meter:
-            let gridOperator = MaisonRelay.url == nil ? nil : GridOperator.supported(in: store.serverConfig?.country)
-            if let gridOperator {
-                NavigationLink { MeterWayPage(gridOperator: gridOperator) } label: {
-                    SettingsRow(symbol: "bolt.horizontal.fill", color: .yellow, title: LocalizedStringKey("Link \(gridOperator.name)"),
-                                detail: String(localized: "Without hardware, the day after"), showsChevron: true)
-                }
-                .buttonStyle(.plain)
-                SettingsDivider()
-            }
-            NavigationLink { MeterWayPage(gridOperator: nil) } label: {
+            NavigationLink { MeterWayPage() } label: {
                 SettingsRow(symbol: "cable.connector", color: .orange, title: "A Reader on the Meter",
                             detail: String(localized: "Live, connected to your Wi-Fi"), showsChevron: true)
             }
@@ -529,25 +520,20 @@ struct SourceDetailPage: View {
     }
 }
 
-/// One way to get the meter's readings, on its own page.
+/// The way to get the meter's readings, on its own page.
 private struct MeterWayPage: View {
     @Environment(HomeStore.self) private var store
-    let gridOperator: GridOperator?
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
-                if let gridOperator {
-                    GridLinkCard(gridOperator: gridOperator)
-                } else {
-                    MeterProposal(reading: .forCountry(store.serverConfig?.country))
-                }
+                MeterProposal(reading: .forCountry(store.serverConfig?.country))
             }
             .padding(.horizontal, Theme.screenPadding)
             .padding(.bottom, 24)
         }
         .background(Theme.background)
-        .navigationTitle(gridOperator.map { String(localized: "Link \($0.name)") } ?? String(localized: "A Reader on the Meter"))
+        .navigationTitle("A Reader on the Meter")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
