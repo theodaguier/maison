@@ -134,7 +134,7 @@ struct ComfortScore: Sendable, Equatable {
 struct EnergyScore: Sendable, Equatable {
     /// Energy used on `day`, from midnight to `asOf`, in `unit`.
     let today: Double
-    /// The midnight the score is about: today with a live meter, yesterday with readings from the grid operator.
+    /// The midnight the score is about: today with a live meter, yesterday when the readings stop at midnight.
     var day: Date = .distantPast
     /// The end of the last hour with a reading.
     var asOf: Date = .distantPast
@@ -145,6 +145,11 @@ struct EnergyScore: Sendable, Equatable {
     let lastDay: [(start: Date, value: Double)]
     /// Every hour read, for the cost of the month.
     var history: [(start: Date, value: Double)] = []
+    /// The meters counted.
+    var meterIDs: [String] = []
+    /// Whether the meters are the ones set in Home Assistant's Energy dashboard; otherwise Maison picked
+    /// the energy total that used the most, and suggests it.
+    var meterIsConfirmed = true
 
     /// `nil` while there is no habit to compare with.
     var percent: Int? {

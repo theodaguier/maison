@@ -1,4 +1,3 @@
-import AuthenticationServices
 import Charts
 import SwiftUI
 import UserNotifications
@@ -359,7 +358,7 @@ private struct ComfortFiche: View {
                 }
                 RangeRow(range: score.range, origin: score.rangeOrigin, isStarting: score.rangeIsStarting) { editsRange = true }
             }
-            .sheet(isPresented: $editsRange) { ComfortRangeEditor(range: score.range) }
+            .sheet(isPresented: $editsRange) { ComfortRangeEditor(range: score.range, fahrenheit: fahrenheit) }
         } else if store.comfortSensors.isEmpty {
             MissingScore(
                 symbol: "thermometer.medium.slash",
@@ -376,9 +375,13 @@ private struct ComfortFiche: View {
                 Button("Set My Range") { editsRange = true }
                     .buttonStyle(.glassProminent)
             }
-            .sheet(isPresented: $editsRange) { ComfortRangeEditor(range: 19...22) }
+            .sheet(isPresented: $editsRange) {
+                ComfortRangeEditor(range: ComfortRangeSetting.starting(fahrenheit: fahrenheit), fahrenheit: fahrenheit)
+            }
         }
     }
+
+    private var fahrenheit: Bool { store.serverConfig?.usesFahrenheit ?? false }
 
     /// Air appears only when a room measures CO₂.
     private var tabs: [(value: Tab, title: LocalizedStringKey, symbol: String?)] {
@@ -501,8 +504,14 @@ private struct ComfortRangeEditor: View {
     @Environment(\.dismiss) private var dismiss
     @State private var lower: Double
     @State private var upper: Double
+    private let bounds: ClosedRange<Double>
+    private let step: Double
 
-    init(range: ClosedRange<Double>) {
+    /// `fahrenheit`: the server measures in °F, so the range is set in °F.
+    init(range: ClosedRange<Double>, fahrenheit: Bool) {
+        (bounds, step) = ComfortRangeSetting.editable(fahrenheit: fahrenheit)
+        // A range kept from the other unit falls back to the starting one rather than off the steppers.
+        let range = bounds.contains(range.lowerBound) && bounds.contains(range.upperBound) ? range : ComfortRangeSetting.starting(fahrenheit: fahrenheit)
         _lower = State(initialValue: range.lowerBound)
         _upper = State(initialValue: range.upperBound)
     }
@@ -511,10 +520,10 @@ private struct ComfortRangeEditor: View {
         NavigationStack {
             Form {
                 Section {
-                    Stepper(value: $lower, in: 10...(upper - 0.5), step: 0.5) {
+                    Stepper(value: $lower, in: bounds.lowerBound...(upper - step), step: step) {
                         LabeledContent("From", value: degrees(lower) + "°")
                     }
-                    Stepper(value: $upper, in: (lower + 0.5)...32, step: 0.5) {
+                    Stepper(value: $upper, in: (lower + step)...bounds.upperBound, step: step) {
                         LabeledContent("To", value: degrees(upper) + "°")
                     }
                 } footer: {
@@ -586,6 +595,9 @@ private struct EnergyFiche: View {
                     TopDeviceCard(device: top, unit: score.unit, isToday: Calendar.current.isDateInToday(score.day))
                 }
                 CostTiles(cost: extras.cost, price: extras.price, isToday: Calendar.current.isDateInToday(score.day)) { editsPrice = true }
+                if !score.meterIsConfirmed, let id = score.meterIDs.first, let meter = store.states[id] {
+                    MeterSuggestion(meter: meter)
+                }
                 if score.usual == nil {
                     MissingScore(
                         symbol: "calendar.badge.clock",
@@ -600,21 +612,9 @@ private struct EnergyFiche: View {
                     Task { extras = await EnergyExtrasData.load(store: store, score: score) }
                 }
             }
-        } else if let link = GridLink.load() {
-            MissingScore(
-                symbol: "bolt.badge.clock",
-                title: "Linked to Your Grid Operator",
-                message: LocalizedStringKey("\(GridOperator.byCountry.values.first { $0.id == link.operatorID }?.name ?? "") sends the previous day’s readings each morning. The score appears with the first of them.")
-            )
         } else {
-            VStack(alignment: .leading, spacing: 18) {
-                let gridOperator = MaisonRelay.url == nil ? nil : GridOperator.supported(in: store.serverConfig?.country)
-                if let gridOperator {
-                    GridLinkCard(gridOperator: gridOperator)
-                }
-                MeterProposal(reading: .forCountry(store.serverConfig?.country), isAlternative: gridOperator != nil)
-            }
-            .onAppear { MeterProposalSetting.markSeen() }
+            MeterProposal(reading: .forCountry(store.serverConfig?.country))
+                .onAppear { MeterProposalSetting.markSeen() }
         }
     }
 
@@ -643,6 +643,60 @@ private struct EnergyFiche: View {
     }
 }
 
+/// The energy total Maison counts as the home's meter when Home Assistant's Energy dashboard names none:
+/// one tap sets it there, so the server counts it too. A resident sees which one it is.
+private struct MeterSuggestion: View {
+    @Environment(HomeStore.self) private var store
+    let meter: EntityState
+    @State private var state: Step = .idle
+
+    enum Step { case idle, saving, saved, failed }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label {
+                Text("Maison counts \(meter.name) as your meter")
+                    .font(.roundedHeadline)
+                    .fixedSize(horizontal: false, vertical: true)
+            } icon: {
+                Image(systemName: "bolt.badge.checkmark")
+                    .foregroundStyle(ScoreKind.energy.color)
+            }
+            Group {
+                if state == .failed {
+                    Text("It couldn’t be set on your server. Try again in a moment.")
+                } else {
+                    Text("It’s the energy total that used the most. Confirm it to make it your home’s meter on your server too.")
+                }
+            }
+            .font(.roundedFootnote)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+            if store.currentUser?.isAdmin == true {
+                Button {
+                    Task {
+                        state = .saving
+                        state = await store.confirmMeter(meter.entityID) ? .saved : .failed
+                    }
+                } label: {
+                    if state == .saved {
+                        Label("Confirmed", systemImage: "checkmark")
+                    } else {
+                        Text("Confirm")
+                    }
+                }
+                .font(.roundedSubheadlineEmphasized)
+                .buttonStyle(.glassProminent)
+                .disabled(state == .saving || state == .saved)
+                .sensoryFeedback(.success, trigger: state == .saved)
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cardStyle()
+    }
+}
+
 /// Whether the home screen already proposed reading the meter: it does so once, then only in the fiche.
 enum MeterProposalSetting {
     static let seenKey = "meterProposalSeen"
@@ -650,84 +704,10 @@ enum MeterProposalSetting {
     static func markSeen() { UserDefaults.standard.set(true, forKey: seenKey) }
 }
 
-/// The way without hardware: the grid operator already has the meter's readings, and hands them over
-/// once the person approves Maison on its site. They arrive the day after.
-struct GridLinkCard: View {
-    @Environment(HomeStore.self) private var store
-    @Environment(\.webAuthenticationSession) private var webAuthenticationSession
-    let gridOperator: GridOperator
-    @State private var isLinking = false
-    @State private var error: String?
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 14) {
-                Image(systemName: "bolt.horizontal.fill")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(width: 40, height: 40)
-                    .background(ScoreKind.energy.color, in: .rect(cornerRadius: 11))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Without Hardware").font(.roundedFootnoteEmphasized).foregroundStyle(.secondary)
-                    Text("Your readings from \(gridOperator.name)").font(.roundedHeadline)
-                }
-            }
-            Text("Your meter already sends its readings to \(gridOperator.name). Approve Maison once on its site: Maison then receives the previous day’s consumption every morning.")
-                .font(.roundedSubheadline)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-            Button {
-                Task { await link() }
-            } label: {
-                Group {
-                    if isLinking { ProgressView() } else { Text("Link My \(gridOperator.name) Account") }
-                }
-                .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.glassProminent)
-            .controlSize(.large)
-            .disabled(isLinking)
-            if let error {
-                Text(error).font(.roundedFootnote).foregroundStyle(.red)
-            }
-        }
-        .padding(16)
-        .cardStyle()
-        .errorFeedback(error)
-    }
-
-    private func link() async {
-        guard let relay = MaisonRelay.url else { return }
-        isLinking = true
-        defer { isLinking = false }
-        let state = UUID().uuidString
-        do {
-            let callback = try await webAuthenticationSession.authenticate(
-                using: EnedisDataConnect(relay: relay).authorizationURL(state: state),
-                callbackURLScheme: EnedisDataConnect.callbackScheme,
-                preferredBrowserSession: .ephemeral
-            )
-            guard let approved = EnedisDataConnect.link(fromCallback: callback, expectedState: state) else {
-                error = String(localized: "\(gridOperator.name) didn’t confirm the link. Try again.")
-                return
-            }
-            GridLink(operatorID: gridOperator.id, meterID: approved.meterID, accessKey: approved.accessKey, linkedAt: .now).save()
-            error = nil
-            await store.syncGridConsumption()
-        } catch let failure as ASWebAuthenticationSessionError where failure.code == .canceledLogin {
-            return
-        } catch {
-            self.error = String(localized: "\(gridOperator.name) couldn’t be reached. Try again in a moment.")
-        }
-    }
-}
-
 /// No meter reaches the server: what reading it brings, and the way that fits the home's country.
 /// Once the reader is on the Wi-Fi, Home Assistant finds it and Maison adds it; nothing to set up.
 struct MeterProposal: View {
     let reading: MeterReading
-    /// Shown under the grid operator's card: the reader is then the way to measure live.
-    var isAlternative = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -761,8 +741,7 @@ struct MeterProposal: View {
     }
 
     private var title: String {
-        if isAlternative { return String(localized: "To Measure It Live") }
-        return switch reading {
+        switch reading {
         case .port: String(localized: "Your Meter Can Talk to Maison")
         case .clamp: String(localized: "Measure Your Electricity")
         }

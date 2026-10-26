@@ -31,8 +31,8 @@ extension HomeStore {
         if isDemoHome {
             // As the server words it, markdown image and all: Maison cleans it.
             let link = language == "fr"
-                ? "Cliquez sur « Soumettre », puis touchez la flèche droite sur le routeur pour enregistrer Freebox avec Home Assistant.\n\n![Emplacement du bouton sur le routeur](/static/images/config_freebox.png)"
-                : "Click \"Submit\", then touch the right arrow on the router to register Freebox with Home Assistant.\n\n![Location of button on the router](/static/images/config_freebox.png)"
+                ? "Cliquez sur « Soumettre », puis touchez la flèche droite sur le routeur pour enregistrer la box avec Home Assistant.\n\n![Emplacement du bouton sur le routeur](/static/images/config_router.png)"
+                : "Click \"Submit\", then touch the right arrow on the router to register the box with Home Assistant.\n\n![Location of button on the router](/static/images/config_router.png)"
             return FlowWording(domain: domain, resources: ["component.\(domain).config.step.link.description": link])
         }
         guard !isDemoHome, let connection, let resources = try? await connection.flowTranslations(domain: domain, language: language)

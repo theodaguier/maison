@@ -67,7 +67,7 @@ struct HomeScoresTests {
 
     @Test func aUsualRangeScoresFromTheFirstDayUntilOneIsLearned() {
         let first = ComfortRangeSetting.resolve(entered: nil, hourlyMeans: Array(repeating: 21, count: 10))
-        #expect(first.range == ComfortRangeSetting.starting)
+        #expect(first.range == 19...22)
         #expect(first.origin == .estimated)
         #expect(first.isStarting)
 
@@ -183,6 +183,27 @@ struct HomeScoresTests {
         #expect(score.lastDay.count == 24)
     }
 
+    /// Readings that stop at midnight (a meter that reports the day after) score the day before, whole.
+    @Test func readingsThatStopAtMidnightScoreYesterdayWhole() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = try #require(TimeZone(identifier: "Europe/Paris"))
+        let midnight = calendar.startOfDay(for: start)
+        var hourly: [(start: Date, value: Double)] = []
+        // Seven full days of 1 kWh an hour, then yesterday at 0.8: nothing for today yet.
+        for day in 2...8 {
+            for hour in 0..<24 { hourly.append((midnight.addingTimeInterval(Double(-day * 24 + hour) * 3600), 1)) }
+        }
+        for hour in 0..<24 { hourly.append((midnight.addingTimeInterval(Double(-24 + hour) * 3600), 0.8)) }
+
+        let score = try #require(EnergyScore.compute(hourly: hourly, unit: "kWh", now: midnight.addingTimeInterval(9 * 3600), calendar: calendar))
+
+        #expect(score.day == midnight.addingTimeInterval(-86_400))
+        #expect(score.asOf == midnight)
+        #expect(abs(score.today - 19.2) < 0.0001)
+        #expect(score.usual == 24)
+        #expect(score.percent == 83)
+    }
+
     @Test func energyHasNoScoreBeforeThreeDaysOfHabit() throws {
         let midnight = Calendar.current.startOfDay(for: start)
         let hourly = (0..<30).map { (start: midnight.addingTimeInterval(Double($0 - 24) * 3600), value: 1.0) }
@@ -294,6 +315,24 @@ struct HomeScoresTests {
         #expect(Highlights.compute(scores: HomeScores(computedAt: start), inputs: home).isEmpty)
     }
 
+    @Test func theAirConditioningRunningWithNobodyHomeIsCaughtToo() {
+        let inputs = HighlightInputs(cooling: ["climate.chambre"], someoneHome: false, openWindows: ["Fenêtre de la chambre"],
+                                     hasThermometer: true, meterProposalSeen: true)
+        let highlights = Highlights.compute(scores: HomeScores(computedAt: start), inputs: inputs)
+        #expect(highlights.map(\.id) == ["cooling-away", "window-cooling"])
+        #expect(highlights.allSatisfy { $0.climatesToTurnOff == ["climate.chambre"] && $0.hasOwnAction })
+        // A window open with nothing heating or cooling isn't worth a word.
+        let idle = HighlightInputs(openWindows: ["Fenêtre de la chambre"], hasThermometer: true, meterProposalSeen: true)
+        #expect(Highlights.compute(scores: HomeScores(computedAt: start), inputs: idle).isEmpty)
+    }
+
+    @Test func aHighlightShowsItsOriginUnlessItIsAMissingSource() {
+        let measured = Highlight(id: "h", score: .network, fact: .connectedDevices(count: 2), origin: .measured, rank: .context)
+        let missing = Highlight(id: "m", score: .energy, fact: .missingTariff, origin: .entered, rank: .missing)
+        #expect(measured.showsOrigin)
+        #expect(!missing.showsOrigin)
+    }
+
     @Test func aDeviceIsNamedOnlyWhenItUsesAFifthOfTheDay() {
         let energy = EnergyScore(today: 10, day: start, asOf: at(12), usual: nil, unit: "kWh", lastDay: [])
         let scores = HomeScores(energy: energy, hasElectricityMeter: true, computedAt: start)
@@ -395,5 +434,61 @@ struct HomeScoresTests {
         #expect(MeterReading.forCountry(nil, region: "NO") == .port(.han))
         #expect(MeterReading.forCountry(nil, region: nil) == .clamp)
         #expect(MeterReading.forCountry("DE", region: "FR") == .clamp)
+    }
+}
+
+struct ScoresWithoutDeadEndTests {
+    @Test func aServerInFahrenheitStartsFromAFahrenheitRange() {
+        let first = ComfortRangeSetting.resolve(entered: nil, hourlyMeans: [], fahrenheit: true)
+        #expect(first.range == 66...72)
+        #expect(first.isStarting)
+        #expect(ComfortRangeSetting.editable(fahrenheit: true).bounds.contains(first.range.upperBound))
+        #expect(ComfortRangeSetting.resolve(entered: nil, hourlyMeans: []).range == 19...22)
+    }
+
+    @Test func theServerSaysWhichTemperatureUnitItUses() throws {
+        let fahrenheit = try JSONValue.object(["location_name": "Home", "unit_system": ["temperature": "°F", "length": "mi"]])
+            .decode(ServerConfig.self)
+        #expect(fahrenheit.usesFahrenheit)
+        let celsius = try JSONValue.object(["location_name": "Maison", "unit_system": ["temperature": "°C"]]).decode(ServerConfig.self)
+        #expect(!celsius.usesFahrenheit)
+        #expect(try !JSONValue.object(["location_name": "Maison"]).decode(ServerConfig.self).usesFahrenheit)
+    }
+
+    @Test func confirmingAMeterAddsItToTheGridAndKeepsTheRest() {
+        let solar: JSONValue = ["type": "solar", "stat_energy_from": "sensor.solar"]
+        // No grid yet: one is made for the meter.
+        let made = EnergyPrefs.settingGridMeter("sensor.compteur", in: [solar])
+        #expect(made.count == 2)
+        #expect(made[0] == solar)
+        #expect(made[1]["type"]?.stringValue == "grid")
+        #expect(made[1]["flow_from"]?.arrayValue?.compactMap { $0["stat_energy_from"]?.stringValue } == ["sensor.compteur"])
+        // A grid with a price already: the meter joins it, the price stays.
+        let priced: JSONValue = ["type": "grid", "flow_from": [["stat_energy_from": "sensor.hc", "number_energy_price": 0.2]], "flow_to": []]
+        let joined = EnergyPrefs.settingGridMeter("sensor.compteur", in: [priced])
+        let flows = joined[0]["flow_from"]?.arrayValue ?? []
+        #expect(flows.compactMap { $0["stat_energy_from"]?.stringValue } == ["sensor.hc", "sensor.compteur"])
+        #expect(flows[0]["number_energy_price"]?.doubleValue == 0.2)
+        // Already there: nothing changes.
+        #expect(EnergyPrefs.settingGridMeter("sensor.hc", in: [priced]) == [priced])
+    }
+
+    @MainActor
+    @Test func withoutPingTheBoxSaysWhetherTheInternetIsUp() {
+        var layout = DemoHome.layout
+        layout.platformByEntity["binary_sensor.box_wan"] = "fritz"
+        layout.platformByEntity["sensor.box_download"] = "fritz"
+        layout.platformByEntity["binary_sensor.vpn_laptop"] = "tailscale"
+        let states = DemoHome.states.filter { layout.platformByEntity[$0.entityID] != "ping" } + [
+            EntityState(entityID: "binary_sensor.vpn_laptop", state: "on", attributes: ["device_class": "connectivity"]),
+            EntityState(entityID: "binary_sensor.box_wan", state: "on", attributes: ["device_class": "connectivity"]),
+            EntityState(entityID: "sensor.box_download", state: "12", attributes: ["device_class": "data_rate", "unit_of_measurement": "MB/s"]),
+        ]
+        let store = HomeStore(
+            demo: states,
+            layout: layout,
+            household: HouseholdStore(demo: DemoHome.household, members: DemoHome.members, plan: DemoHome.plan)
+        )
+        #expect(store.routerInternet?.entityID == "binary_sensor.box_wan")
     }
 }

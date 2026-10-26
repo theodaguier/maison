@@ -108,6 +108,10 @@ struct ServerConfig: Sendable, Hashable, Decodable {
     var country: String?
     /// ISO 4217 code ("EUR"), the currency Home Assistant counts energy costs in.
     var currency: String?
+    /// "°C" or "°F", from Home Assistant's unit system.
+    var temperatureUnit: String?
+
+    var usesFahrenheit: Bool { temperatureUnit == "°F" }
 
     private enum CodingKeys: String, CodingKey {
         case locationName = "location_name"
@@ -115,6 +119,24 @@ struct ServerConfig: Sendable, Hashable, Decodable {
         case externalURL = "external_url"
         case internalURL = "internal_url"
         case country, currency
+        case unitSystem = "unit_system"
+    }
+
+    private struct UnitSystem: Decodable {
+        let temperature: String?
+    }
+}
+
+extension ServerConfig {
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        locationName = try container.decodeIfPresent(String.self, forKey: .locationName)
+        version = try container.decodeIfPresent(String.self, forKey: .version)
+        externalURL = try container.decodeIfPresent(String.self, forKey: .externalURL)
+        internalURL = try container.decodeIfPresent(String.self, forKey: .internalURL)
+        country = try container.decodeIfPresent(String.self, forKey: .country)
+        currency = try container.decodeIfPresent(String.self, forKey: .currency)
+        temperatureUnit = try? container.decodeIfPresent(UnitSystem.self, forKey: .unitSystem)?.temperature
     }
 }
 

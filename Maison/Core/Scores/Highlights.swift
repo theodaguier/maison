@@ -32,7 +32,9 @@ struct Highlight: Identifiable, Equatable, Sendable {
         case outage(start: Date, duration: TimeInterval)
         case roomOutOfRange(room: String, side: ComfortScore.Side, start: Date, percent: Int)
         case heatingWhileAway(entityIDs: [String])
+        case coolingWhileAway(entityIDs: [String])
         case windowOpenWhileHeating(window: String, entityIDs: [String])
+        case windowOpenWhileCooling(window: String, entityIDs: [String])
         case airNow(room: String, ppm: Double)
         case mildOutside(temperature: Double)
         case energyAboveHabit(difference: Double, isToday: Bool)
@@ -50,9 +52,11 @@ struct Highlight: Identifiable, Equatable, Sendable {
 struct HighlightInputs: Sendable {
     /// Climates heating at this moment.
     var heating: [String] = []
+    /// Climates cooling at this moment.
+    var cooling: [String] = []
     /// Whether someone is home; `nil` when nobody is tracked.
     var someoneHome: Bool?
-    /// Open windows, by name, while heating runs.
+    /// Open windows, by name, while heating or cooling runs.
     var openWindows: [String] = []
     var carbonDioxide: [(room: String, ppm: Double)] = []
     var outdoor: OutdoorWeather?
@@ -83,8 +87,15 @@ enum Highlights {
         if !inputs.heating.isEmpty, inputs.someoneHome == false {
             add("heating-away", .comfort, .heatingWhileAway(entityIDs: inputs.heating), .measured, .now)
         }
-        if !inputs.heating.isEmpty, let window = inputs.openWindows.first {
-            add("window-heating", .comfort, .windowOpenWhileHeating(window: window, entityIDs: inputs.heating), .measured, .now)
+        if !inputs.cooling.isEmpty, inputs.someoneHome == false {
+            add("cooling-away", .comfort, .coolingWhileAway(entityIDs: inputs.cooling), .measured, .now)
+        }
+        if let window = inputs.openWindows.first {
+            if !inputs.heating.isEmpty {
+                add("window-heating", .comfort, .windowOpenWhileHeating(window: window, entityIDs: inputs.heating), .measured, .now)
+            } else if !inputs.cooling.isEmpty {
+                add("window-cooling", .comfort, .windowOpenWhileCooling(window: window, entityIDs: inputs.cooling), .measured, .now)
+            }
         }
         let airing = AiringAdvice.compute(outdoor: inputs.outdoor, carbonDioxide: inputs.carbonDioxide)
         if case .carbonDioxide(let room, let ppm)? = airing?.reason {
@@ -156,11 +167,17 @@ enum Highlights {
 
 extension HomeStore {
     /// Climates heating at this moment.
-    var heatingClimates: [EntityState] {
+    var heatingClimates: [EntityState] { climates(running: "heating", mode: "heat") }
+
+    /// Climates cooling at this moment.
+    var coolingClimates: [EntityState] { climates(running: "cooling", mode: "cool") }
+
+    /// Climates doing `action` now; without `hvac_action`, the ones set to `mode`.
+    private func climates(running action: String, mode: String) -> [EntityState] {
         devices.filter { entity in
             guard entity.domain == "climate" else { return false }
-            if let action = entity.attributes["hvac_action"]?.stringValue { return action == "heating" }
-            return entity.state == "heat"
+            if let current = entity.attributes["hvac_action"]?.stringValue { return current == action }
+            return entity.state == mode
         }
     }
 
@@ -171,10 +188,10 @@ extension HomeStore {
         return people.contains { $0.state == "home" }
     }
 
-    /// Windows open in a room that is heating, or anywhere when the heating has no room.
-    func openWindows(whileHeating heating: [EntityState]) -> [EntityState] {
-        guard !heating.isEmpty else { return [] }
-        let heatedRooms = Set(heating.compactMap { area(of: $0)?.id })
+    /// Windows open in a room that is heated or cooled, or anywhere when the climate has no room.
+    func openWindows(whileRunning climates: [EntityState]) -> [EntityState] {
+        guard !climates.isEmpty else { return [] }
+        let heatedRooms = Set(climates.compactMap { area(of: $0)?.id })
         return measuring(["window"], domains: ["binary_sensor"]).filter { window in
             window.state == "on" && (heatedRooms.isEmpty || area(of: window).map { heatedRooms.contains($0.id) } ?? true)
         }
@@ -183,10 +200,12 @@ extension HomeStore {
     /// What the highlights are computed from, besides the scores.
     func highlightInputs(for scores: HomeScores) async -> HighlightInputs {
         let heating = heatingClimates
+        let cooling = coolingClimates
         var inputs = HighlightInputs(
             heating: heating.map(\.entityID),
+            cooling: cooling.map(\.entityID),
             someoneHome: someoneHome,
-            openWindows: openWindows(whileHeating: heating).map(\.name),
+            openWindows: openWindows(whileRunning: heating + cooling).map(\.name),
             carbonDioxide: roomCarbonDioxide,
             outdoor: outdoorWeather,
             hasThermometer: !comfortSensors.isEmpty,

@@ -20,8 +20,6 @@
 	<string>1</string>
 	<key>CKSharingSupported</key>
 	<true/>
-	<key>MaisonRelayURL</key>
-	<string>$(MAISON_RELAY_URL)</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsLocalNetworking</key>

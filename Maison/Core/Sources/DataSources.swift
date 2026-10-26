@@ -48,7 +48,7 @@ struct DataSource: Identifiable, Hashable, Sendable {
 
     /// How a missing source is added.
     enum Setup: Hashable, Sendable {
-        /// The meter: the grid operator, a reader, a clamp.
+        /// The meter: a reader or a clamp.
         case meter
         case tariff
         /// Maison adds it to the server by itself.
@@ -74,8 +74,6 @@ struct SourceCoverage: Equatable, Sendable {
 struct SourceFacts: Sendable {
     var meterIDs: [String] = []
     var hasMeter: Bool { !meterIDs.isEmpty }
-    var gridLinked = false
-    var gridOperatorName: String?
     var tariff: EnergyTariff?
     var serverPrice = false
     var presenceOn = false
@@ -85,8 +83,6 @@ extension HomeStore {
     func sourceFacts() async -> SourceFacts {
         var facts = SourceFacts()
         facts.meterIDs = await electricityMeters().ids
-        facts.gridLinked = GridLink.load() != nil
-        if MaisonRelay.url != nil { facts.gridOperatorName = GridOperator.supported(in: serverConfig?.country)?.name }
         facts.tariff = energyTariff
         facts.serverPrice = await serverEnergyPrice() != nil
         facts.presenceOn = presence.isEnabled || isTrackedByHomeAssistant
@@ -113,7 +109,7 @@ extension HomeStore {
         sources.append(DataSource(
             id: "meter", section: .energy, symbol: "gauge.with.dots.needle.67percent", title: String(localized: "Electricity meter"),
             detail: String(localized: "The Energy score"),
-            state: facts.hasMeter ? .inPlace(String(localized: "Connected")) : facts.gridLinked ? .inPlace(String(localized: "Linked")) : .missing,
+            state: facts.hasMeter ? .inPlace(String(localized: "Connected")) : .missing,
             setup: .meter, entityIDs: facts.meterIDs
         ))
         let tariffEntered = facts.tariff != nil || facts.serverPrice
