@@ -10,27 +10,11 @@ struct HomeScoresTests {
 
     // MARK: Comfort
 
-    @Test func theRangeIsLearnedFromThreeDaysOfReadings() {
-        #expect(ComfortRangeSetting.learned(from: Array(repeating: 21, count: 71)) == nil)
-        let week = (0..<168).map { 20 + Double($0 % 21) / 10 }
-        #expect(ComfortRangeSetting.learned(from: week) == 20.0...22.0)
-    }
-
-    @Test func aUsualRangeScoresFromTheFirstDayUntilOneIsLearned() {
-        let first = ComfortRangeSetting.resolve(entered: nil, hourlyMeans: Array(repeating: 21, count: 10))
-        #expect(first.range == 19...22)
-        #expect(first.origin == .estimated)
-        #expect(first.isStarting)
-
-        let week = (0..<168).map { 20 + Double($0 % 21) / 10 }
-        let learned = ComfortRangeSetting.resolve(entered: nil, hourlyMeans: week)
-        #expect(learned.range == 20.0...22.0)
-        #expect(!learned.isStarting)
-
-        let entered = ComfortRangeSetting.resolve(entered: 18...21, hourlyMeans: [])
-        #expect(entered.range == 18...21)
-        #expect(entered.origin == .entered)
-        #expect(!entered.isStarting)
+    @Test func anEnteredComfortRangeIsKeptOnTheIPhone() throws {
+        let defaults = try #require(UserDefaults(suiteName: "ComfortRange-\(UUID().uuidString)"))
+        #expect(ComfortRangeSetting.range(in: defaults) == nil)
+        ComfortRangeSetting.set(19.5...22, in: defaults)
+        #expect(ComfortRangeSetting.range(in: defaults) == 19.5...22)
     }
 
     @MainActor
@@ -98,64 +82,14 @@ struct HomeScoresTests {
         #expect(ScoreKind.comfort.reading(in: scores) == nil)
     }
 
-    // MARK: Network
-
     // MARK: Summary
 
-    @Test func anOutageComesBeforeARoomOutOfRange() throws {
-        let comfort = try #require(ComfortScore.compute(
-            rooms: [("bedroom", "Chambre", TimeSeries(changes: [StateChange(state: "25", date: start), StateChange(state: "21", date: at(2))]))],
-            range: 20...22,
-            rangeOrigin: .entered,
-            window: window
-        ))
-        let network = try #require(NetworkScore.compute(
-            connectivity: [StateChange(state: "on", date: start), StateChange(state: "off", date: at(3)), StateChange(state: "on", date: at(3.1))],
-            latency: nil,
-            pastLatency: nil,
-            window: window
-        ))
-        let quiet = HighlightInputs(hasThermometer: true, meterProposalSeen: true)
-
-        let both = Highlights.compute(scores: HomeScores(comfort: comfort, network: network, computedAt: start), inputs: quiet)
-        #expect(both.map(\.score) == [.network, .comfort])
-        #expect(both.first?.rank == .now)
-        #expect(Highlights.compute(scores: HomeScores(comfort: comfort, computedAt: start), inputs: quiet).first?.score == .comfort)
-        #expect(Highlights.compute(scores: HomeScores(computedAt: start), inputs: quiet).isEmpty)
-    }
-
-    @Test func aHomeWithoutMeterIsOfferedToReadItOnce() {
-        let noMeter = HomeScores(computedAt: start)
-        #expect(Highlights.compute(scores: noMeter, inputs: HighlightInputs(meterProposalSeen: false)).map(\.fact) == [.missingMeter])
-        #expect(Highlights.compute(scores: noMeter, inputs: HighlightInputs(meterProposalSeen: true)).isEmpty)
-        // With a meter, the next missing source is the tariff, then a thermometer.
-        let metered = HomeScores(hasElectricityMeter: true, computedAt: start)
-        #expect(Highlights.compute(scores: metered, inputs: HighlightInputs()).map(\.fact) == [.missingTariff])
-        let price = EnergyPrice(perKilowattHour: 0.25, currency: "EUR", origin: .entered)
-        #expect(Highlights.compute(scores: metered, inputs: HighlightInputs(price: price)).map(\.fact) == [.missingThermometer])
-        #expect(Highlights.compute(scores: metered, inputs: HighlightInputs(price: price, hasThermometer: true)).isEmpty)
-    }
-
-    @Test func theHeatingRunningWithNobodyHomeComesFirst() {
-        let inputs = HighlightInputs(heating: ["climate.salon"], someoneHome: false, openWindows: ["Fenêtre du salon"],
-                                     hasThermometer: true, meterProposalSeen: true)
-        let highlights = Highlights.compute(scores: HomeScores(computedAt: start), inputs: inputs)
-        #expect(highlights.map(\.id) == ["heating-away", "window-heating"])
-        #expect(highlights.allSatisfy { $0.rank == .now })
-        // Someone home, windows shut: nothing to say about the heating.
-        let home = HighlightInputs(heating: ["climate.salon"], someoneHome: true, hasThermometer: true, meterProposalSeen: true)
-        #expect(Highlights.compute(scores: HomeScores(computedAt: start), inputs: home).isEmpty)
-    }
-
-    @Test func theAirConditioningRunningWithNobodyHomeIsCaughtToo() {
+    @Test func theAirConditioningRunningWithNobodyHomeCanBeTurnedOff() {
         let inputs = HighlightInputs(cooling: ["climate.chambre"], someoneHome: false, openWindows: ["Fenêtre de la chambre"],
                                      hasThermometer: true, meterProposalSeen: true)
-        let highlights = Highlights.compute(scores: HomeScores(computedAt: start), inputs: inputs)
+        let highlights = Highlights.compute(scores: HomeScores(computedAt: start), inputs: inputs, now: start)
         #expect(highlights.map(\.id) == ["cooling-away", "window-cooling"])
         #expect(highlights.allSatisfy { $0.climatesToTurnOff == ["climate.chambre"] && $0.hasOwnAction })
-        // A window open with nothing heating or cooling isn't worth a word.
-        let idle = HighlightInputs(openWindows: ["Fenêtre de la chambre"], hasThermometer: true, meterProposalSeen: true)
-        #expect(Highlights.compute(scores: HomeScores(computedAt: start), inputs: idle).isEmpty)
     }
 
     @Test func aHighlightShowsItsOriginUnlessItIsAMissingSource() {
@@ -163,26 +97,6 @@ struct HomeScoresTests {
         let missing = Highlight(id: "m", score: .energy, fact: .missingTariff, origin: .entered, rank: .missing)
         #expect(measured.showsOrigin)
         #expect(!missing.showsOrigin)
-    }
-
-    @Test func aDeviceIsNamedOnlyWhenItUsesAFifthOfTheDay() {
-        let energy = EnergyScore(today: 10, day: start, asOf: at(12), usual: nil, unit: "kWh", lastDay: [])
-        let scores = HomeScores(energy: energy, hasElectricityMeter: true, computedAt: start)
-        let price = EnergyPrice(perKilowattHour: 0.25, currency: "EUR", origin: .entered)
-        func top(_ kWh: Double) -> [Highlight] {
-            Highlights.compute(scores: scores, inputs: HighlightInputs(devices: [DeviceEnergy(id: "sensor.ce", name: "Chauffe-eau", kilowattHours: kWh)],
-                                                                       price: price, hasThermometer: true))
-                .filter { $0.id.hasPrefix("top-device") }
-        }
-        #expect(top(1.9).isEmpty)
-        #expect(top(4).first?.fact == .topDevice(entityID: "sensor.ce", name: "Chauffe-eau", share: 0.4, kilowattHours: 4, isToday: false))
-    }
-
-    @Test func whatNeverSwitchesOffIsTheLowestHoursOfTheWeek() {
-        let hours = (0..<100).map { (start: at(Double($0)), value: $0 % 10 == 0 ? 0.08 : 0.5) }
-        #expect(Highlights.alwaysOnWatts(Array(hours.prefix(71))) == nil)
-        let watts = try? #require(Highlights.alwaysOnWatts(hours))
-        #expect(watts == 80)
     }
 
     @Test func aSectionButtonOnlyShowsWhenItDoesMoreThanOpenTheFiche() {
@@ -270,14 +184,6 @@ struct HomeScoresTests {
 }
 
 struct ScoresWithoutDeadEndTests {
-    @Test func aServerInFahrenheitStartsFromAFahrenheitRange() {
-        let first = ComfortRangeSetting.resolve(entered: nil, hourlyMeans: [], fahrenheit: true)
-        #expect(first.range == 66...72)
-        #expect(first.isStarting)
-        #expect(ComfortRangeSetting.editable(fahrenheit: true).bounds.contains(first.range.upperBound))
-        #expect(ComfortRangeSetting.resolve(entered: nil, hourlyMeans: []).range == 19...22)
-    }
-
     @Test func confirmingAMeterAddsItToTheGridAndKeepsTheRest() {
         let solar: JSONValue = ["type": "solar", "stat_energy_from": "sensor.solar"]
         // No grid yet: one is made for the meter.

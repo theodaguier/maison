@@ -1,26 +1,7 @@
 import Foundation
 
-/// The three scores at one moment, with what each fiche needs to explain them.
-struct HomeScores: Sendable, Equatable {
-    var comfort: ComfortScore?
-    var energy: EnergyScore?
-    var network: NetworkScore?
-    /// Nothing measures the internet yet (no Ping integration in Home Assistant).
-    var hasNetworkSource = false
-    /// An electricity meter reaches the server, even if it has no habit to compare with yet.
-    var hasElectricityMeter = false
-    /// What Maison noticed, most valuable first.
-    var findings: [Finding] = []
-    /// What the home screen shows under the scores, most urgent first.
-    var highlights: [Highlight] = []
-    /// The price of a kWh and what the day and the month cost, when a price is known.
-    var energyPrice: EnergyPrice?
-    var energyCost: EnergyCost?
-    var computedAt: Date
-}
-
-/// The household's comfort range, when the person set one in Settings.
-enum ComfortRangeSetting {
+/// The comfort range the person set in Settings, kept on the iPhone.
+extension ComfortRangeSetting {
     static let lowerKey = "comfortRangeLower"
     static let upperKey = "comfortRangeUpper"
 
@@ -30,35 +11,9 @@ enum ComfortRangeSetting {
         return lower...upper
     }
 
-    /// Where the score starts until three days of readings teach the household's own range,
-    /// in the unit the server measures in.
-    static func starting(fahrenheit: Bool) -> ClosedRange<Double> { fahrenheit ? 66...72 : 19...22 }
-
-    /// The bounds the person can set a range within, and the step, in the server's unit.
-    static func editable(fahrenheit: Bool) -> (bounds: ClosedRange<Double>, step: Double) {
-        fahrenheit ? (50...90, 1) : (10...32, 0.5)
-    }
-
     static func set(_ range: ClosedRange<Double>, in defaults: UserDefaults = .standard) {
         defaults.set(range.lowerBound, forKey: lowerKey)
         defaults.set(range.upperBound, forKey: upperKey)
-    }
-
-    /// The range Comfort scores against: the one entered, else the one learned, else the starting one.
-    static func resolve(entered: ClosedRange<Double>?, hourlyMeans: [Double],
-                        fahrenheit: Bool = false) -> (range: ClosedRange<Double>, origin: ValueOrigin, isStarting: Bool) {
-        if let entered { return (entered, .entered, false) }
-        if let learned = learned(from: hourlyMeans) { return (learned, .estimated, false) }
-        return (starting(fahrenheit: fahrenheit), .estimated, true)
-    }
-
-    /// The 10th to 90th percentile of the previous week's hourly means, to the half degree.
-    /// `nil` with fewer than three days of readings.
-    static func learned(from hourlyMeans: [Double]) -> ClosedRange<Double>? {
-        guard hourlyMeans.count >= 72 else { return nil }
-        let lower = (percentile(hourlyMeans, 0.1) * 2).rounded(.down) / 2
-        let upper = (percentile(hourlyMeans, 0.9) * 2).rounded(.up) / 2
-        return lower < upper ? lower...upper : nil
     }
 }
 
@@ -125,7 +80,7 @@ extension HomeStore {
         let inputs = await highlightInputs(for: scores)
         scores.energyPrice = inputs.price
         scores.energyCost = inputs.cost
-        scores.highlights = Highlights.compute(scores: scores, inputs: inputs)
+        scores.highlights = Highlights.compute(scores: scores, inputs: inputs, now: now)
         return scores
     }
 
