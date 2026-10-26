@@ -34,6 +34,9 @@ Maison/
   Core/Analytics/      usage events; off unless a PostHog project token is set
   Core/Devices/        device kinds, inline controls, presentation
   Resources/           illustrations, colours, string catalogs
+Packages/MaisonIntelligence/
+                  the intelligence layer: entities, scores, housekeeping, validation;
+                  Foundation only, tested with `swift test --package-path Packages/MaisonIntelligence`
 MaisonTests/      tests (Swift Testing)
 ci/               export options and helper scripts for GitHub Actions
 ```

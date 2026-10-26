@@ -15,3 +15,5 @@
 # hoistTry/hoistAwait mis-place try/await on the outer call. numberFormatting would strip
 # separators such as 86_400. noForceUnwrapInTests rewrites Swift Testing helpers.
 --disable wrapIfStatementBodies,wrapPropertyBodies,wrapFunctionBodies,wrapMultilineStatementBraces,wrapIfExpressionBodies,wrapLoopBodies,wrapArguments,noForceUnwrapInTests,hoistTry,hoistAwait,numberFormatting,conditionalAssignment
+# What `swift build` leaves in the package is not ours to format.
+--exclude Packages/MaisonIntelligence/.build

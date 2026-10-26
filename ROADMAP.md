@@ -33,7 +33,9 @@ V1 is that core, and that core only: three scores — Comfort, Energy and Networ
 
 ## The intelligence layer
 
-It already exists in pieces: `DayFacts` computes the facts, `DayDigest` has them written, `GroundedNumbers` rejects a text with a number that isn't in the facts, `RuleDraft` turns a sentence into a rule. They are spread out and wired to Home Assistant: every screen reads `HomeStore.states` directly, and `DayFacts` returns translated sentences from an extension of the store. They become one module behind the source boundary, free of SwiftUI, the main actor and string catalogs, so it builds on Linux.
+It has started as a Swift package, `Packages/MaisonIntelligence`, which imports only Foundation and is tested on its own (`swift test`). It holds the types that were already pure: the entity model (`EntityState` and its raw values, `DeviceKind`, `JSONValue`, `Area`, `HomeLayout`, `ServerConfig`, `StateChange`, `StatisticPoint`, `DayUsage`), the three scores with `ValueOrigin` (`ComfortScore`, `EnergyScore`, `NetworkScore`, `TimeSeries`), housekeeping by room type (`RoomKind`, `Chore`, `HousekeepingLog`), and `GroundedNumbers`, which rejects a text with a number that isn't in the facts. The app re-exports it, so screens use these types as before.
+
+The rest is still in the app, wired to Home Assistant: `DayFacts` computes the facts and returns translated sentences from an extension of the store, `DayDigest` has them written, `Findings` and `Highlights` hold their wording, `RuleDraft` turns a sentence into a rule with the on-device model, and every screen reads `HomeStore.states` directly. They move into the package as they shed SwiftUI, the main actor and string catalogs, so it builds on Linux.
 
 What it does:
 

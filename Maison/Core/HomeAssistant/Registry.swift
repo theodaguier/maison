@@ -1,19 +1,5 @@
 import Foundation
 
-/// A Home Assistant area, shown as a room.
-struct Area: Sendable, Hashable, Identifiable, Codable {
-    let id: String
-    let name: String
-    /// The room's icon in Home Assistant ("mdi:sofa"), which says what it is for.
-    var icon: String?
-
-    private enum CodingKeys: String, CodingKey {
-        case id = "area_id"
-        case name
-        case icon
-    }
-}
-
 /// The parts of the entity registry the app needs: where an entity lives and whether to show it.
 struct EntityRegistryEntry: Sendable, Hashable, Decodable {
     let entityID: String
@@ -53,18 +39,10 @@ struct DeviceRegistryEntry: Sendable, Hashable, Decodable {
     }
 }
 
-/// Everything the registries say about how entities are organised.
-struct HomeLayout: Sendable, Hashable, Codable {
-    var areas: [Area] = []
-    var areaByEntity: [String: String] = [:]
-    var deviceByEntity: [String: String] = [:]
-    var hiddenEntities: Set<String> = []
-    var platformByEntity: [String: String] = [:]
-    var translationKeyByEntity: [String: String] = [:]
-
-    init() {}
-
+/// Reads the registries into the layout.
+extension HomeLayout {
     init(areas: [Area], entities: [EntityRegistryEntry], devices: [DeviceRegistryEntry]) {
+        self.init()
         self.areas = areas.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
         let deviceAreas = Dictionary(devices.map { ($0.id, $0.areaID) }, uniquingKeysWith: { first, _ in first })
         for entry in entities {
@@ -96,88 +74,6 @@ struct HomeAssistantUser: Sendable, Hashable, Decodable {
         case id
         case name
         case isAdmin = "is_admin"
-    }
-}
-
-struct ServerConfig: Sendable, Hashable, Decodable {
-    let locationName: String?
-    let version: String?
-    let externalURL: String?
-    let internalURL: String?
-    /// ISO 3166 code set in Home Assistant's general settings ("FR").
-    var country: String?
-    /// ISO 4217 code ("EUR"), the currency Home Assistant counts energy costs in.
-    var currency: String?
-    /// "°C" or "°F", from Home Assistant's unit system.
-    var temperatureUnit: String?
-
-    var usesFahrenheit: Bool { temperatureUnit == "°F" }
-
-    private enum CodingKeys: String, CodingKey {
-        case locationName = "location_name"
-        case version
-        case externalURL = "external_url"
-        case internalURL = "internal_url"
-        case country, currency
-        case unitSystem = "unit_system"
-    }
-
-    private struct UnitSystem: Decodable {
-        let temperature: String?
-    }
-}
-
-extension ServerConfig {
-    init(from decoder: any Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        locationName = try container.decodeIfPresent(String.self, forKey: .locationName)
-        version = try container.decodeIfPresent(String.self, forKey: .version)
-        externalURL = try container.decodeIfPresent(String.self, forKey: .externalURL)
-        internalURL = try container.decodeIfPresent(String.self, forKey: .internalURL)
-        country = try container.decodeIfPresent(String.self, forKey: .country)
-        currency = try container.decodeIfPresent(String.self, forKey: .currency)
-        temperatureUnit = try? container.decodeIfPresent(UnitSystem.self, forKey: .unitSystem)?.temperature
-    }
-}
-
-struct StateChange: Sendable, Hashable {
-    let state: String
-    let date: Date
-}
-
-/// When a device was on during one day.
-struct DayUsage: Sendable, Equatable {
-    /// On periods, clipped to the day.
-    let periods: [DateInterval]
-    let day: DateInterval
-
-    var total: TimeInterval { periods.reduce(0) { $0 + $1.duration } }
-
-    /// Builds the on periods within `day` from a history whose first entry is the state at its start.
-    init(changes: [StateChange], day: DateInterval, now: Date = .now, isOn: (String) -> Bool = { $0 == "on" }) {
-        self.day = day
-        let end = min(day.end, now)
-        var periods: [DateInterval] = []
-        var onSince: Date?
-        for change in changes.sorted(by: { $0.date < $1.date }) {
-            // Changes after the day (yesterday's usage is read from a history that runs to now) are clamped to its end.
-            let date = min(max(change.date, day.start), end)
-            if isOn(change.state) {
-                if onSince == nil { onSince = date }
-            } else if let start = onSince {
-                if date > start { periods.append(DateInterval(start: start, end: date)) }
-                onSince = nil
-            }
-        }
-        if let start = onSince, end > start {
-            periods.append(DateInterval(start: start, end: end))
-        }
-        self.periods = periods.filter { $0.end > day.start && $0.start < end }
-    }
-
-    init(periods: [DateInterval], day: DateInterval) {
-        self.periods = periods
-        self.day = day
     }
 }
 

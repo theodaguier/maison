@@ -26,6 +26,7 @@ opt_in_rules: []
 
 excluded:
   - .build
+  - Packages/MaisonIntelligence/.build
   - build
   - DerivedData
 

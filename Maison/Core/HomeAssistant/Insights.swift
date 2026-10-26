@@ -10,18 +10,6 @@ struct LogbookEntry: Sendable, Hashable {
     let automationName: String?
 }
 
-/// One period of long-term statistics (hourly or daily means kept by the recorder).
-struct StatisticPoint: Sendable, Hashable {
-    let start: Date
-    let mean: Double?
-    let min: Double?
-    let max: Double?
-    /// What a total (an energy meter) grew by during the period.
-    var change: Double?
-    /// The running total at the end of the period.
-    var sum: Double?
-}
-
 extension HomeAssistantConnection {
     func logbook(of entityID: String, since start: Date) async throws -> [LogbookEntry] {
         let result = try await send([
