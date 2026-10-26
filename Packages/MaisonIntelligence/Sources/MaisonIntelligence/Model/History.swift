@@ -67,3 +67,38 @@ public struct DayUsage: Sendable, Equatable {
         self.day = day
     }
 }
+
+/// One line of an entity's logbook: what changed, and who or what changed it.
+public struct LogbookEntry: Sendable, Hashable {
+    public let date: Date
+    public let state: String?
+    /// The account behind the change, when a person did it.
+    public let userID: String?
+    /// The automation or script behind the change ("Dernier départ").
+    public let automationName: String?
+
+    public init(date: Date, state: String?, userID: String?, automationName: String?) {
+        self.date = date
+        self.state = state
+        self.userID = userID
+        self.automationName = automationName
+    }
+}
+
+/// One run of an automation, from its stored traces.
+public struct AutomationRun: Sendable, Hashable {
+    public let automationID: String
+    public let start: Date
+    /// `finished`, `error`, `failed_conditions`, `cancelled`…
+    public let execution: String
+
+    public init(automationID: String, start: Date, execution: String) {
+        self.automationID = automationID
+        self.start = start
+        self.execution = execution
+    }
+
+    /// Stopped by its own conditions: the rule was checked but didn't run.
+    public var didRun: Bool { execution != "failed_conditions" && execution != "failed_single" }
+    public var failed: Bool { execution == "error" }
+}

@@ -1,15 +1,5 @@
 import Foundation
 
-/// One line of an entity's logbook: what changed, and who or what changed it.
-struct LogbookEntry: Sendable, Hashable {
-    let date: Date
-    let state: String?
-    /// The Home Assistant user behind the change, when a person did it.
-    let userID: String?
-    /// The automation or script behind the change ("Dernier départ").
-    let automationName: String?
-}
-
 extension HomeAssistantConnection {
     func logbook(of entityID: String, since start: Date) async throws -> [LogbookEntry] {
         let result = try await send([

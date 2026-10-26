@@ -316,18 +316,6 @@ extension AutomationRule.Action {
 
 // MARK: - Runs
 
-/// One run of an automation, from its stored traces.
-struct AutomationRun: Sendable, Hashable {
-    let automationID: String
-    let start: Date
-    /// `finished`, `error`, `failed_conditions`, `cancelled`…
-    let execution: String
-
-    /// Stopped by its own conditions: the rule was checked but didn't run.
-    var didRun: Bool { execution != "failed_conditions" && execution != "failed_single" }
-    var failed: Bool { execution == "error" }
-}
-
 extension HomeAssistantConnection {
     func automationRuns() async throws -> [AutomationRun] {
         let result = try await send(["type": "trace/list", "domain": "automation"])
