@@ -13187,6 +13187,66 @@
           }
         }
       }
+    },
+    "The air conditioning runs with nobody home": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La climatisation tourne sans personne"
+          }
+        }
+      }
+    },
+    "%@ is open while the air conditioning runs": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ est ouverte pendant que la climatisation tourne"
+          }
+        }
+      }
+    },
+    "The cool air goes outside": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La fraîcheur part dehors"
+          }
+        }
+      }
+    },
+    "See Your Day": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Voir la journée"
+          }
+        }
+      }
+    },
+    "Your Day": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre journée"
+          }
+        }
+      }
+    },
+    "From your server’s history, on your iPhone. Nothing is sent anywhere else.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "D’après l’historique de votre serveur, sur votre iPhone. Rien n’est envoyé ailleurs."
+          }
+        }
+      }
     }
   },
   "version": "1.0"
