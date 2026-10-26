@@ -14,6 +14,8 @@ final class PresenceReporter: NSObject, CLLocationManagerDelegate {
 
     private(set) var authorization: CLAuthorizationStatus
     private(set) var isEnabled: Bool
+    /// Whether the tracker counts for the person, once Maison tried to link it.
+    private(set) var trackerLink: TrackerLink?
     /// The sample home's reporter: the switch works, nothing is asked or sent.
     let isDemo: Bool
 
@@ -74,10 +76,25 @@ final class PresenceReporter: NSObject, CLLocationManagerDelegate {
         manager.requestLocation()
         // The tracker appears once the first position arrives.
         try? await Task.sleep(for: .seconds(3))
-        if let webhook = webhooks.load() { try? await store.attachTracker(webhookID: webhook.id) }
+        await link(with: store)
     }
 
+    /// Adds the iPhone's tracker to the person, and says whether it worked: without it, rules like
+    /// "When everyone leaves" don't count this iPhone.
+    func link(with store: HomeStore) async {
+        guard let webhook = webhooks.load() else { return }
+        do {
+            trackerLink = try await store.attachTracker(webhookID: webhook.id)
+        } catch {
+            trackerLink = .failed
+        }
+    }
+
+    /// The webhook Maison registered with the server, if any.
+    var webhook: Webhook? { webhooks.load() }
+
     func disable() {
+        trackerLink = nil
         setEnabled(false)
         if !isDemo { manager.stopMonitoringSignificantLocationChanges() }
     }

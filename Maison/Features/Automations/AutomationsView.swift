@@ -25,8 +25,12 @@ struct AutomationsView: View {
                     } description: {
                         Text("Rules run in the home, even when your iPhone is off.")
                     } actions: {
-                        Button("New Rule") { editor = EditorTarget(rule: .new(), isNew: true) }
-                            .buttonStyle(.glassProminent)
+                        if store.isResident {
+                            AskAdministratorButton(request: .rules)
+                        } else {
+                            Button("New Rule") { editor = EditorTarget(rule: .new(), isNew: true) }
+                                .buttonStyle(.glassProminent)
+                        }
                     }
                 } else {
                     ScrollView {
@@ -42,6 +46,11 @@ struct AutomationsView: View {
                             }
                             .padding(.horizontal, 4)
                             .padding(.top, 10)
+                            if store.isResident {
+                                // Rules are read and switched on or off with any account; writing them needs an administrator's.
+                                ResidentNote(text: "Only an administrator can create or change rules.", request: .rules)
+                                    .padding(.horizontal, 4)
+                            }
                             ForEach(filtered) { automation in
                                 let id = automation.attributes["id"]?.stringValue
                                 AutomationCard(
@@ -62,13 +71,15 @@ struct AutomationsView: View {
             }
             .navigationTitle("Rules")
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    IntelligenceButton("Describe a Rule") { describes = true }
-                }
-                ToolbarSpacer(.fixed, placement: .topBarTrailing)
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("New Rule", systemImage: "plus") {
-                        editor = EditorTarget(rule: .new(), isNew: true)
+                if !store.isResident {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        IntelligenceButton("Describe a Rule") { describes = true }
+                    }
+                    ToolbarSpacer(.fixed, placement: .topBarTrailing)
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("New Rule", systemImage: "plus") {
+                            editor = EditorTarget(rule: .new(), isNew: true)
+                        }
                     }
                 }
             }

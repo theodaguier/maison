@@ -54,7 +54,9 @@ struct FindingView: View {
                     }
                 }
                 .cardStyle()
-                if let rule = finding.rule {
+                if finding.rule != nil, store.isResident {
+                    ResidentNote(text: "Only an administrator can create rules.", request: .rules)
+                } else if let rule = finding.rule {
                     Button {
                         Task { await create(rule) }
                     } label: {

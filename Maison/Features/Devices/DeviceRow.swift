@@ -19,7 +19,7 @@ struct DeviceRow: View {
                 .contentTransition(.symbolEffect(.replace))
                 .frame(width: 26, height: 26)
             VStack(alignment: .leading, spacing: 1) {
-                Text(entity.name)
+                Text(store.displayName(of: entity))
                     .font(.roundedHeadline)
                     .opacity(entity.isUnavailable ? 0.5 : 1)
                 if let detail {

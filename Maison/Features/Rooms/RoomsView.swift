@@ -16,45 +16,40 @@ struct RoomsView: View {
 
     var body: some View {
         NavigationStack(path: $path) {
-            Group {
-                if store.layout.areas.isEmpty, store.currentUser?.isAdmin == false {
-                    ContentUnavailableView(
-                        "No Rooms Yet",
-                        systemImage: "square.grid.2x2",
-                        description: Text("An administrator of your home adds them from Maison.")
-                    )
-                } else {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
-                            PillPicker(options: [(.list, "List", nil), (.plan, "Plan", nil)], selection: $mode)
-                            switch mode {
-                            case .list:
-                                FavoritesSection(opened: $opened)
-                                if let question = store.roomToConfirm {
-                                    RoomKindQuestion(room: question.area, guess: question.guess) { namedRoom = question.area }
-                                }
-                                HousekeepingWeekCard { showsHousekeeping = true }
-                                RoomList()
-                                if store.currentUser?.isAdmin == true || store.isDemoHome {
-                                    Button("Add a Room", systemImage: "plus") { addsRoom = true }
-                                        .font(.roundedBody)
-                                        .padding(.leading, 16)
-                                        .padding(.vertical, 6)
-                                }
-                                if let error {
-                                    Text(error).font(.roundedFootnote).foregroundStyle(.orange).padding(.leading, 16)
-                                }
-                                ScenesSection()
-                            case .plan:
-                                PlanTab(opened: $opened, isScanning: $isScanning)
-                            }
+            ScrollView {
+                VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
+                    PillPicker(options: [(.list, "List", nil), (.plan, "Plan", nil)], selection: $mode)
+                    switch mode {
+                    case .list:
+                        FavoritesSection(opened: $opened)
+                        if let question = store.roomToConfirm {
+                            RoomKindQuestion(room: question.area, guess: question.guess) { namedRoom = question.area }
                         }
-                        .padding(.horizontal, Theme.screenPadding)
-                        .padding(.bottom, 24)
+                        HousekeepingWeekCard { showsHousekeeping = true }
+                        RoomSuggestionsCard()
+                        if store.layout.areas.isEmpty {
+                            NoRoomsCard()
+                        } else {
+                            RoomList()
+                        }
+                        if !store.isResident {
+                            Button("Add a Room", systemImage: "plus") { addsRoom = true }
+                                .font(.roundedBody)
+                                .padding(.leading, 16)
+                                .padding(.vertical, 6)
+                        }
+                        if let error {
+                            Text(error).font(.roundedFootnote).foregroundStyle(.orange).padding(.leading, 16)
+                        }
+                        ScenesSection()
+                    case .plan:
+                        PlanTab(opened: $opened, isScanning: $isScanning)
                     }
-                    .background(Theme.background)
                 }
+                .padding(.horizontal, Theme.screenPadding)
+                .padding(.bottom, 24)
             }
+            .background(Theme.background)
             .navigationTitle("Rooms")
             .navigationDestination(for: Area.self) { RoomView(room: $0) }
             .toolbar {

@@ -36,6 +36,11 @@ struct ConfigFlowClient: Sendable {
         _ = try await request("POST", "api/config/config_entries/entry/\(entryID)/reload")
     }
 
+    /// Removes an integration entry with its devices and entities, as its "Delete" menu does.
+    func delete(entryID: String) async throws {
+        _ = try await request("DELETE", "api/config/config_entries/entry/\(entryID)")
+    }
+
     /// `nil` while the flow still shows a form.
     private func outcome(of step: JSONValue) throws -> Outcome? {
         switch step["type"]?.stringValue {
