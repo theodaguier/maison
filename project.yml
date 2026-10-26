@@ -62,8 +62,6 @@ targets:
           - location
         # Filled from POSTHOG_API_KEY (xcconfig or xcodebuild). Empty leaves analytics off.
         PostHogAPIKey: "$(POSTHOG_API_KEY)"
-        # Maison's relay (https), which holds the grid operators' client credentials. Empty: none offered.
-        MaisonRelayURL: "$(MAISON_RELAY_URL)"
     dependencies:
       - package: PostHog
         product: PostHog

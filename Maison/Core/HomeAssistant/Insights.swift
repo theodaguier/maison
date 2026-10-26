@@ -65,26 +65,6 @@ extension HomeAssistantConnection {
         }
     }
 
-    /// Writes hourly energy into Home Assistant's long-term statistics, under a statistic of Maison's own
-    /// (`maison:grid_consumption`), so the server keeps the history as it does for a meter. `hourly` must
-    /// follow `previousSum`, the running total before its first hour. Administrators only.
-    func importEnergyStatistics(id: String, name: String, hourly: [(start: Date, value: Double)], previousSum: Double) async throws {
-        var sum = previousSum
-        let stats: [JSONValue] = hourly.sorted { $0.start < $1.start }.map { hour in
-            sum += hour.value
-            return ["start": .string(hour.start.ISO8601Format()), "sum": .number(sum), "state": .number(sum)]
-        }
-        guard !stats.isEmpty else { return }
-        _ = try await send([
-            "type": "recorder/import_statistics",
-            "metadata": [
-                "has_mean": false, "has_sum": true, "name": .string(name), "source": "maison",
-                "statistic_id": .string(id), "unit_of_measurement": "kWh",
-            ],
-            "stats": .array(stats),
-        ])
-    }
-
     /// The statistics Home Assistant's Energy dashboard counts as electricity taken from the grid.
     func gridConsumptionStatistics() async throws -> [String] {
         let prefs = try await send(["type": "energy/get_prefs"])

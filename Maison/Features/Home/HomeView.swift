@@ -63,8 +63,8 @@ private struct HomeDashboard: View {
     @State private var temperatureChange: Double?
     @State private var confirmsTurnOff = false
     @State private var turnedOff = 0
-    /// The day summary written on the iPhone; `nil` when Apple Intelligence isn't available.
-    @State private var digest: DayDigest? = DayDigest.isAvailable && DaySummarySetting.isEnabled ? DayDigest() : nil
+    /// The day summary written on the iPhone, or only its facts when Apple Intelligence isn't available or is turned off.
+    @State private var digest = DayDigest(writes: DayDigest.isAvailable && DaySummarySetting.isEnabled)
     @State private var readsDigest = false
     #if DEBUG
     /// `-sheet describe` opens "Describe a Rule" at launch, to check its design without switching tabs.
@@ -107,8 +107,10 @@ private struct HomeDashboard: View {
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 Menu("More", systemImage: "ellipsis") {
-                    if digest?.written != nil {
+                    if digest.written != nil {
                         Button("Your Day in Brief", systemImage: "sparkles") { readsDigest = true }
+                    } else if digest.hasContent {
+                        Button("Your Day", systemImage: "calendar") { readsDigest = true }
                     }
                     Button("Turn Everything Off", systemImage: "power") {
                         confirmsTurnOff = true
@@ -166,7 +168,7 @@ private struct HomeDashboard: View {
             temperatureChange = await store.temperatureChangeSinceYesterday()
         }
         .task(id: store.phase == .connected) {
-            guard store.phase == .connected, let digest else { return }
+            guard store.phase == .connected else { return }
             await digest.refreshIfNeeded(from: store, now: summary.sentences + summary.more)
         }
         .sheet(item: $opened) { DeviceSheet(entityID: $0.id) }
@@ -174,7 +176,7 @@ private struct HomeDashboard: View {
         .sheet(isPresented: $editsLayout) { HomeLayoutEditor(layout: $layout) }
         .sheet(isPresented: $editsShortcuts) { HomeFavoritesEditor() }
         .sheet(isPresented: $readsDigest) {
-            if let digest { DaySummarySheet(digest: digest, current: summary.sentences + summary.more) }
+            DaySummarySheet(digest: digest, current: summary.sentences + summary.more)
         }
         #if DEBUG
         .sheet(isPresented: $describesRule) { DescribeRuleView() }
@@ -182,7 +184,7 @@ private struct HomeDashboard: View {
         .onAppear {
             guard let id = UserDefaults.standard.string(forKey: "sheet") else { return }
             switch id {
-            case "day": readsDigest = digest != nil
+            case "day": readsDigest = true
             case "describe": describesRule = true
             case "comfort", "energy", "network": openedScore = ScoreKind(rawValue: id)
             default: opened = OpenedDevice(id: id)

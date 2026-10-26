@@ -142,8 +142,6 @@ A Maison email, a bank connection, subscriptions that don't feed a score, a cond
 
 Dead ends that contradict the principles above:
 
-- The temperature ring is fixed at 10–30 °C, saturated in a hot climate and wrong in °F (`Components.swift`).
-- The day summary and rule writing disappear when Apple Intelligence doesn't support the language.
 - The app is in English and French only.
 - A resident (not a Home Assistant administrator) gets errors where an administrator gets the rule editor, timers and door alerts, and attaching the iPhone to their person fails silently. These need a path of their own: read-only rules, and a request to the administrator.
 - Updates arrive through `subscribe_entities` and are applied in batches, but every screen still recomputes its lists per room from all the states on each batch; precomputed lists per room are the next step.
