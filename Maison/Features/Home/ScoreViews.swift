@@ -359,7 +359,7 @@ private struct ComfortFiche: View {
                 }
                 RangeRow(range: score.range, origin: score.rangeOrigin, isStarting: score.rangeIsStarting) { editsRange = true }
             }
-            .sheet(isPresented: $editsRange) { ComfortRangeEditor(range: score.range) }
+            .sheet(isPresented: $editsRange) { ComfortRangeEditor(range: score.range, fahrenheit: fahrenheit) }
         } else if store.comfortSensors.isEmpty {
             MissingScore(
                 symbol: "thermometer.medium.slash",
@@ -376,9 +376,13 @@ private struct ComfortFiche: View {
                 Button("Set My Range") { editsRange = true }
                     .buttonStyle(.glassProminent)
             }
-            .sheet(isPresented: $editsRange) { ComfortRangeEditor(range: 19...22) }
+            .sheet(isPresented: $editsRange) {
+                ComfortRangeEditor(range: ComfortRangeSetting.starting(fahrenheit: fahrenheit), fahrenheit: fahrenheit)
+            }
         }
     }
+
+    private var fahrenheit: Bool { store.serverConfig?.usesFahrenheit ?? false }
 
     /// Air appears only when a room measures CO₂.
     private var tabs: [(value: Tab, title: LocalizedStringKey, symbol: String?)] {
@@ -501,8 +505,14 @@ private struct ComfortRangeEditor: View {
     @Environment(\.dismiss) private var dismiss
     @State private var lower: Double
     @State private var upper: Double
+    private let bounds: ClosedRange<Double>
+    private let step: Double
 
-    init(range: ClosedRange<Double>) {
+    /// `fahrenheit`: the server measures in °F, so the range is set in °F.
+    init(range: ClosedRange<Double>, fahrenheit: Bool) {
+        (bounds, step) = ComfortRangeSetting.editable(fahrenheit: fahrenheit)
+        // A range kept from the other unit falls back to the starting one rather than off the steppers.
+        let range = bounds.contains(range.lowerBound) && bounds.contains(range.upperBound) ? range : ComfortRangeSetting.starting(fahrenheit: fahrenheit)
         _lower = State(initialValue: range.lowerBound)
         _upper = State(initialValue: range.upperBound)
     }
@@ -511,10 +521,10 @@ private struct ComfortRangeEditor: View {
         NavigationStack {
             Form {
                 Section {
-                    Stepper(value: $lower, in: 10...(upper - 0.5), step: 0.5) {
+                    Stepper(value: $lower, in: bounds.lowerBound...(upper - step), step: step) {
                         LabeledContent("From", value: degrees(lower) + "°")
                     }
-                    Stepper(value: $upper, in: (lower + 0.5)...32, step: 0.5) {
+                    Stepper(value: $upper, in: (lower + step)...bounds.upperBound, step: step) {
                         LabeledContent("To", value: degrees(upper) + "°")
                     }
                 } footer: {
@@ -586,6 +596,9 @@ private struct EnergyFiche: View {
                     TopDeviceCard(device: top, unit: score.unit, isToday: Calendar.current.isDateInToday(score.day))
                 }
                 CostTiles(cost: extras.cost, price: extras.price, isToday: Calendar.current.isDateInToday(score.day)) { editsPrice = true }
+                if !score.meterIsConfirmed, let id = score.meterIDs.first, let meter = store.states[id] {
+                    MeterSuggestion(meter: meter)
+                }
                 if score.usual == nil {
                     MissingScore(
                         symbol: "calendar.badge.clock",
@@ -640,6 +653,60 @@ private struct EnergyFiche: View {
         guard let difference = score?.difference else { return String(localized: "No habit yet") }
         let percent = Int((abs(difference) * 100).rounded())
         return difference < 0 ? String(localized: "\(percent) % under your habit") : String(localized: "\(percent) % over your habit")
+    }
+}
+
+/// The energy total Maison counts as the home's meter when Home Assistant's Energy dashboard names none:
+/// one tap sets it there, so the server counts it too. A resident sees which one it is.
+private struct MeterSuggestion: View {
+    @Environment(HomeStore.self) private var store
+    let meter: EntityState
+    @State private var state: Step = .idle
+
+    enum Step { case idle, saving, saved, failed }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label {
+                Text("Maison counts \(meter.name) as your meter")
+                    .font(.roundedHeadline)
+                    .fixedSize(horizontal: false, vertical: true)
+            } icon: {
+                Image(systemName: "bolt.badge.checkmark")
+                    .foregroundStyle(ScoreKind.energy.color)
+            }
+            Group {
+                if state == .failed {
+                    Text("It couldn’t be set on your server. Try again in a moment.")
+                } else {
+                    Text("It’s the energy total that used the most. Confirm it to make it your home’s meter on your server too.")
+                }
+            }
+            .font(.roundedFootnote)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+            if store.currentUser?.isAdmin == true {
+                Button {
+                    Task {
+                        state = .saving
+                        state = await store.confirmMeter(meter.entityID) ? .saved : .failed
+                    }
+                } label: {
+                    if state == .saved {
+                        Label("Confirmed", systemImage: "checkmark")
+                    } else {
+                        Text("Confirm")
+                    }
+                }
+                .font(.roundedSubheadlineEmphasized)
+                .buttonStyle(.glassProminent)
+                .disabled(state == .saving || state == .saved)
+                .sensoryFeedback(.success, trigger: state == .saved)
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cardStyle()
     }
 }
 

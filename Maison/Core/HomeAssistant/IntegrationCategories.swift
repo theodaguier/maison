@@ -71,6 +71,11 @@ enum IntegrationCategories {
         category == prefix || category.hasPrefix(prefix + ".")
     }
 
+    /// A box or a router: its connectivity sensor says whether the internet is up.
+    static func isRouter(_ domain: String) -> Bool {
+        all[domain]?.categories.contains { matches($0, "computers_network.routers_network") } ?? false
+    }
+
     /// A weather forecast service (Met.no, OpenWeatherMap…): what it measures is outside.
     static func isForecast(_ domain: String) -> Bool {
         all[domain]?.categories.contains { matches($0, "weather_alerts.forecasts") } ?? false
