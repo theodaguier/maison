@@ -14,7 +14,8 @@ struct WrittenDay: Equatable, Sendable {
 }
 
 /// Writes the day summary with Apple's on-device model, from facts computed beforehand.
-/// Nothing leaves the iPhone; when the model isn't available the home keeps its plain sentences.
+/// Nothing leaves the iPhone. When the model isn't available, or the person turned the summary off,
+/// the day keeps its facts in their written form instead of disappearing.
 @MainActor
 @Observable
 final class DayDigest {
@@ -22,12 +23,20 @@ final class DayDigest {
         case idle
         case writing
         case written(WrittenDay)
+        /// Only the facts, in their written form: the model isn't used on this iPhone.
+        case factsOnly
         case failed
     }
 
+    /// Whether the on-device model words the day, or only its facts are kept.
+    let writes: Bool
     private(set) var state: State = .idle
     private(set) var facts: [DayFact] = []
     private(set) var writtenAt: Date?
+
+    init(writes: Bool = DayDigest.isAvailable) {
+        self.writes = writes
+    }
 
     /// Whether this iPhone can write the summary: Apple Intelligence on, model downloaded, language supported.
     static var isAvailable: Bool { Intelligence.isAvailable }
@@ -38,18 +47,31 @@ final class DayDigest {
         if case .written(let day) = state { day } else { nil }
     }
 
+    /// Whether there is something to read: a written summary, or at least the day's facts.
+    var hasContent: Bool { written != nil || (state == .factsOnly && !facts.isEmpty) }
+
     /// Writes the summary unless a recent one is still fresh.
     func refreshIfNeeded(from store: HomeStore, now current: [String]) async {
-        if let writtenAt, written != nil, Date.now.timeIntervalSince(writtenAt) < 30 * 60 { return }
+        if let writtenAt, hasContent, Date.now.timeIntervalSince(writtenAt) < 30 * 60 { return }
         await write(from: store, now: current)
     }
 
     /// `current` describes the home right now, as the summary card's plain sentences do.
     func write(from store: HomeStore, now current: [String]) async {
-        guard Self.isAvailable, state != .writing else { return }
+        guard state != .writing else { return }
         state = .writing
-        let facts = await store.dayFacts()
+        await write(facts: store.dayFacts(), now: current)
+    }
+
+    /// Words the facts, or keeps them as they are when the model isn't used.
+    func write(facts: [DayFact], now current: [String]) async {
+        state = .writing
         self.facts = facts
+        guard writes, Self.isAvailable else {
+            state = .factsOnly
+            writtenAt = .now
+            return
+        }
         #if DEBUG
         // `-writtenDay` shows a summary the model wrote on a Mac for the demo home: the simulator's model
         // can't generate (its content safety assets are missing), and the design still needs checking.

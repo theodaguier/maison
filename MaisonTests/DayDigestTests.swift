@@ -43,3 +43,23 @@ struct DayFactsTests {
         #expect(fact.promptLine == "- 4,2 kWh consommés (13 % de moins)")
     }
 }
+
+@MainActor
+struct DayDigestFallbackTests {
+    /// Without the on-device model, the day keeps its facts in their written form instead of disappearing.
+    @Test func withoutTheModelTheFactsStay() async {
+        let digest = DayDigest(writes: false)
+        let facts = [DayFact(kind: .energy, title: "4,2 kWh consommés")]
+        await digest.write(facts: facts, now: [])
+        #expect(digest.state == .factsOnly)
+        #expect(digest.facts == facts)
+        #expect(digest.written == nil)
+        #expect(digest.hasContent)
+    }
+
+    @Test func aDayWithoutFactsHasNothingToOpen() async {
+        let digest = DayDigest(writes: false)
+        await digest.write(facts: [], now: [])
+        #expect(!digest.hasContent)
+    }
+}

@@ -100,7 +100,7 @@ struct MetricCard: View {
 
 /// The plain-language summary of the home ("All Quiet at Home").
 /// With a day digest, a calm home shows the summary written on the iPhone instead; anything worth a look
-/// keeps the plain sentences, which are always right.
+/// keeps the plain sentences, which are always right. Without the model, the day's facts stay one tap away.
 struct SummaryCard: View {
     let summary: HomeSummary
     var digest: DayDigest?
@@ -147,16 +147,21 @@ struct SummaryCard: View {
                 .lineSpacing(1)
                 .fixedSize(horizontal: false, vertical: true)
                 .contentTransition(.opacity)
-            if let digest, digest.written != nil || (summary.isCalm && digest.state == .writing) {
+            if let digest, digest.hasContent || (summary.isCalm && digest.writes && digest.state == .writing) {
                 HStack {
                     if written != nil {
                         Text("Written on your iPhone").foregroundStyle(.tertiary)
-                    } else if digest.state == .writing {
+                    } else if digest.writes, digest.state == .writing {
                         Text("Writing your day…").foregroundStyle(.tertiary)
                     }
                     Spacer()
                     if digest.written != nil {
                         Button("Read Summary", action: onRead)
+                            .fontWeight(.semibold)
+                            .buttonStyle(.plain)
+                            .foregroundStyle(.tint)
+                    } else if digest.hasContent {
+                        Button("See Your Day", action: onRead)
                             .fontWeight(.semibold)
                             .buttonStyle(.plain)
                             .foregroundStyle(.tint)
@@ -234,58 +239,6 @@ struct ProgressRing<Fill: ShapeStyle, Center: View>: View {
             center
         }
         .padding(lineWidth / 2)
-    }
-}
-
-/// The 160 pt frosted ring over the illustration, showing the home's temperature.
-struct HeroRing: View {
-    let temperature: HeroTemperature?
-    var isDimmed = false
-
-    var body: some View {
-        ZStack {
-            Circle().fill(.ultraThinMaterial)
-            Circle().fill(Theme.card.opacity(0.9))
-            ProgressRing(progress: progress, color: Self.arc, lineWidth: 13) {
-                VStack(spacing: 0) {
-                    if let temperature {
-                        NumberLabel(
-                            value: temperature.value.formatted(.number.precision(.fractionLength(1))),
-                            unit: "°",
-                            size: .large,
-                            unitStyle: AnyShapeStyle(.orange)
-                        )
-                        Text(temperature.source == .indoor ? "indoor" : "outdoor")
-                            .font(.roundedFootnote)
-                            .foregroundStyle(.secondary)
-                    } else {
-                        Image(systemName: "thermometer.medium.slash")
-                            .font(.system(size: 34, weight: .semibold))
-                            .foregroundStyle(.tertiary)
-                    }
-                }
-            }
-            .padding(14)
-        }
-        .overlay {
-            Circle().strokeBorder(Theme.card.opacity(0.9), lineWidth: 3.6)
-        }
-        .frame(width: 160, height: 160)
-        .opacity(isDimmed ? 0.55 : 1)
-        .animation(.smooth, value: isDimmed)
-    }
-
-    /// Yellow at the top of the ring turning orange towards the bottom.
-    private static let arc = LinearGradient(
-        colors: [Color(red: 1, green: 0.839, blue: 0.039), Color(red: 1, green: 0.584, blue: 0)],
-        startPoint: .top,
-        endPoint: .bottom
-    )
-
-    /// Maps 10…30 °C onto the ring.
-    private var progress: Double {
-        guard let value = temperature?.value else { return 0 }
-        return (value - 10) / 20
     }
 }
 

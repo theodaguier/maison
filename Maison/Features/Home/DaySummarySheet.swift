@@ -1,6 +1,7 @@
 import SwiftUI
 
 /// The day told in a few sentences, then the facts it was written from.
+/// Without the on-device model, the facts alone, in their written form.
 struct DaySummarySheet: View {
     let digest: DayDigest
     /// The home right now, in the summary card's plain sentences, for when the summary is written again.
@@ -12,21 +13,12 @@ struct DaySummarySheet: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
-                    story
+                    if digest.writes { story } else { header }
                     if !digest.facts.isEmpty { facts }
-                    Button {
-                        Task { await digest.write(from: store, now: current) }
-                    } label: {
-                        Label("Write Again", systemImage: "arrow.clockwise")
-                            .font(.roundedFootnoteEmphasized)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 8)
-                            .background(Theme.pill, in: .capsule)
-                    }
-                    .buttonStyle(.plain)
-                    .tapFeedback(.impact(weight: .light))
-                    .disabled(digest.state == .writing)
-                    Label("Written on your iPhone from your server’s history. Nothing is sent anywhere else.", systemImage: "iphone")
+                    if digest.writes { writeAgain }
+                    Label(digest.writes
+                        ? "Written on your iPhone from your server’s history. Nothing is sent anywhere else."
+                        : "From your server’s history, on your iPhone. Nothing is sent anywhere else.", systemImage: "iphone")
                         .font(.roundedFootnote)
                         .foregroundStyle(.tertiary)
                         .padding(.horizontal, 4)
@@ -44,6 +36,34 @@ struct DaySummarySheet: View {
                 }
             }
         }
+    }
+
+    private var writeAgain: some View {
+        Button {
+            Task { await digest.write(from: store, now: current) }
+        } label: {
+            Label("Write Again", systemImage: "arrow.clockwise")
+                .font(.roundedFootnoteEmphasized)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+                .background(Theme.pill, in: .capsule)
+        }
+        .buttonStyle(.plain)
+        .tapFeedback(.impact(weight: .light))
+        .disabled(digest.state == .writing)
+    }
+
+    /// The title alone, when only the facts are shown.
+    private var header: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "calendar")
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(.secondary)
+            Text("Your Day")
+                .font(.system(.title2, design: .rounded).weight(.bold))
+        }
+        .padding(.horizontal, 4)
+        .padding(.top, 16)
     }
 
     /// "Mardi 20 octobre".

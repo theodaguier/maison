@@ -294,6 +294,24 @@ struct HomeScoresTests {
         #expect(Highlights.compute(scores: HomeScores(computedAt: start), inputs: home).isEmpty)
     }
 
+    @Test func theAirConditioningRunningWithNobodyHomeIsCaughtToo() {
+        let inputs = HighlightInputs(cooling: ["climate.chambre"], someoneHome: false, openWindows: ["Fenêtre de la chambre"],
+                                     hasThermometer: true, meterProposalSeen: true)
+        let highlights = Highlights.compute(scores: HomeScores(computedAt: start), inputs: inputs)
+        #expect(highlights.map(\.id) == ["cooling-away", "window-cooling"])
+        #expect(highlights.allSatisfy { $0.climatesToTurnOff == ["climate.chambre"] && $0.hasOwnAction })
+        // A window open with nothing heating or cooling isn't worth a word.
+        let idle = HighlightInputs(openWindows: ["Fenêtre de la chambre"], hasThermometer: true, meterProposalSeen: true)
+        #expect(Highlights.compute(scores: HomeScores(computedAt: start), inputs: idle).isEmpty)
+    }
+
+    @Test func aHighlightShowsItsOriginUnlessItIsAMissingSource() {
+        let measured = Highlight(id: "h", score: .network, fact: .connectedDevices(count: 2), origin: .measured, rank: .context)
+        let missing = Highlight(id: "m", score: .energy, fact: .missingTariff, origin: .entered, rank: .missing)
+        #expect(measured.showsOrigin)
+        #expect(!missing.showsOrigin)
+    }
+
     @Test func aDeviceIsNamedOnlyWhenItUsesAFifthOfTheDay() {
         let energy = EnergyScore(today: 10, day: start, asOf: at(12), usual: nil, unit: "kWh", lastDay: [])
         let scores = HomeScores(energy: energy, hasElectricityMeter: true, computedAt: start)
